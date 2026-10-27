@@ -822,9 +822,10 @@ function render() {
   };
   // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
   const need = {};
-  for (const k of [res.jeonse >= res.wolse ? 'jeonse' : 'wolse']) {
-    if (res[k] >= res.buy) continue;
-    const r = requiredReturn(inp, p, k, res.buy);
+  // 매매보다 적게 남는 쪽 중, 필요한 수익률이 더 낮은 쪽(투자로 따라잡을 수 있는 쪽)에만 표시
+  const req = ['jeonse', 'wolse'].filter(k => res[k] < res.buy).map(k => [k, requiredReturn(inp, p, k, res.buy)]).sort((a, b) => a[1] - b[1]);
+  if (req.length) {
+    const [k, r] = req[0];
     need[k] = r === Infinity ? '남는 돈으로 해마다 40% 넘게 벌어도 매매를 못 따라가요' : `매매를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
   }
   const rows = [['buy', res.buy], ['jeonse', res.jeonse], ['wolse', res.wolse]];

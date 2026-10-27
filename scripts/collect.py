@@ -131,8 +131,14 @@ def lawd_sido(name):
             raise RuntimeError(text[:200])
         rows = next((b["row"] for b in block if "row" in b), [])
         for r in rows:
-            if r.get("umd_cd") == "000" and r.get("ri_cd") == "00" and r.get("sgg_cd") != "000":
-                codes[r["region_cd"][:5]] = r.get("locatadd_nm", "").strip()
+            if r.get("sgg_cd") == "000":
+                continue
+            sgg, name = r["region_cd"][:5], r.get("locatadd_nm", "").strip()
+            if r.get("umd_cd") == "000" and r.get("ri_cd") == "00":
+                codes[sgg] = name
+            elif r.get("ri_cd") == "00" and sgg not in codes:
+                # 시군구 줄이 빠진 경우가 있어서 읍면동 줄에서 시군구 이름을 만듦
+                codes[sgg] = name.rsplit(" ", 1)[0]
         if len(rows) < 1000:
             return codes
         page += 1

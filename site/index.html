@@ -307,7 +307,7 @@ const sizeText = k => `${k}㎡(${PYEONG[k]}평형)`;
 const MIN_DEALS = 3;          // 이보다 거래가 적은 크기는 고를 수 없음
 const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
-const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0, conv: 4.5, ptax: 0.15, jgrow: 2.5 };
+const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0, conv: 4.5, jgrow: 2.5 };
 const YEARS = [2, 4, 6, 10];
 const ASSUME = [
   { key: 'grow',    label: '집값이 1년에 오르는 비율' },
@@ -317,7 +317,6 @@ const ASSUME = [
   { key: 'jloan',   label: '전세 대출 금리' },
   { key: 'deposit', label: '예금 금리' },
   { key: 'conv',    label: '월세 계산 기준 (전세금 대비 연 %)' },
-  { key: 'ptax',    label: '재산세 (집값의 몇 %)' },
 ];
 // 동네 이름으로도 찾게 (법정동 코드 기준)
 const ALIAS = {
@@ -467,6 +466,32 @@ function brokerFee(P) {                    // 매매 중개수수료 상한 요�
   return P * r / 100;
 }
 
+// 1세대 1주택 보유세 (연간, 원). 공시가격은 시세의 69%로 가정
+const PUBLIC_RATIO = 0.69;
+function bracket(base, steps) {             // steps: [[상한, 세율%], ...] 누진
+  let tax = 0, prev = 0;
+  for (const [cap, rate] of steps) {
+    if (base <= prev) break;
+    tax += (Math.min(base, cap) - prev) * rate / 100; prev = cap;
+  }
+  return tax;
+}
+function holdingTax(price) {
+  const pub = price * PUBLIC_RATIO, E = EOK;
+  // 재산세: 공시 9억 이하 1주택 특례
+  const special = pub <= 9 * E;
+  const fmr = special ? (pub <= 3 * E ? 0.43 : pub <= 6 * E ? 0.44 : 0.45) : 0.6;
+  const base = pub * fmr;
+  const prop = bracket(base, special
+    ? [[0.6 * E, 0.05], [1.5 * E, 0.1], [3 * E, 0.2], [Infinity, 0.35]]
+    : [[0.6 * E, 0.1], [1.5 * E, 0.15], [3 * E, 0.25], [Infinity, 0.4]]);
+  const local = prop * 0.2 + base * 0.0014;  // 지방교육세 + 도시지역분
+  // 종합부동산세: 1주택 공제 12억, 공정시장가액비율 60%, 농어촌특별세 20%
+  const cb = Math.max(0, pub - 12 * E) * 0.6;
+  const comp = bracket(cb, [[3 * E, 0.5], [6 * E, 0.7], [12 * E, 1.0], [25 * E, 1.3], [50 * E, 1.5], [94 * E, 2.0], [Infinity, 2.7]]) * 1.2;
+  return prop + local + comp;
+}
+
 function simulate(inp, p, growOverride) {
   const P = inp.price * EOK, C = inp.cash * EOK, months = inp.years * 12;
   const g = (growOverride ?? p.grow) / 100;
@@ -496,7 +521,7 @@ function simulate(inp, p, growOverride) {
       const nd = D * Math.pow(1 + p.jgrow / 100, 2);
       jl += nd - D; D = nd;
     }
-    const tax = P * p.ptax / 100 / 12;
+    const tax = holdingTax(P * Math.pow(1 + g, yr)) / 12;   // 그해 집값 기준
     let outB = tax; f.bTax += tax;
     if (bal > 0) { const it = bal * rm; f.bInterest += it; outB += pay; bal = bal + it - pay; }
     const outJ = jl * rj; f.jInterest += outJ;
@@ -799,7 +824,8 @@ function render() {
 
   $('note').textContent =
     `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}로 계산했어요. ` +
-    `셋 다 매달 같은 돈을 쓰고, 덜 쓰는 쪽은 남는 돈을 예금에 넣는다고 봤어요.`;
+    `셋 다 매달 같은 돈을 쓰고, 덜 쓰는 쪽은 남는 돈을 예금에 넣는다고 봤어요. ` +
+    `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${won(holdingTax(state.price * EOK))}).`;
 }
 
 // ── 입력 ───────────────────────────────────────────────

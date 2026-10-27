@@ -219,7 +219,7 @@ footer a { color: inherit; }
     <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="전국 시군구 지도"></svg></div>
     <div class="maps-foot">
       <div class="search">
-        <input id="q" type="search" autocomplete="off" placeholder="지도에 없는 곳 검색 (예: 부산, 대전, 분당)" aria-label="지역 검색" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list">
+        <input id="q" type="search" autocomplete="off" placeholder="이름으로 찾기 (예: 판교, 해운대, 평택)" aria-label="지역 검색" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list">
         <ul id="q-list" role="listbox" hidden></ul>
       </div>
       <span class="legend">싸다 <i></i> 비싸다</span>
@@ -282,7 +282,7 @@ footer a { color: inherit; }
   <footer>
     <p id="source"></p>
     <p>참고용 시뮬레이션이에요. 실제 대출 한도, 세금, 집값은 개인 조건과 시장에 따라 달라요. 1주택 실거주 기준이라 양도세는 없다고 봤고, 관리비처럼 어느 쪽이든 나가는 돈은 뺐어요.</p>
-    <p>경기 지도는 서울 생활권 시만 보여줘요. 다른 경기 지역과 시 안의 구, 울릉군은 검색으로 고를 수 있어요. 전국 지도의 제주는 실제보다 위로 옮겨 그렸어요.</p>
+    <p>경기 지도는 서울 생활권 시만 보여줘요. 평택·이천 같은 다른 경기 지역, 분당구 같은 시 안의 구, 울릉군은 이름으로 찾아 고를 수 있어요. 전국 지도의 제주는 실제보다 위로 옮겨 그렸어요.</p>
   </footer>
 </div>
 
@@ -825,7 +825,7 @@ function renderHits() {
     .sort((a, b) => (b.r.whole ? 1 : 0) - (a.r.whole ? 1 : 0) || a.r.name.length - b.r.name.length).slice(0, 8);
   if (!hits.length) {
     const li = document.createElement('li'); li.className = 'empty';
-    li.textContent = '찾는 지역이 없어요. 시·군·구 이름으로 검색해보세요.'; ul.appendChild(li);
+    li.textContent = '찾는 곳이 없어요. 시·군·구나 동네 이름으로 찾아보세요.'; ul.appendChild(li);
   }
   hits.forEach((h, i) => {
     const li = document.createElement('li'); li.id = 'q-' + i; li.setAttribute('role', 'option');

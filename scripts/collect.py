@@ -202,13 +202,46 @@ def window_trades(lawd, end):
     return deals
 
 
-def window_rents(lawd, end):
-    jeonse = []
+def window_rents(lawd, end, with_monthly=False):
+    """전세 [(보증금, 면적)], with_monthly면 월세 [(보증금, 월세, 면적)]도"""
+    jeonse, monthly = [], []
     for ym in months_back(end, WINDOW):
         for it in fetch_items(RENT, lawd, ym):
-            if num(it.get("monthlyRent")) == 0:            # 월세 0 = 전세
-                jeonse.append((num(it.get("deposit")), num(it.get("excluUseAr"))))
-    return jeonse
+            dep, mr, area = num(it.get("deposit")), num(it.get("monthlyRent")), num(it.get("excluUseAr"))
+            if mr == 0:                                    # 월세 0 = 전세
+                jeonse.append((dep, area))
+            else:
+                monthly.append((dep, mr, area))
+    return (jeonse, monthly) if with_monthly else jeonse
+
+
+def size_of(area):
+    for k, (lo, hi, _) in SIZES.items():
+        if lo <= area <= hi:
+            return k
+    return None
+
+
+def rent_terms(jeonse, monthly):
+    """월세 계약으로 지역의 전월세 전환율(연 %)과 보증금 비율(전세금 대비)을 구함.
+    같은 크기의 전세 중간값을 기준으로 계약마다 계산해서 중간값을 씀"""
+    jmed = {k: med(in_size(jeonse, k)) for k in SIZES}
+    rates, ratios = [], []
+    for dep, mr, area in monthly:
+        k = size_of(area)
+        J = jmed.get(k) if k else None
+        if not J:
+            continue
+        gap = J - dep
+        if gap < J * 0.1:                  # 보증금이 전세금과 거의 같으면 환산이 불안정해서 뺌
+            continue
+        r = mr * 12 / gap * 100
+        if 0.5 <= r <= 20:                 # 이상치 제외
+            rates.append(r)
+        ratios.append(min(dep / J, 1))
+    return (round(statistics.median(rates), 2) if len(rates) >= 5 else None,
+            round(statistics.median(ratios), 3) if len(ratios) >= 5 else None,
+            len(rates))
 
 
 def in84(rows):
@@ -311,11 +344,14 @@ def main():
     for i, (code, name) in enumerate(codes.items(), 1):
         try:
             now = window_trades(code, end)
-            rents = window_rents(code, end)
+            rents, monthly = window_rents(code, end, with_monthly=True)
             # 새로 생긴 구는 과거 거래가 옛 코드에 있을 수 있어서 지금 코드와 옛 코드를 함께 봄
             hist = list(dict.fromkeys([code] + HIST_PARENT.get(code, []) + legacy_parent(name)))
             y5 = [d for h in hist for d in window_trades(h, (end[0] - 5, end[1]))]
             y10 = [d for h in hist for d in window_trades(h, (end[0] - 10, end[1]))]
+            # 전세금 상승률: 5년·10년 전 같은 달 전세 중간값
+            r5 = [d for h in hist for d in window_rents(h, (end[0] - 5, end[1]))]
+            r10 = [d for h in hist for d in window_rents(h, (end[0] - 10, end[1]))]
         except Exception as e:
             print(f"[{i}/{len(codes)}] {code} {name}: 실패 {e}", file=sys.stderr)
             continue
@@ -332,6 +368,11 @@ def main():
             "g10": cagr(p84, med(in84(y10)), 10),
             "sizes": size_table(now, rents),
         }
+        conv, wdep, nconv = rent_terms(rents, monthly)
+        regions[code].update({
+            "conv": conv, "wdep": wdep, "nconv": nconv,                    # 전월세 전환율(연 %), 월세 보증금/전세금
+            "jg5": cagr(j84, med(in84(r5)), 5), "jg10": cagr(j84, med(in84(r10)), 10),   # 84㎡ 전세 상승률
+        })
         # 84㎡ 거래가 없으면 59㎡(25평형)로 상승률 계산
         if regions[code]["g10"] is None and regions[code]["g5"] is None:
             p59 = med(in_size(now, "59"))
@@ -348,14 +389,20 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     window = months_back(end, WINDOW)
-    if args.only and OUT.exists():
-        # 일부 시도만 다시 모았으면 나머지 지역은 기존 파일에서 그대로 가져옴
+    if OUT.exists():
         old = json.loads(OUT.read_text())["regions"]
-        # 새로 받은 결과가 있는 시도만 교체 (수집 실패로 비면 기존 데이터 유지)
-        got = {c[:2] for c in regions}
-        drop = (set(args.only) & got) | ({"29", "46"} if "12" in got else set())
-        kept = {c: r for c, r in old.items() if c[:2] not in drop}
-        regions = {**kept, **regions}
+        if args.only:
+            # 일부 시도만 다시 모았으면 나머지 지역은 기존 파일에서 그대로 가져옴
+            # 새로 받은 결과가 있는 시도만 교체 (수집 실패로 비면 기존 데이터 유지)
+            got = {c[:2] for c in regions}
+            drop = (set(args.only) & got) | ({"29", "46"} if "12" in got else set())
+            kept = {c: r for c, r in old.items() if c[:2] not in drop or (c in codes and c not in regions)}
+        else:
+            # 전체 수집: 이번에 실패한 지역(호출 한도 등)은 기존 데이터를 유지
+            kept = {c: r for c, r in old.items() if c in codes and c not in regions}
+        if kept:
+            print(f"기존 데이터 유지: {len(kept)}곳", file=sys.stderr)
+        regions = dict(sorted({**kept, **regions}.items()))
     OUT.write_text(json.dumps({
         "updated": today.isoformat(),
         "window": [window[-1], window[0]],

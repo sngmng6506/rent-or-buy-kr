@@ -315,7 +315,8 @@ const sizeText = k => `${k}㎡(${PYEONG[k]}평형)`;
 const MIN_DEALS = 3;          // 이보다 거래가 적은 크기는 고를 수 없음
 const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
-const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0, conv: 4.5, jgrow: 2.5 };
+const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };
+const RENT_FALLBACK = { conv: 4.5, wdep: 20, jgrow: 2.5 };   // 지역·시도 데이터가 없을 때만 (임시)
 const YEARS = [2, 4, 6, 10];
 const ASSUME = [
   { key: 'grow',    label: '집값이 1년에 오르는 비율' },
@@ -324,6 +325,7 @@ const ASSUME = [
   { key: 'mort',    label: '집 살 때 대출 금리' },
   { key: 'jloan',   label: '전세 대출 금리' },
   { key: 'deposit', label: '예금 금리' },
+  { key: 'wdep',    label: '월세 보증금 (전세금의 몇 %)' },
   { key: 'conv',    label: '월세: 전세 1억당 월 (만 원)', unit: '만 원', to: v => Math.round(v / 12 * 100 * 10) / 10, from: v => v * 12 / 100 },
 ];
 // 동네 이름으로도 찾게 (법정동 코드 기준)
@@ -345,11 +347,12 @@ const REG = {};
 
 function normalize(raw) {
   const sizes = raw.sizes || (raw.p84 ? { '84': { p: raw.p84, n: raw.n84, j: raw.j84, nj: raw.nj84 } } : {});
-  return { sizes, avg: raw.avg, cnt: raw.cnt || 0, g5: raw.g5, g10: raw.g10, n84: raw.n84 || 0 };
+  return { sizes, avg: raw.avg, cnt: raw.cnt || 0, g5: raw.g5, g10: raw.g10, n84: raw.n84 || 0,
+    conv: raw.conv ?? null, wdep: raw.wdep ?? null, nconv: raw.nconv || 0, jg5: raw.jg5 ?? null, jg10: raw.jg10 ?? null };
 }
 // 여러 지역을 합칠 때: 건수로 가중 평균 (중간값의 근사)
 function combine(list) {
-  const out = { sizes: {}, avg: null, cnt: 0, g5: null, g10: null, n84: 0 };
+  const out = { sizes: {}, avg: null, cnt: 0, g5: null, g10: null, n84: 0, conv: null, wdep: null, nconv: 0, jg5: null, jg10: null };
   const wavg = (pairs) => { const w = pairs.reduce((s, [, n]) => s + n, 0); return w ? pairs.reduce((s, [v, n]) => s + v * n, 0) / w : null; };
   for (const k of SIZE_KEYS) {
     const ps = list.filter(r => r.sizes[k]?.p).map(r => [r.sizes[k].p, r.sizes[k].n]);
@@ -362,6 +365,11 @@ function combine(list) {
   out.n84 = list.reduce((s, r) => s + r.n84, 0);
   out.g5 = wavg(list.filter(r => r.g5 != null).map(r => [r.g5, Math.max(r.n84, 1)]));
   out.g10 = wavg(list.filter(r => r.g10 != null).map(r => [r.g10, Math.max(r.n84, 1)]));
+  out.conv = wavg(list.filter(r => r.conv != null).map(r => [r.conv, Math.max(r.nconv, 1)]));
+  out.wdep = wavg(list.filter(r => r.wdep != null).map(r => [r.wdep, Math.max(r.nconv, 1)]));
+  out.nconv = list.reduce((s, r) => s + (r.nconv || 0), 0);
+  out.jg5 = wavg(list.filter(r => r.jg5 != null).map(r => [r.jg5, Math.max(r.n84, 1)]));
+  out.jg10 = wavg(list.filter(r => r.jg10 != null).map(r => [r.jg10, Math.max(r.n84, 1)]));
   return out;
 }
 const norm = t => t.replace(/\s+/g, '').toLowerCase();
@@ -449,6 +457,17 @@ function growthOf(r) {
   const label = (own || r.whole) && r.g10 != null ? r.short : `${SIDO[r.sido]} 전체`;
   return { g10: g10 ?? null, g5: g5 ?? null, label };
 }
+// 전월세 조건: 지역 → 시도 전체 → 임시값 순으로
+function rentTermsOf(r) {
+  const sido = REG['sido:' + r.sido] || {};
+  const pick = (own, ok, sv, fb) => (ok && own != null) ? own : (sv ?? fb);
+  const enough = (r.nconv || 0) >= 10;
+  return {
+    conv: Math.round(pick(r.conv, enough, sido.conv, RENT_FALLBACK.conv) * 100) / 100,
+    wdep: Math.round(pick(r.wdep, enough, sido.wdep, RENT_FALLBACK.wdep / 100) * 1000) / 10,
+    jgrow: Math.round(pick(r.jg10, r.n84 >= 10, sido.jg10, RENT_FALLBACK.jgrow) * 10) / 10,
+  };
+}
 function ratioOf(r, k) {
   const s = r.sizes[k];
   if (s && s.p && s.j && s.n >= MIN_DEALS && s.nj >= MIN_DEALS) return Math.round(s.j / s.p * 1000) / 10;
@@ -459,14 +478,14 @@ function ratioOf(r, k) {
 const priceAt = (r, k) => (k && r.sizes[k]?.p) ? r.sizes[k].p : null;   // 만원
 
 // ── 상태 ───────────────────────────────────────────────
-const state = { region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, p: { ...RATES, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
+const state = { region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, p: { ...RATES, ...RENT_FALLBACK, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
 
 function applyRegion(key, keepSize) {
   const r = REG[key]; if (!r) return;
   state.region = key;
   state.size = defaultSize(r, keepSize ? state.size : '84');
   const gr = growthOf(r);
-  state.p = { ...RATES, grow: gr.g10 ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
+  state.p = { ...RATES, ...rentTermsOf(r), grow: gr.g10 ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
   const pr = priceAt(r, state.size);
   if (pr) { state.price = Math.round(pr / 1000) / 10; state.manual = false; } else state.manual = true;
 }
@@ -526,7 +545,7 @@ function simulate(inp, p, growOverride) {
   const jl0 = jl, D0 = D;
   let invJ = Math.max(0, C - D);
 
-  const W = Math.min(C, D * 0.2);          // 월세 보증금은 전세금의 20%까지
+  const W = Math.min(C, D * p.wdep / 100); // 월세 보증금은 그 지역 월세 계약의 보통 비율만큼
   const rent0 = (D - W) * p.conv / 100 / 12;
   let invW = C - W;
 

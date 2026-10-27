@@ -28,6 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "data" / "regions.json"
 FALLBACK = ROOT / "data" / "lawd_fallback.json"
+CACHE = ROOT / "data" / "lawd_codes.json"      # 마지막으로 성공한 법정동코드 목록
 
 TRADE = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
 RENT = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent"
@@ -128,6 +129,8 @@ def lawd_sido(name):
         text = get(LAWD, {"type": "json", "pageNo": page, "numOfRows": 1000, "locatadd_nm": name})
         block = json.loads(text).get("StanReginCd")
         if not block:
+            if page > 1 and codes:      # 뒤쪽 쪽에서 '데이터 없음'이면 거기까지만
+                return codes
             raise RuntimeError(text[:200])
         rows = next((b["row"] for b in block if "row" in b), [])
         for r in rows:
@@ -145,21 +148,27 @@ def lawd_sido(name):
 
 
 def lawd_codes(only):
-    """{코드: 이름} — 시도별로 행안부 API, 실패한 시도만 예비 목록"""
+    """{코드: 이름} — 시도별로 행안부 API, 실패한 시도는 마지막 저장본 → 예비 목록 순으로"""
     fallback = json.loads(FALLBACK.read_text())["codes"]
+    if CACHE.exists():
+        fallback = {**fallback, **json.loads(CACHE.read_text())["codes"]}
     codes, used_fallback = {}, []
     for sc, name in SIDO.items():
         if only and sc not in only:
             continue
         try:
-            got = lawd_sido(name)
+            try:
+                got = lawd_sido(name)
+            except Exception:
+                time.sleep(3)
+                got = lawd_sido(name)     # 간헐적 실패가 있어서 한 번 더
             if not got and sc != "36":
                 raise RuntimeError("결과 없음")
             codes.update(got)
         except Exception as e:
             LAWD_ERRORS[name] = str(e)[:200]
             print(f"법정동코드 {name} 실패, 예비 목록 사용: {e}", file=sys.stderr)
-            codes.update({c: n for c, n in fallback.items() if c[:2] == sc})
+            codes.update({c: n for c, n in fallback.items() if n.startswith(name)})
             used_fallback.append(name)
     # 통합특별시 코드를 받았으면 옛 광주·전남 예비 코드는 버림
     if any(n.startswith("전남광주통합특별시") for n in codes.values()):
@@ -271,6 +280,12 @@ def main():
         return
 
     codes, src = lawd_codes(set(args.only))
+    if not LAWD_ERRORS:
+        old = json.loads(CACHE.read_text())["codes"] if CACHE.exists() else {}
+        if args.only:
+            old = {c: n for c, n in old.items() if c[:2] not in set(args.only)}
+        CACHE.write_text(json.dumps({"updated": dt.date.today().isoformat(), "codes": dict(sorted({**old, **codes}.items()))},
+                                    ensure_ascii=False, indent=1) + "\n")
     print(f"시군구 {len(codes)}곳 ({src}), 창 {months_back(end, WINDOW)[::-1]}")
     regions = {}
     for i, (code, name) in enumerate(codes.items(), 1):
@@ -316,7 +331,9 @@ def main():
     if args.only and OUT.exists():
         # 일부 시도만 다시 모았으면 나머지 지역은 기존 파일에서 그대로 가져옴
         old = json.loads(OUT.read_text())["regions"]
-        drop = set(args.only) | ({"29", "46"} if "12" in args.only else set())
+        # 새로 받은 결과가 있는 시도만 교체 (수집 실패로 비면 기존 데이터 유지)
+        got = {c[:2] for c in regions}
+        drop = (set(args.only) & got) | ({"29", "46"} if "12" in got else set())
         kept = {c: r for c, r in old.items() if c[:2] not in drop}
         regions = {**kept, **regions}
     OUT.write_text(json.dumps({

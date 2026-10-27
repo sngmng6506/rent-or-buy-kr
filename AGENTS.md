@@ -9,7 +9,8 @@ site/index.html            계산기 페이지 (계산 엔진·지도·검색 �
 site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
 site/data/regions.json     지역 시세 (scripts/collect.py가 생성, 직접 수정 금지)
 scripts/collect.py         국토부 실거래가 API 수집 → regions.json
-data/lawd_fallback.json    법정동코드 API 실패 시 쓰는 예비 시군구 코드
+data/lawd_codes.json       마지막으로 받은 법정동코드 목록 (API 실패 시 사용, 수집 때 자동 갱신)
+data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코드
 .github/workflows/collect.yml  매달 16일 자동 수집, 수동 실행(test/full)
 ```
 

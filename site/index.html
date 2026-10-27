@@ -576,9 +576,10 @@ function breakeven(inp, p) {
 function requiredReturn(inp, p, kind, target) {
   const f = r => simulate(inp, { ...p, deposit: r })[kind] - target;
   let lo = 0, hi = 40;
-  if (f(hi) < 0) return Infinity;
+  while (f(hi) < 0 && hi < 100000) { lo = hi; hi *= 2; }   // 상한 없이 늘려가며 찾음
+  if (f(hi) < 0) return Infinity;                          // 굴릴 돈이 거의 없어 따라잡을 수 없음
   if (f(lo) > 0) return 0;
-  for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
+  for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
   return (lo + hi) / 2;
 }
 function ranking(r) {
@@ -831,7 +832,7 @@ function render() {
   for (const k of ['buy', 'jeonse', 'wolse']) {
     if (k === win) continue;
     const r = requiredReturn(inp, p, k, res[win]);
-    need[k] = r === Infinity ? `남는 돈으로 해마다 40% 넘게 벌어도 ${OBJ[win]}를 못 따라가요` : `${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
+    need[k] = r === Infinity ? `남는 돈이 거의 없어서 투자로는 ${OBJ[win]}를 못 따라가요` : `${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
   }
   // 셋 다 똑같이 들어간 '매달 집에 쓴 돈'을 빼고 보여줌 → 가진 돈 + 막대 아래 항목 = 막대 금액 (차이·판정은 그대로)
   const spent = res.flow.spend;

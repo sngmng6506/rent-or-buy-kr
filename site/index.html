@@ -135,6 +135,7 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .amount span { color: var(--ink-2); }
 input[type="range"] { width: 100%; accent-color: var(--seal); margin: 0; }
 .hint { font-size: 13px; color: var(--ink-2); }
+.hint:empty { display: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
@@ -210,7 +211,6 @@ footer a { color: inherit; }
   <header>
     <div class="brand">영끌각</div>
     <h1>이 집, 영끌해서 사야 하나?</h1>
-    <p class="sub">지역을 고르고 가진 돈만 넣으면 매매·전세·월세 중 몇 년 뒤 돈이 제일 많이 남는 쪽을 알려줘요.</p>
   </header>
 
   <section class="panel" aria-label="지역 선택">
@@ -289,10 +289,7 @@ footer a { color: inherit; }
   </div>
 
   <footer>
-    <p><a href="faq/index.html">계산 방법과 자주 묻는 질문</a></p>
-    <p id="source"></p>
-    <p>참고용 시뮬레이션이에요. 실제 대출 한도, 세금, 집값은 개인 조건과 시장에 따라 달라요. 1주택 실거주 기준이라 양도세는 없다고 봤고, 관리비처럼 어느 쪽이든 나가는 돈은 뺐어요.</p>
-    <p>경기 지도는 서울 생활권 시만 보여줘요. 평택·이천 같은 다른 경기 지역, 분당구 같은 시 안의 구, 울릉군은 이름으로 찾아 고를 수 있어요. 전국 지도의 제주는 실제보다 위로 옮겨 그렸어요.</p>
+    <p>참고용 시뮬레이션이에요 · <a href="faq/index.html">계산 방법 보기</a></p>
   </footer>
 </div>
 
@@ -773,9 +770,9 @@ function render() {
   // 선택한 지역
   const v = priceAt(r0, state.size), s = state.size && r0.sizes[state.size];
   $('picked').innerHTML = v
-    ? `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 중간 가격</span> <b>${won(v * 1e4)}</b> <span class="muted">· 최근 3개월 ${s.n.toLocaleString('ko-KR')}건${s.n < 10 ? ', 거래가 적어 참고만 하세요' : ''}</span>`
+    ? `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 중간 가격</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· 거래가 적어 참고만 하세요</span>` : ''}`
     : `<b>${r0.name}</b> <span class="muted">· 최근 거래가 적어 시세가 없어요. 집 가격을 직접 넣어주세요.</span>`;
-  $('price-hint').textContent = state.manual ? '직접 입력한 가격이에요.' : `${r0.name} ${sizeText(state.size)} 중간 가격으로 채웠어요.`;
+  $('price-hint').textContent = state.manual && v ? '직접 입력한 가격이에요.' : '';
 
   // 도장
   const seal = $('seal');
@@ -790,12 +787,12 @@ function render() {
   const edited = gr.g10 == null || Math.abs(g - gr.g10) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
-  let assume = `집값이 해마다 <b>${pct(Math.abs(g))}</b>씩 ${g >= 0 ? '오른다' : '떨어진다'}고 계산했어요${edited ? '' : ` (${gr.label} 최근 10년 평균)`}.`;
+  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} 10년 평균)`}`;
   const be = breakeven(inp, p);
-  if (be === -Infinity) assume += ' 집값이 떨어져도 매매가 더 나아요.';
-  else if (be === Infinity) assume += ' 집값이 많이 올라도 매매가 더 불리해요.';
-  else if (buyWins) assume += be >= 0 ? ` <b>${pct(be)}보다 덜 오르면 ${rentNow}가 더 나아요.</b>` : ` <b>해마다 ${pct(-be)}보다 더 떨어지면 ${rentNow}가 더 나아요.</b>`;
-  else assume += be >= 0 ? ` <b>${pct(be)}보다 더 오르면 매매가 더 나아요.</b>` : ` <b>해마다 ${pct(-be)}보다 덜 떨어지면 매매가 더 나아요.</b>`;
+  if (be === -Infinity) assume += ' · 집값이 떨어져도 매매가 유리';
+  else if (be === Infinity) assume += ' · 집값이 많이 올라도 매매가 불리';
+  else if (buyWins) assume += be >= 0 ? ` · <b>${pct(be)}보다 덜 오르면 ${rentNow}가 유리</b>` : ` · <b>해마다 ${pct(-be)}보다 더 떨어지면 ${rentNow}가 유리</b>`;
+  else assume += be >= 0 ? ` · <b>${pct(be)}보다 더 오르면 매매가 유리</b>` : ` · <b>해마다 ${pct(-be)}보다 덜 떨어지면 매매가 유리</b>`;
   // 다른 흐름: 항상 매매와 비교
   let alt = '';
   const altG = gr.g5 != null && !edited ? gr.g5 : (Math.abs(g) > 0.05 ? 0 : null);
@@ -825,7 +822,7 @@ function render() {
   };
   // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
   const need = {};
-  for (const k of ['jeonse', 'wolse']) {
+  for (const k of [res.jeonse >= res.wolse ? 'jeonse' : 'wolse']) {
     if (res[k] >= res.buy) continue;
     const r = requiredReturn(inp, p, k, res.buy);
     need[k] = r === Infinity ? '남는 돈으로 해마다 40% 넘게 벌어도 매매를 못 따라가요' : `매매를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
@@ -934,6 +931,7 @@ $('reset').addEventListener('click', () => { applyRegion(state.region, true); sy
 syncInputs(); drawYears(); buildAssume(); showTab('seoul');
 
 function sourceLine(d) {
+  if (!$('source')) return;
   const [a, b] = d.window || [];
   const ym = s => s ? `${s.slice(0, 4)}년 ${Number(s.slice(4))}월` : '';
   $('source').textContent = `시세는 국토교통부 실거래가 ${ym(a)}~${ym(b)} 계약분의 크기별 중간값이고, 집값 상승률은 5년·10년 전 같은 달(${ym(a).split(' ')[1]}~${ym(b).split(' ')[1]})의 84㎡(34평형) 중간값과 비교했어요 (${d.updated} 갱신).`;
@@ -952,7 +950,7 @@ fetch('data/regions.json')
   .catch(() => {
     REG.manual = { key: 'manual', name: '직접 입력', short: '직접 입력', sido: '', sizes: {}, cnt: 0, n84: 0, whole: true };
     state.region = 'manual'; state.manual = true; state.size = null;
-    $('source').textContent = '시세를 불러오지 못했어요. 집 가격을 직접 넣어주세요.';
+    $('picked').textContent = '시세를 불러오지 못했어요. 집 가격을 직접 넣어주세요.';
     render();
   });
 </script>

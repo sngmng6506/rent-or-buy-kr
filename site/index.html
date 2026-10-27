@@ -810,7 +810,7 @@ function render() {
       ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 남아요.`
       : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 남아요.`;
   }
-  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${alt ? `<span class="why3">${alt}</span>` : ''}`;
+  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
 
   // 대출 경고는 해당 막대 아래에
   const warns = {};

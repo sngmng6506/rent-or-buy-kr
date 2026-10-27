@@ -192,6 +192,9 @@ footer p { margin: 0; }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ink-2); margin-top: -4px; }
 .flow .need { color: var(--ink); }
+.more-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-top: 10px; }
+.more-foot .reset { margin-top: 0; }
+.faq-link { font-size: 13px; color: var(--ink); font-weight: 500; }
 .flow b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .why .why3 { display: block; margin-top: 4px; font-size: 14px; font-weight: 400; color: var(--ink-2); }
 .map .rg.off path { fill: var(--bg); stroke: var(--line); cursor: default; }
@@ -275,12 +278,16 @@ footer a { color: inherit; }
         <summary>직접 조정</summary>
         <p class="note" id="note"></p>
         <div class="assume" id="assume"></div>
-        <button class="reset" id="reset" type="button">기본값으로 되돌리기</button>
+        <div class="more-foot">
+          <button class="reset" id="reset" type="button">기본값으로 되돌리기</button>
+          <a class="faq-link" href="faq/index.html">계산 방법 자세히 보기 →</a>
+        </div>
       </details>
     </section>
   </div>
 
   <footer>
+    <p><a href="faq/index.html">계산 방법과 자주 묻는 질문</a></p>
     <p id="source"></p>
     <p>참고용 시뮬레이션이에요. 실제 대출 한도, 세금, 집값은 개인 조건과 시장에 따라 달라요. 1주택 실거주 기준이라 양도세는 없다고 봤고, 관리비처럼 어느 쪽이든 나가는 돈은 뺐어요.</p>
     <p>경기 지도는 서울 생활권 시만 보여줘요. 평택·이천 같은 다른 경기 지역, 분당구 같은 시 안의 구, 울릉군은 이름으로 찾아 고를 수 있어요. 전국 지도의 제주는 실제보다 위로 옮겨 그렸어요.</p>

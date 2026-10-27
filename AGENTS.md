@@ -6,9 +6,10 @@
 
 ```
 site/index.html            계산기 페이지 (계산 엔진·지도·검색 포함, 한 파일)
+site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
 site/data/regions.json     지역 시세 (scripts/collect.py가 생성, 직접 수정 금지)
 scripts/collect.py         국토부 실거래가 API 수집 → regions.json
-data/lawd_fallback.json    법정동코드 API 실패 시 쓰는 수도권 시군구 코드
+data/lawd_fallback.json    법정동코드 API 실패 시 쓰는 예비 시군구 코드
 .github/workflows/collect.yml  매달 16일 자동 수집, 수동 실행(test/full)
 ```
 
@@ -26,3 +27,5 @@ data/lawd_fallback.json    법정동코드 API 실패 시 쓰는 수도권 시�
 - 면적은 항상 평수와 함께: 84㎡(34평형)
 - 숫자는 근거와 함께: 화면에 "○○ 기준 X%로 가정" 표시, 임시값은 임시라고 표시
 - 판정 문구는 매매/전세/월세 중 이기는 쪽 + 얼마 더 남는지 금액
+- 계산 방식·기본값·데이터 기준을 바꾸면 `site/faq/index.html`의 설명과 숫자도 같은 커밋에서 고치기
+- 재산세·종부세·취득세는 법정 세율로 계산(사용자 조정 항목 아님). 세법이 바뀌면 `holdingTax`·`acqTax`와 FAQ 함께 수정

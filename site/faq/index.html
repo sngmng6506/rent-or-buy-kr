@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>영끌각 계산 방법</title>
+<meta name="description" content="영끌각이 매매·전세·월세를 어떻게 비교하는지, 시세·상승률·세금·대출을 어떤 기준으로 계산하는지 자세히 설명해요.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 한 줄 읽기 폭의 문서, 질문은 주제별로 묶음 */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #15181e; --ink-2: #5a6170; --line: #dde1e8; --seal: #cf2f25;
+  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.75 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.doc { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--seal); text-decoration: none; letter-spacing: 0.02em; }
+.back { color: var(--ink); font-weight: 500; text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.back:hover, .back:focus-visible { border-color: var(--ink); outline: none; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.25; text-wrap: balance; }
+.lead { margin: 8px 0 0; color: var(--ink-2); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a { color: var(--ink); text-decoration: none; font-size: 14px; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+nav.toc a:hover { border-color: var(--ink); }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 22px; }
+section > h2 { font-size: 13px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 500; margin: 14px 0 0; }
+.q { padding: 16px 0; border-top: 1px solid var(--line); }
+section > h2 + .q { border-top: 0; }
+.q h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.45; text-wrap: balance; }
+.q p { margin: 0 0 8px; }
+.q p:last-child, .q ul:last-child, .q .table:last-child { margin-bottom: 0; }
+.q ul { margin: 0 0 8px; padding-left: 20px; }
+.q li { margin: 2px 0; }
+.table { overflow-x: auto; margin: 6px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 500; }
+.muted { color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 13px; }
+a { color: inherit; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "결과 막대의 금액은 무엇인가요?", "acceptedAnswer": {"@type": "Answer", "text": "고른 기간이 지난 뒤의 전체 재산이에요. 지금 가진 돈이 포함돼 있어서 집값보다 클 수 있어요."}},
+    {"@type": "Question", "name": "왜 셋 다 매달 같은 돈을 쓴다고 가정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "공정하게 비교하려고요. 매달 나가는 돈이 가장 많은 쪽에 맞추고, 덜 쓰는 쪽은 그 차이를 예금에 넣는다고 계산해요."}},
+    {"@type": "Question", "name": "집값은 어디서 가져오나요?", "acceptedAnswer": {"@type": "Answer", "text": "국토교통부 아파트 매매·전월세 실거래가 자료에서 최근 3개월 거래를 받아 크기별 중간값을 써요. 매달 16일에 갱신해요."}},
+    {"@type": "Question", "name": "집값 상승률은 어떻게 정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "같은 지역의 전용 84㎡(34평형) 거래 중간값을 10년 전 같은 시기와 비교한 연평균 상승률을 기본으로 써요. 최근 5년 흐름도 함께 보여줘요."}},
+    {"@type": "Question", "name": "재산세와 종부세는 어떻게 계산하나요?", "acceptedAnswer": {"@type": "Answer", "text": "1세대 1주택 기준 법정 세율로 계산해요. 공시가격은 시세의 69%로 가정하고, 매년 그해 집값 기준으로 다시 계산해요."}}
+  ]
+}
+</script>
+</head>
+<body>
+<main class="doc">
+  <div class="top">
+    <a class="brand" href="../">영끌각</a>
+    <a class="back" href="../">← 계산기로</a>
+  </div>
+
+  <header>
+    <h1>영끌각은 이렇게 계산해요</h1>
+    <p class="lead">결과를 더 자세히 알고 싶은 분을 위한 설명이에요. 아래 숫자 중 금리, 전세금 비율, 상승률은 계산기의 "직접 조정"에서 바꿀 수 있어요.</p>
+  </header>
+
+  <nav class="toc" aria-label="목차">
+    <a href="#result">결과 읽기</a>
+    <a href="#data">시세 데이터</a>
+    <a href="#buy">매매 계산</a>
+    <a href="#rent">전세·월세 계산</a>
+    <a href="#limits">빠진 것</a>
+  </nav>
+
+  <section id="result">
+    <h2>결과 읽기</h2>
+    <div class="q">
+      <h3>결과 막대의 금액은 무엇인가요?</h3>
+      <p>고른 기간이 지난 뒤의 <b>전체 재산</b>이에요. 지금 가진 돈이 들어 있어서 집값보다 클 수 있어요.</p>
+      <ul>
+        <li>매매: 그때 집값 − 팔 때 중개수수료 − 남은 대출 + 예금에 모인 돈</li>
+        <li>전세: 돌려받는 전세금 − 남은 전세대출 + 예금에 모인 돈</li>
+        <li>월세: 돌려받는 보증금 + 예금에 모인 돈</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h3>왜 셋 다 매달 같은 돈을 쓴다고 가정하나요?</h3>
+      <p>공정하게 비교하려고요. 매달 대출 원리금·이자·월세 중 가장 많이 나가는 쪽에 맞춰 셋 다 같은 돈을 쓴다고 보고, 덜 쓰는 쪽은 그 차이를 예금에 넣는다고 계산해요. 처음에 가진 돈 중 집값이나 보증금에 들어가지 않은 돈도 예금에 넣어요.</p>
+      <p>예를 들어 매매는 매달 300만 원, 월세는 150만 원이 나간다면, 월세 쪽은 매달 150만 원을 예금에 넣는다고 봐요.</p>
+    </div>
+    <div class="q">
+      <h3>"매매만큼 남기려면 연 X%로 굴려야 해요"는 무슨 뜻인가요?</h3>
+      <p>전세나 월세에서 예금에 넣는 돈을 1년에 몇 %씩 불려야 같은 기간 뒤 매매와 재산이 같아지는지예요. 주식처럼 예금보다 수익을 더 낼 자신이 있다면 이 숫자와 비교해보면 돼요.</p>
+      <p>전세는 이 숫자가 크게 나오는 경우가 많아요. 가진 돈 대부분이 전세금으로 묶여서 굴릴 돈이 적기 때문이에요.</p>
+    </div>
+    <div class="q">
+      <h3>"연 X%보다 덜 오르면 결과가 바뀌어요"는 무슨 뜻인가요?</h3>
+      <p>집값 상승률만 바꿔가며 다시 계산해서, 매매와 전세·월세 중 나은 쪽이 같아지는 상승률을 찾은 거예요. 집값이 그보다 더 오르면 매매가, 덜 오르면 전세나 월세가 유리해요.</p>
+    </div>
+  </section>
+
+  <section id="data">
+    <h2>시세 데이터</h2>
+    <div class="q">
+      <h3>집값과 전세금은 어디서 가져오나요?</h3>
+      <p>국토교통부 실거래가 공개시스템의 아파트 매매·전월세 신고 자료를 공공데이터포털 API로 받아요. 지역마다 최근 3개월 계약을 모아 크기별 <b>중간값</b>을 써요. 평균은 몇 건의 아주 비싼 거래에 크게 흔들려서 중간값을 골랐어요.</p>
+      <ul>
+        <li>계약이 해제된 거래는 뺐어요.</li>
+        <li>전월세 중 월세가 0원인 계약만 전세로 봐요.</li>
+        <li>실거래 신고 기한(30일)을 고려해서 매달 16일에 다시 받아요.</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h3>평형은 어떻게 나누나요?</h3>
+      <p>전용면적으로 나누고, 사람들이 흔히 부르는 평형(공급면적 기준)을 같이 적었어요.</p>
+      <div class="table"><table>
+        <thead><tr><th>버튼</th><th>전용면적 범위</th></tr></thead>
+        <tbody>
+          <tr><td>16평형</td><td>35~45㎡ (대표 39㎡)</td></tr>
+          <tr><td>20평형</td><td>45~54㎡ (대표 49㎡)</td></tr>
+          <tr><td>25평형</td><td>54~65㎡ (대표 59㎡)</td></tr>
+          <tr><td>30평형</td><td>65~80㎡ (대표 74㎡)</td></tr>
+          <tr><td>34평형</td><td>80~90㎡ (대표 84㎡)</td></tr>
+          <tr><td>40평형</td><td>90~108㎡ (대표 101㎡)</td></tr>
+          <tr><td>45평형</td><td>108~125㎡ (대표 114㎡)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">전용 84㎡는 실제로 쓰는 면적이 약 25평이고, 복도·계단 같은 공용 부분을 더한 공급면적으로 34평형이라고 불러요.</p>
+    </div>
+    <div class="q">
+      <h3>어떤 평형은 왜 고를 수 없나요?</h3>
+      <p>그 지역에서 최근 3개월 동안 그 크기의 매매가 3건보다 적으면 시세를 믿기 어려워서 막아뒀어요. 10건보다 적으면 "거래가 적어 참고만 하세요"라고 표시해요.</p>
+    </div>
+    <div class="q">
+      <h3>전세금은 어떻게 정하나요?</h3>
+      <p>같은 지역, 같은 크기의 전세 중간값을 매매 중간값으로 나눈 비율(전세가율)을 집값에 곱해요. 그 크기의 거래가 적으면 시도 전체의 같은 크기 비율을 쓰고, 그것도 없으면 60%로 둬요.</p>
+    </div>
+    <div class="q">
+      <h3>집값 상승률은 어떻게 정하나요?</h3>
+      <p>같은 지역의 전용 84㎡(34평형) 매매 중간값을 10년 전 같은 3개월과 비교해서 1년 평균 몇 %씩 올랐는지 계산해 기본값으로 써요. 5년 전과 비교한 값은 "최근 5년 흐름이라면" 줄에 보여줘요.</p>
+      <ul>
+        <li>84㎡ 거래가 없는 지역은 59㎡(25평형)로 계산해요.</li>
+        <li>지역의 84㎡ 거래가 10건보다 적으면 시도 전체 값을 써요.</li>
+        <li>지난 10년에는 2015~2021년 급등이 들어 있어서 높게 나오는 곳이 많아요. 과거 상승률이 앞으로도 이어진다는 보장은 없어요.</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h3>새로 생긴 구나 통합된 지역은 어떻게 하나요?</h3>
+      <p>2024년 이후 생긴 부천 원미·소사·오정구, 화성 만세·효행·병점·동탄구, 인천 제물포·영종·서해·검단구, 2026년 7월 출범한 전남광주통합특별시는 지금 코드로 시세를 받아요. 과거 상승률은 지금 코드와 개편 전 코드를 함께 비교해요. 지도는 2018년 경계라서 이런 곳은 옛 경계 위에 표시돼요.</p>
+    </div>
+  </section>
+
+  <section id="buy">
+    <h2>매매 계산</h2>
+    <div class="q">
+      <h3>대출은 어떻게 가정하나요?</h3>
+      <p>가진 돈으로 집값, 취득세, 중개수수료를 내고 모자라는 만큼 주택담보대출을 받는다고 봐요. 기본 금리는 연 4.2%이고, 30년 원리금 균등 상환이에요.</p>
+      <p>대출이 집값의 70%를 넘으면 "실제로는 대출이 이만큼 안 나올 수 있어요"라고 알려줘요. 지역별 대출 규제나 소득에 따른 한도(DSR)는 계산하지 않아요.</p>
+    </div>
+    <div class="q">
+      <h3>살 때와 팔 때 드는 돈은요?</h3>
+      <ul>
+        <li><b>취득세</b>: 1주택 기준 6억 원 이하 1%, 6~9억 원은 금액에 따라 1~3%, 9억 원 초과 3%에 지방교육세(취득세의 10%)를 더해요.</li>
+        <li><b>중개수수료</b>: 살 때와 팔 때 모두 법정 상한 요율로 계산해요 (2억 미만 0.5%, 9억 미만 0.4%, 12억 미만 0.5%, 15억 미만 0.6%, 그 이상 0.7%).</li>
+        <li><b>양도세</b>: 1세대 1주택 실거주 비과세를 가정해서 넣지 않았어요.</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h3>재산세와 종부세는 어떻게 계산하나요?</h3>
+      <p>1세대 1주택 기준 법정 세율로 계산하고, 매년 그해 집값으로 다시 계산해요. 공시가격은 시세의 69%로 가정해요.</p>
+      <ul>
+        <li><b>재산세</b>: 공시가격 9억 원 이하는 1주택 특례(과세표준 비율 43~45%, 세율 0.05~0.35%), 초과는 일반 기준(60%, 0.1~0.4%)이에요. 지방교육세(재산세의 20%)와 도시지역분(과세표준의 0.14%)을 더해요.</li>
+        <li><b>종부세</b>: 공시가격 12억 원을 넘는 부분에 과세표준 비율 60%, 세율 0.5~2.7%, 농어촌특별세 20%를 더해요. 고령자·장기보유 공제는 사람마다 달라서 넣지 않았어요.</li>
+      </ul>
+      <p class="muted">1주택 재산세 특례는 2026년 12월 31일까지로 정해져 있어요. 연장 여부가 바뀌면 계산도 고칠게요.</p>
+    </div>
+  </section>
+
+  <section id="rent">
+    <h2>전세·월세 계산</h2>
+    <div class="q">
+      <h3>전세는 어떻게 계산하나요?</h3>
+      <p>가진 돈으로 전세금을 내고, 모자라면 전세대출(기본 연 4.0%)을 받아요. 2년마다 재계약하면서 전세금이 1년에 2.5%씩 오른 만큼 오르고, 오른 금액은 대출로 메운다고 봐요. 대출이 전세금의 80%를 넘으면 한도를 넘을 수 있다고 알려줘요.</p>
+    </div>
+    <div class="q">
+      <h3>월세 금액은 어떻게 정하나요?</h3>
+      <p>보증금은 전세금의 20%까지(가진 돈이 적으면 가진 돈만큼)로 두고, 나머지 전세금을 월세로 바꿔요. 월세는 (전세금 − 보증금) × 연 4.5% ÷ 12이고, 매년 2.5%씩 올라요.</p>
+    </div>
+    <div class="q">
+      <h3>예금 금리는요?</h3>
+      <p>남는 돈은 기본 연 3.0% 예금에 넣는다고 봐요. 주식 등에 투자한다면 "직접 조정"에서 예금 금리를 바꿔보거나, 결과의 "매매만큼 남기려면 연 X%" 숫자와 비교해보세요.</p>
+    </div>
+  </section>
+
+  <section id="limits">
+    <h2>빠진 것</h2>
+    <div class="q">
+      <h3>계산에 넣지 않은 것은 무엇인가요?</h3>
+      <ul>
+        <li>관리비: 어느 쪽이든 비슷하게 나가서 뺐어요.</li>
+        <li>수리비, 이사비, 등기 비용</li>
+        <li>전세사기·역전세 위험, 전세보증보험료</li>
+        <li>월세 세액공제, 청약 가점 변화</li>
+        <li>다주택, 대출 규제, 소득에 따른 대출 한도</li>
+        <li>예금 이자에 붙는 세금</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h3>결과를 그대로 믿어도 되나요?</h3>
+      <p>참고용 시뮬레이션이에요. 실제 대출 한도, 세금, 앞으로의 집값은 사람과 시장에 따라 달라요. 큰 결정 전에는 은행, 세무사, 공인중개사와 꼭 확인하세요.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>출처: 국토교통부 실거래가 공개시스템(공공데이터포털 API), 행정안전부 법정동코드. 계산 방식이 바뀌면 이 페이지도 함께 고쳐요.</p>
+  </footer>
+</main>
+</body>
+</html>

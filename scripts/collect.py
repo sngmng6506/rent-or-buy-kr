@@ -263,6 +263,20 @@ def main():
             note("trade", json.dumps(t[0], ensure_ascii=False))
         if r:
             note("rent", json.dumps(r[0], ensure_ascii=False))
+        for probe in os.environ.get("PROBE_NAMES", "").split(","):
+            if not probe.strip():
+                continue
+            try:
+                raw = get(LAWD, {"type": "json", "pageNo": 1, "numOfRows": 3, "locatadd_nm": probe.strip()})
+                note("probe", f"{probe}: {raw[:500]}")
+            except Exception as e:
+                note("probe", f"{probe}: 실패 {e}")
+        for code in os.environ.get("PROBE_CODES", "").split(","):
+            if code.strip():
+                try:
+                    note("probe", f"{code} 매매 {ym}: {len(fetch_items(TRADE, code.strip(), ym))}건")
+                except Exception as e:
+                    note("probe", f"{code}: 실패 {e}")
         try:
             raw = get(LAWD, {"type": "json", "pageNo": 1, "numOfRows": 5, "locatadd_nm": "경기도"})
             note("lawd-raw", raw[:600].replace("\n", " "))

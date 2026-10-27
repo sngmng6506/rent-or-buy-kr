@@ -532,7 +532,7 @@ function simulate(inp, p, growOverride) {
   let invW = C - W;
 
   // 돈 흐름 합계
-  const f = { bInterest: 0, bTax: upfront, bEarn: 0, jInterest: 0, jEarn: 0, wRent: 0, wEarn: 0, spend: 0 };
+  const f = { bInterest: 0, bTax: upfront, bEarn: 0, jInterest: 0, jEarn: 0, wRent: 0, wEarn: 0, spend: 0, top: { buy: 0, jeonse: 0, wolse: 0 } };
 
   for (let m = 1; m <= months; m++) {
     const yr = Math.floor((m - 1) / 12);
@@ -547,6 +547,7 @@ function simulate(inp, p, growOverride) {
     const outW = rent0 * Math.pow(1 + p.jgrow / 100, yr); f.wRent += outW;
     const M = Math.max(outB, outJ, outW);  // 같은 돈을 쓰고, 덜 쓴 쪽은 차액을 예금
     f.spend += M;
+    f.top[M === outB ? 'buy' : M === outJ ? 'jeonse' : 'wolse']++;   // 어느 쪽이 기준이었는지
     f.bEarn += invB * rd; f.jEarn += invJ * rd; f.wEarn += invW * rd;
     invB = invB * (1 + rd) + (M - outB);
     invJ = invJ * (1 + rd) + (M - outJ);
@@ -821,7 +822,7 @@ function render() {
   $('bars-title').textContent = `${state.years}년 뒤 내 전체 재산`;
   // 셋 다 같은 출발점: 지금 가진 돈 + 매달 집에 쓴 돈의 합. 막대 아래 항목을 여기에 더하면 막대 금액
   const base = state.cash * EOK + res.flow.spend;
-  $('base').innerHTML = `출발점은 셋 다 같아요: 지금 가진 돈 ${won(state.cash * EOK)} + ${state.years}년 동안 집에 쓴 돈 ${won(res.flow.spend)} (매달 ${won(res.flow.spend / (state.years * 12))}) = <b>${won(base)}</b>`;
+  $('base').innerHTML = `출발점은 셋 다 같아요: 지금 가진 돈 ${won(state.cash * EOK)} + ${state.years}년 동안 집에 쓴 돈 ${won(res.flow.spend)} (매달 ${won(res.flow.spend / (state.years * 12))}, ${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준) = <b>${won(base)}</b>`;
   const f = res.flow;
   const flows = {
     buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],

@@ -165,8 +165,7 @@ def lawd_codes(only):
             if not got and sc != "36":
                 raise RuntimeError("결과 없음")
             # API 응답에서 가끔 빠지는 시군구(예: 충북 영동군)는 저장본에서 보충
-            missing = {c: n for c, n in fallback.items() if n.startswith(name + " ") and c not in got
-                       and not any(g[:4] == c[:4] for g in got if g != c)}
+            missing = {c: n for c, n in fallback.items() if n.startswith(name + " ") and c not in got}
             if missing:
                 print(f"법정동코드 {name}: 응답에 없는 {len(missing)}곳을 저장본에서 보충 {list(missing.values())}", file=sys.stderr)
             codes.update({**missing, **got})

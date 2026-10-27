@@ -193,6 +193,11 @@ def main():
         if r:
             note("rent", json.dumps(r[0], ensure_ascii=False))
         try:
+            raw = get(LAWD, {"type": "json", "pageNo": 1, "numOfRows": 5, "locatadd_nm": "경기도"})
+            note("lawd-raw", raw[:600].replace("\n", " "))
+        except Exception as e:
+            note("lawd-raw", f"호출 실패: {e}")
+        try:
             codes, src = lawd_codes({"41"})
             note("lawd", f"{src}, 경기 {len(codes)}곳: " + ", ".join(f"{c} {n}" for c, n in list(codes.items())[:60]))
         except Exception as e:

@@ -824,9 +824,9 @@ function render() {
   $('base').innerHTML = `출발점은 셋 다 같아요: 지금 가진 돈 ${won(state.cash * EOK)} + ${state.years}년 동안 집에 쓴 돈 ${won(res.flow.spend)} (매달 ${won(res.flow.spend / (state.years * 12))}) = <b>${won(base)}</b>`;
   const f = res.flow;
   const flows = {
-    buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 이자', f.bEarn] : null],
-    jeonse: [['대출 이자', -f.jInterest], ['남는 돈 이자', f.jEarn]],
-    wolse: [['월세', -f.wRent], ['남는 돈 이자', f.wEarn]],
+    buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],
+    jeonse: [['대출 이자', -f.jInterest], ['남는 돈 예금 이자', f.jEarn]],
+    wolse: [['월세', -f.wRent], ['남는 돈 예금 이자', f.wEarn]],
   };
   // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
   const need = {};

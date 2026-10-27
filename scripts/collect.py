@@ -44,7 +44,7 @@ SIDO = {"11": "서울특별시", "26": "부산광역시", "27": "대구광역시
         "30": "대전광역시", "31": "울산광역시", "36": "세종특별자치시", "41": "경기도", "51": "강원특별자치도",
         "43": "충청북도", "44": "충청남도", "52": "전북특별자치도", "46": "전라남도", "47": "경상북도",
         "48": "경상남도", "50": "제주특별자치도",
-        "JG": "전남광주통합특별시"}   # 2026년 7월 광주·전남 통합, 코드 앞자리는 API가 알려줌
+        "12": "전남광주통합특별시"}   # 2026년 7월 광주·전남 통합
 
 KEY = os.environ.get("MOLIT_API_KEY", "").strip()
 calls = 0
@@ -307,6 +307,12 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     window = months_back(end, WINDOW)
+    if args.only and OUT.exists():
+        # 일부 시도만 다시 모았으면 나머지 지역은 기존 파일에서 그대로 가져옴
+        old = json.loads(OUT.read_text())["regions"]
+        drop = set(args.only) | ({"29", "46"} if "12" in args.only else set())
+        kept = {c: r for c, r in old.items() if c[:2] not in drop}
+        regions = {**kept, **regions}
     OUT.write_text(json.dumps({
         "updated": today.isoformat(),
         "window": [window[-1], window[0]],

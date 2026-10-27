@@ -298,7 +298,7 @@ const TABS = [['seoul', '서울'], ['cap', '경기 · 인천'], ['m26', '부산'
 const METRO_OF = { '26': 'm26', '27': 'm27', '30': 'm30', '36': 'm30', '29': 'm29', '31': 'm31' };
 
 // ── 상수 ───────────────────────────────────────────────
-const SIDO = { '11':'서울','26':'부산','27':'대구','28':'인천','29':'광주','30':'대전','31':'울산','36':'세종','41':'경기',
+const SIDO = { '12':'전남광주', '11':'서울','26':'부산','27':'대구','28':'인천','29':'광주','30':'대전','31':'울산','36':'세종','41':'경기',
   '42':'강원','51':'강원','43':'충북','44':'충남','45':'전북','52':'전북','46':'전남','47':'경북','48':'경남','50':'제주' };
 const SIZE_KEYS = ['39', '49', '59', '74', '84', '101', '114'];
 const PYEONG = { '39': 16, '49': 20, '59': 25, '74': 30, '84': 34, '101': 40, '114': 45 };
@@ -383,7 +383,9 @@ function buildRegions(data) {
   for (const key of Object.keys(MAPS.nat.gu)) {
     if (!key.startsWith('nat:')) continue;
     const [, sc, nm] = key.split(':');
-    const e = (bySido[sc] || []).find(x => norm(x.short) === nm);
+    // 2026년 7월 광주·전남 통합: 옛 경계(29, 46)를 통합특별시(12) 지역으로 찾음
+    const pool = (sc === '29' || sc === '46') ? [...(bySido['12'] || []), ...(bySido[sc] || [])] : (bySido[sc] || []);
+    const e = pool.find(x => norm(x.short) === nm);
     if (e) { REG[key] = e; e.mapKey = key; }
   }
   // 경기 지도: 시 = 그 시의 구 전체
@@ -656,8 +658,9 @@ function showTab(t) {
 const mapKeyOf = key => { const r = REG[key]; return r ? (r.mapKey || r.parentMap || null) : null; };
 function tabOf(key) {
   const r = REG[key]; if (!r) return null;
-  if (METRO_OF[r.sido]) return METRO_OF[r.sido];
   const mk = mapKeyOf(key);
+  if (r.sido === '12') return mk && mk.startsWith('nat:29:') ? 'm29' : (mk ? 'nat' : null);
+  if (METRO_OF[r.sido]) return METRO_OF[r.sido];
   if (!mk) return null;
   return mk.startsWith('seoul:') ? 'seoul' : mk.startsWith('nat:') ? 'nat' : 'cap';
 }

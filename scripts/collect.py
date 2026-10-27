@@ -34,6 +34,11 @@ RENT = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent
 LAWD = "https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList"
 
 AREA_84 = (81.0, 87.0)        # 전용 84㎡(34평형) 구간
+# 크기 구간: 전용면적 키 → (하한, 상한, 흔히 부르는 평형)
+SIZES = {
+    "39": (35.0, 44.9, 16), "49": (45.0, 53.9, 20), "59": (54.0, 64.9, 25), "74": (65.0, 79.9, 30),
+    "84": (80.0, 89.9, 34), "101": (90.0, 107.9, 40), "114": (108.0, 125.0, 45),
+}
 WINDOW = 3                     # 최근 몇 개월
 SIDO = {"11": "서울특별시", "26": "부산광역시", "27": "대구광역시", "28": "인천광역시", "29": "광주광역시",
         "30": "대전광역시", "31": "울산광역시", "36": "세종특별자치시", "41": "경기도", "51": "강원특별자치도",
@@ -175,6 +180,21 @@ def in84(rows):
     return [p for p, a in rows if AREA_84[0] <= a <= AREA_84[1]]
 
 
+def in_size(rows, key):
+    lo, hi, _ = SIZES[key]
+    return [p for p, a in rows if lo <= a <= hi]
+
+
+def size_table(now, rents):
+    """크기별 매매·전세 중간값과 건수"""
+    out = {}
+    for k in SIZES:
+        t, j = in_size(now, k), in_size(rents, k)
+        if t or j:
+            out[k] = {"p": med(t), "n": len(t), "j": med(j), "nj": len(j)}
+    return out
+
+
 def cagr(now, then, years):
     if not now or not then:
         return None
@@ -254,7 +274,15 @@ def main():
             "jratio": round(j84 / p84 * 100, 1) if p84 and j84 else None,
             "g5": cagr(p84, med(in84(y5)), 5),
             "g10": cagr(p84, med(in84(y10)), 10),
+            "sizes": size_table(now, rents),
         }
+        # 84㎡ 거래가 없으면 59㎡(25평형)로 상승률 계산
+        if regions[code]["g10"] is None and regions[code]["g5"] is None:
+            p59 = med(in_size(now, "59"))
+            regions[code]["g5"] = cagr(p59, med(in_size(y5, "59")), 5)
+            regions[code]["g10"] = cagr(p59, med(in_size(y10, "59")), 10)
+            if regions[code]["g5"] is not None or regions[code]["g10"] is not None:
+                regions[code]["g_basis"] = "59"
         if code in HIST_PARENT:
             regions[code]["hist_from"] = HIST_PARENT[code]   # 상승률은 개편 전 지역 전체 기준
         r = regions[code]
@@ -270,6 +298,7 @@ def main():
         "source": "국토교통부 실거래가 공개시스템 (공공데이터포털 API)",
         "codes_source": src,
         "unit": "만원",
+        "sizes": {k: {"min": v[0], "max": v[1], "pyeong": v[2]} for k, v in SIZES.items()},
         "regions": regions,
     }, ensure_ascii=False, indent=1) + "\n")
     print(f"저장: {OUT.relative_to(ROOT)} ({len(regions)}곳, API 호출 {calls}회)")

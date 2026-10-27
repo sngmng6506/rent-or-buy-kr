@@ -324,7 +324,7 @@ const ASSUME = [
   { key: 'mort',    label: '집 살 때 대출 금리' },
   { key: 'jloan',   label: '전세 대출 금리' },
   { key: 'deposit', label: '예금 금리' },
-  { key: 'conv',    label: '월세 계산 기준 (전세금 대비 연 %)' },
+  { key: 'conv',    label: '월세: 전세 1억당 월 (만 원)', unit: '만 원', to: v => Math.round(v / 12 * 100 * 10) / 10, from: v => v * 12 / 100 },
 ];
 // 동네 이름으로도 찾게 (법정동 코드 기준)
 const ALIAS = {
@@ -627,9 +627,10 @@ function buildAssume() {
     const l = document.createElement('label');
     const t = document.createElement('span'); t.textContent = a.label; l.appendChild(t);
     const i = document.createElement('input');
-    i.type = 'number'; i.step = '0.1'; i.id = 'a-' + a.key; i.value = state.p[a.key];
-    i.setAttribute('aria-label', a.label + ' (%)');
-    i.addEventListener('input', () => { const v = parseFloat(i.value); if (!isNaN(v)) { state.p[a.key] = v; render(); } });
+    // 대부분은 %, 월세는 '전세 1억당 월 만 원'으로 보여주고 내부에서는 연 %로 바꿈
+    i.type = 'number'; i.step = '0.1'; i.id = 'a-' + a.key; i.value = a.to ? a.to(state.p[a.key]) : state.p[a.key];
+    i.setAttribute('aria-label', a.label + (a.unit ? '' : ' (%)'));
+    i.addEventListener('input', () => { const v = parseFloat(i.value); if (!isNaN(v)) { state.p[a.key] = a.from ? a.from(v) : v; render(); } });
     l.appendChild(i); box.appendChild(l);
   }
 }

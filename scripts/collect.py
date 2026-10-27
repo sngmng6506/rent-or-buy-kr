@@ -43,7 +43,8 @@ WINDOW = 3                     # 최근 몇 개월
 SIDO = {"11": "서울특별시", "26": "부산광역시", "27": "대구광역시", "28": "인천광역시", "29": "광주광역시",
         "30": "대전광역시", "31": "울산광역시", "36": "세종특별자치시", "41": "경기도", "51": "강원특별자치도",
         "43": "충청북도", "44": "충청남도", "52": "전북특별자치도", "46": "전라남도", "47": "경상북도",
-        "48": "경상남도", "50": "제주특별자치도"}
+        "48": "경상남도", "50": "제주특별자치도",
+        "JG": "전남광주통합특별시"}   # 2026년 7월 광주·전남 통합, 코드 앞자리는 API가 알려줌
 
 KEY = os.environ.get("MOLIT_API_KEY", "").strip()
 calls = 0
@@ -102,6 +103,15 @@ def months_back(end, n):
 
 
 LAWD_ERRORS = {}
+
+
+def legacy_parent(name):
+    """전남광주통합특별시 ○○ → 옛 광주·전남 코드 (과거 거래 비교용)"""
+    if not name.startswith("전남광주통합특별시"):
+        return []
+    short = name.split(" ", 1)[1] if " " in name else name
+    fb = json.loads(FALLBACK.read_text())["codes"]
+    return [c for c, n in fb.items() if c[:2] in ("29", "46") and n.split(" ", 1)[1] == short]
 # 2024년 이후 신설된 구 → 개편 전 코드 (과거 거래 비교용)
 HIST_PARENT = {
     "41192": ["41190"], "41194": ["41190"], "41196": ["41190"],                      # 부천 원미·소사·오정
@@ -145,6 +155,10 @@ def lawd_codes(only):
             print(f"법정동코드 {name} 실패, 예비 목록 사용: {e}", file=sys.stderr)
             codes.update({c: n for c, n in fallback.items() if c[:2] == sc})
             used_fallback.append(name)
+    # 통합특별시 코드를 받았으면 옛 광주·전남 예비 코드는 버림
+    if any(n.startswith("전남광주통합특별시") for n in codes.values()):
+        codes = {c: n for c, n in codes.items() if c[:2] not in ("29", "46") or not n.startswith(("광주광역시", "전라남도"))}
+        used_fallback = [x for x in used_fallback if x not in ("광주광역시", "전라남도")]
     if (not only or "36" in only) and not any(c.startswith("36") for c in codes):
         codes["36110"] = "세종특별자치시"     # 세종은 시군구가 없어서 36110 하나
     src = "행정안전부 법정동코드" + (f" (예비 목록: {', '.join(used_fallback)})" if used_fallback else "")
@@ -242,6 +256,7 @@ def main():
                 by[SIDO.get(c[:2], c[:2])] = by.get(SIDO.get(c[:2], c[:2]), 0) + 1
             note("lawd", f"{src}, 전국 {len(codes)}곳 · " + ", ".join(f"{k} {v}" for k, v in by.items()))
             note("lawd-41", ", ".join(f"{c} {n.replace('경기도 ', '')}" for c, n in codes.items() if c[:2] == "41"))
+            note("lawd-jg", ", ".join(f"{c} {n}" for c, n in codes.items() if n.startswith("전남광주")))
             note("lawd-28", ", ".join(f"{c} {n.replace('인천광역시 ', '')}" for c, n in codes.items() if c[:2] == "28"))
             if LAWD_ERRORS:
                 note("lawd-errors", json.dumps(LAWD_ERRORS, ensure_ascii=False))
@@ -256,8 +271,8 @@ def main():
         try:
             now = window_trades(code, end)
             rents = window_rents(code, end)
-            # 새로 생긴 구는 과거 거래가 옛 코드에 있어서 옛 코드로 비교
-            hist = HIST_PARENT.get(code, [code])
+            # 새로 생긴 구는 과거 거래가 옛 코드에 있을 수 있어서 지금 코드와 옛 코드를 함께 봄
+            hist = list(dict.fromkeys([code] + HIST_PARENT.get(code, []) + legacy_parent(name)))
             y5 = [d for h in hist for d in window_trades(h, (end[0] - 5, end[1]))]
             y10 = [d for h in hist for d in window_trades(h, (end[0] - 10, end[1]))]
         except Exception as e:
@@ -283,8 +298,8 @@ def main():
             regions[code]["g10"] = cagr(p59, med(in_size(y10, "59")), 10)
             if regions[code]["g5"] is not None or regions[code]["g10"] is not None:
                 regions[code]["g_basis"] = "59"
-        if code in HIST_PARENT:
-            regions[code]["hist_from"] = HIST_PARENT[code]   # 상승률은 개편 전 지역 전체 기준
+        if len(hist) > 1:
+            regions[code]["hist_from"] = hist[1:]   # 상승률은 개편 전 코드도 함께 비교
         r = regions[code]
         print(f"[{i}/{len(codes)}] {code} {name}: 평균 {r['avg']}만 ({r['cnt']}건), 84㎡ {p84} / 전세 {j84}, "
               f"5년 {r['g5']}% 10년 {r['g10']}%  (누적 호출 {calls})")

@@ -858,7 +858,7 @@ function render() {
 
   $('note').textContent =
     `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}로 계산했어요. ` +
-    `집 때문에 매달 나가는 돈(대출 상환, 이자, 월세)은 셋 다 같게 맞추고, 덜 나가는 쪽은 그 차이를 매달 예금에 넣는다고 계산했어요. ` +
+    `셋 다 매달 집에 ${won(res.flow.spend / (state.years * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
     `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${won(holdingTax(state.price * EOK))}).`;
 }
 

@@ -35,9 +35,10 @@ LAWD = "https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList"
 
 AREA_84 = (81.0, 87.0)        # 전용 84㎡(34평형) 구간
 WINDOW = 3                     # 최근 몇 개월
-SIDO_NAMES = ["서울특별시", "부산광역시", "대구광역시", "인천광역시", "광주광역시", "대전광역시", "울산광역시",
-              "세종특별자치시", "경기도", "강원특별자치도", "충청북도", "충청남도", "전북특별자치도", "전라남도",
-              "경상북도", "경상남도", "제주특별자치도"]
+SIDO = {"11": "서울특별시", "26": "부산광역시", "27": "대구광역시", "28": "인천광역시", "29": "광주광역시",
+        "30": "대전광역시", "31": "울산광역시", "36": "세종특별자치시", "41": "경기도", "51": "강원특별자치도",
+        "43": "충청북도", "44": "충청남도", "52": "전북특별자치도", "46": "전라남도", "47": "경상북도",
+        "48": "경상남도", "50": "제주특별자치도"}
 
 KEY = os.environ.get("MOLIT_API_KEY", "").strip()
 calls = 0
@@ -95,36 +96,46 @@ def months_back(end, n):
     return out
 
 
+LAWD_ERRORS = {}
+
+
+def lawd_sido(name):
+    """한 시도의 시군구 {코드: 이름}"""
+    codes, page = {}, 1
+    while True:
+        text = get(LAWD, {"type": "json", "pageNo": page, "numOfRows": 1000, "locatadd_nm": name})
+        block = json.loads(text).get("StanReginCd")
+        if not block:
+            raise RuntimeError(text[:200])
+        rows = next((b["row"] for b in block if "row" in b), [])
+        for r in rows:
+            if r.get("umd_cd") == "000" and r.get("ri_cd") == "00" and r.get("sgg_cd") != "000":
+                codes[r["region_cd"][:5]] = r.get("locatadd_nm", "").strip()
+        if len(rows) < 1000:
+            return codes
+        page += 1
+
+
 def lawd_codes(only):
-    """{코드: 이름} — 행안부 API, 실패 시 예비 목록"""
-    codes = {}
-    try:
-        for sido in SIDO_NAMES:
-            page = 1
-            while True:
-                text = get(LAWD, {"type": "json", "pageNo": page, "numOfRows": 1000, "locatadd_nm": sido})
-                data = json.loads(text)
-                block = data.get("StanReginCd")
-                if not block:
-                    raise RuntimeError(text[:200])
-                rows = next((b["row"] for b in block if "row" in b), [])
-                for r in rows:
-                    rc = r.get("region_cd", "")
-                    if r.get("umd_cd") == "000" and r.get("ri_cd") == "00" and r.get("sgg_cd") != "000":
-                        codes[rc[:5]] = r.get("locatadd_nm", "").strip()
-                if len(rows) < 1000:
-                    break
-                page += 1
-        src = "행정안전부 법정동코드"
-    except Exception as e:
-        print(f"법정동코드 API를 못 써서 예비 목록 사용: {e}", file=sys.stderr)
-        codes = json.loads(FALLBACK.read_text())["codes"]
-        src = "예비 목록(수도권)"
-    # 세종은 시군구가 없어서 36110 하나
-    if not only or "36" in only:
-        codes.setdefault("36110", "세종특별자치시")
-    if only:
-        codes = {c: n for c, n in codes.items() if c[:2] in only}
+    """{코드: 이름} — 시도별로 행안부 API, 실패한 시도만 예비 목록"""
+    fallback = json.loads(FALLBACK.read_text())["codes"]
+    codes, used_fallback = {}, []
+    for sc, name in SIDO.items():
+        if only and sc not in only:
+            continue
+        try:
+            got = lawd_sido(name)
+            if not got and sc != "36":
+                raise RuntimeError("결과 없음")
+            codes.update(got)
+        except Exception as e:
+            LAWD_ERRORS[name] = str(e)[:200]
+            print(f"법정동코드 {name} 실패, 예비 목록 사용: {e}", file=sys.stderr)
+            codes.update({c: n for c, n in fallback.items() if c[:2] == sc})
+            used_fallback.append(name)
+    if (not only or "36" in only) and not any(c.startswith("36") for c in codes):
+        codes["36110"] = "세종특별자치시"     # 세종은 시군구가 없어서 36110 하나
+    src = "행정안전부 법정동코드" + (f" (예비 목록: {', '.join(used_fallback)})" if used_fallback else "")
     # 시 전체 코드(예: 41110 수원시)는 구 코드와 겹치므로 구가 있으면 제외
     parents = {c for c in codes if c[4] == "0" and any(o != c and o[:4] == c[:4] for o in codes)}
     return {c: n for c, n in sorted(codes.items()) if c not in parents}, src
@@ -198,8 +209,15 @@ def main():
         except Exception as e:
             note("lawd-raw", f"호출 실패: {e}")
         try:
-            codes, src = lawd_codes({"41"})
-            note("lawd", f"{src}, 경기 {len(codes)}곳: " + ", ".join(f"{c} {n}" for c, n in list(codes.items())[:60]))
+            codes, src = lawd_codes(set())
+            by = {}
+            for c in codes:
+                by[SIDO.get(c[:2], c[:2])] = by.get(SIDO.get(c[:2], c[:2]), 0) + 1
+            note("lawd", f"{src}, 전국 {len(codes)}곳 · " + ", ".join(f"{k} {v}" for k, v in by.items()))
+            note("lawd-41", ", ".join(f"{c} {n.replace('경기도 ', '')}" for c, n in codes.items() if c[:2] == "41"))
+            note("lawd-28", ", ".join(f"{c} {n.replace('인천광역시 ', '')}" for c, n in codes.items() if c[:2] == "28"))
+            if LAWD_ERRORS:
+                note("lawd-errors", json.dumps(LAWD_ERRORS, ensure_ascii=False))
         except Exception as e:
             note("lawd", f"실패: {e}")
         return

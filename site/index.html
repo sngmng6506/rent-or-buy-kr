@@ -192,6 +192,7 @@ footer p { margin: 0; }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ink-2); margin-top: -4px; }
 .flow .need { color: var(--ink); }
+.flow .rwarn { flex-basis: 100%; color: var(--warn); }
 .more-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-top: 10px; }
 .more-foot .reset { margin-top: 0; }
 .faq-link { font-size: 13px; color: var(--ink); font-weight: 500; }
@@ -790,13 +791,14 @@ function render() {
   }
   $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${alt ? `<span class="why3">${alt}</span>` : ''}`;
 
-  const w = [];
-  if (res.ltv > 0.7) w.push(`매매하려면 집값의 ${Math.round(res.ltv * 100)}%를 빌려야 해요. 실제로는 대출이 이만큼 안 나올 수 있어요.`);
-  if (res.jltv > 0.8) w.push(`전세금의 ${Math.round(res.jltv * 100)}%를 빌려야 해요. 전세대출 한도를 넘을 수 있어요.`);
-  $('warn').textContent = w.join(' ');
+  // 대출 경고는 해당 막대 아래에
+  const warns = {};
+  if (res.ltv > 0.7) warns.buy = `대출이 집값의 ${Math.round(res.ltv * 100)}%라 실제로는 이만큼 안 나올 수 있어요`;
+  if (res.jltv > 0.8) warns.jeonse = `대출이 전세금의 ${Math.round(res.jltv * 100)}%라 한도를 넘을 수 있어요`;
+  $('warn').textContent = '';
 
   // 막대 + 돈 흐름
-  $('bars-title').textContent = `${state.years}년 뒤 내 전체 재산 (지금 가진 ${won(state.cash * EOK)} 포함)`;
+  $('bars-title').textContent = `${state.years}년 뒤 내 전체 재산` + (state.cash > 0 ? ` (지금 가진 ${won(state.cash * EOK)} 포함)` : '');
   const f = res.flow;
   const flows = {
     buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['예금 이자', f.bEarn] : null],
@@ -826,7 +828,8 @@ function render() {
     vEl.style.color = outside ? 'var(--ink)' : '';
     row.querySelector('.flow').innerHTML = flows[id].filter(Boolean).filter(([, x]) => Math.abs(x) >= 1e5)
       .map(([k, x]) => `<span>${k} <b class="${x < 0 ? 'minus' : 'plus'}">${wonShort(x)}</b></span>`).join('')
-      + (need[id] ? `<span class="need">→ ${need[id]}</span>` : '');
+      + (need[id] ? `<span class="need">→ ${need[id]}</span>` : '')
+      + (warns[id] ? `<span class="rwarn">${warns[id]}</span>` : '');
   }
 
   $('note').textContent =

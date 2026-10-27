@@ -273,7 +273,6 @@ footer a { color: inherit; }
 
       <div class="bars">
         <p class="bars-title" id="bars-title"></p>
-        <p class="base" id="base"></p>
         <div class="bar-row" id="row-buy"><span class="name">매매</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
         <div class="bar-row" id="row-jeonse"><span class="name">전세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
         <div class="bar-row" id="row-wolse"><span class="name">월세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
@@ -820,9 +819,6 @@ function render() {
 
   // 막대 + 돈 흐름
   $('bars-title').textContent = `${state.years}년 뒤 내 전체 재산`;
-  // 셋 다 같은 출발점: 지금 가진 돈 + 매달 집에 쓴 돈의 합. 막대 아래 항목을 여기에 더하면 막대 금액
-  const base = state.cash * EOK + res.flow.spend;
-  $('base').innerHTML = `출발점은 셋 다 같아요: 지금 가진 돈 ${won(state.cash * EOK)} + ${state.years}년 동안 집에 쓴 돈 ${won(res.flow.spend)} (매달 ${won(res.flow.spend / (state.years * 12))}, ${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준) = <b>${won(base)}</b>`;
   const f = res.flow;
   const flows = {
     buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],

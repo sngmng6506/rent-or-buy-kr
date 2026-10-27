@@ -385,7 +385,7 @@ function buildRegions(data) {
     const [, sc, nm] = key.split(':');
     // 2026년 7월 광주·전남 통합: 옛 경계(29, 46)를 통합특별시(12) 지역으로 찾음
     const pool = (sc === '29' || sc === '46') ? [...(bySido['12'] || []), ...(bySido[sc] || [])] : (bySido[sc] || []);
-    const e = pool.find(x => norm(x.short) === nm);
+    const e = pool.find(x => norm(x.short) === nm) || (sc === '36' ? pool[0] : null);   // 세종시 ↔ 세종특별자치시
     if (e) { REG[key] = e; e.mapKey = key; }
   }
   // 경기 지도: 시 = 그 시의 구 전체
@@ -536,7 +536,7 @@ function won(v) {
   const eok = Math.floor(v / EOK), man = Math.round((v % EOK) / 1e4 / 100) * 100;
   let s;
   if (eok > 0) s = man >= 10000 ? `${eok + 1}억` : man > 0 ? `${eok}억 ${man.toLocaleString('ko-KR')}만` : `${eok}억`;
-  else s = `${Math.round(v / 1e4).toLocaleString('ko-KR')}만`;
+  else s = `${(Math.round(v / 1e5) * 10).toLocaleString('ko-KR')}만`;
   return (neg ? '−' : '') + s + ' 원';
 }
 function wonShort(v) {                     // 돈 흐름 줄용: 2.1억, 4,300만

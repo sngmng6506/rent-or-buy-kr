@@ -183,11 +183,20 @@ def main():
         ym = f"{end[0]}{end[1]:02d}"
         t = fetch_items(TRADE, "11350", ym)
         r = fetch_items(RENT, "11350", ym)
-        print(f"노원구 {ym}: 매매 {len(t)}건, 전월세 {len(r)}건")
+        # GitHub Actions 알림으로도 남겨서 로그를 열지 않아도 결과가 보이게
+        gh = os.environ.get("GITHUB_ACTIONS") == "true"
+        def note(title, msg):
+            print(f"::notice title={title}::{msg}" if gh else f"{title}: {msg}")
+        note("count", f"노원구 {ym} 매매 {len(t)}건, 전월세 {len(r)}건")
         if t:
-            print("매매 예시 항목:", json.dumps(t[0], ensure_ascii=False))
+            note("trade", json.dumps(t[0], ensure_ascii=False))
         if r:
-            print("전월세 예시 항목:", json.dumps(r[0], ensure_ascii=False))
+            note("rent", json.dumps(r[0], ensure_ascii=False))
+        try:
+            codes, src = lawd_codes({"41"})
+            note("lawd", f"{src}, 경기 {len(codes)}곳: " + ", ".join(f"{c} {n}" for c, n in list(codes.items())[:60]))
+        except Exception as e:
+            note("lawd", f"실패: {e}")
         return
 
     codes, src = lawd_codes(set(args.only))

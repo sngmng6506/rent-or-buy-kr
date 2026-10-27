@@ -192,6 +192,7 @@ footer p { margin: 0; }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ink-2); margin-top: -4px; }
 .flow .need { color: var(--ink); }
+.muted-l { color: var(--ink-2); font-weight: 400; }
 .flow .rwarn { flex-basis: 100%; color: var(--warn); }
 .more-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-top: 10px; }
 .more-foot .reset { margin-top: 0; }
@@ -246,7 +247,7 @@ footer a { color: inherit; }
 
       <div class="field">
         <div class="field-head">
-          <label for="cash">지금 가진 돈</label>
+          <label for="cash">지금 가진 돈 <span class="muted-l">(대출 빼고)</span></label>
           <div class="amount"><input id="cash-n" type="number" inputmode="decimal" min="0" max="40" step="0.1" aria-label="가진 돈(억 원)"><span>억 원</span></div>
         </div>
         <input id="cash" type="range" min="0" max="15" step="0.1">
@@ -772,22 +773,27 @@ function render() {
   lastVerdict = win;
 
   // 결론 + 가정 + 다른 흐름
-  const lead = `${SUBJ[win]} ${OBJ[rank[1][0]]}보다 ${state.years}년 뒤 <b>${won(gap)}</b> 더 남아요.`;
+  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[rank[1][0]]}보다 <b>${won(gap)}</b> 더 남아요.`;
   const g = p.grow;
   const edited = gr.g10 == null || Math.abs(g - gr.g10) > 0.05;
-  const basis = edited ? '' : `${gr.label} 최근 10년 평균대로 `;
-  let assume = `${basis}집값이 1년에 <b>${pct(Math.abs(g))}</b>씩 ${g >= 0 ? '오른다' : '떨어진다'}고 봤어요.`;
+  const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
+  const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
+  let assume = `집값이 해마다 <b>${pct(Math.abs(g))}</b>씩 ${g >= 0 ? '오른다' : '떨어진다'}고 계산했어요${edited ? '' : ` (${gr.label} 최근 10년 평균)`}.`;
   const be = breakeven(inp, p);
-  if (be === -Infinity) assume += ' 집값이 떨어져도 매매가 이겨요.';
-  else if (be === Infinity) assume += ' 집값이 많이 올라도 매매가 지는 조건이에요.';
-  else if (buyWins) assume += ` 연 ${pct(be)}보다 덜 오르면 결과가 바뀌어요.`;
-  else assume += ` 연 ${pct(be)} 넘게 오르면 매매가 이겨요.`;
+  if (be === -Infinity) assume += ' 집값이 떨어져도 매매가 더 나아요.';
+  else if (be === Infinity) assume += ' 집값이 많이 올라도 매매가 더 불리해요.';
+  else if (buyWins) assume += be >= 0 ? ` <b>${pct(be)}보다 덜 오르면 ${rentNow}가 더 나아요.</b>` : ` <b>해마다 ${pct(-be)}보다 더 떨어지면 ${rentNow}가 더 나아요.</b>`;
+  else assume += be >= 0 ? ` <b>${pct(be)}보다 더 오르면 매매가 더 나아요.</b>` : ` <b>해마다 ${pct(-be)}보다 덜 떨어지면 매매가 더 나아요.</b>`;
+  // 다른 흐름: 항상 매매와 비교
   let alt = '';
   const altG = gr.g5 != null && !edited ? gr.g5 : (Math.abs(g) > 0.05 ? 0 : null);
   if (altG != null && Math.abs(altG - g) > 0.3) {
-    const ar = ranking(simulate(inp, p, altG));
-    const altLabel = altG === gr.g5 && !edited ? `최근 5년 흐름(연 ${altG >= 0 ? '' : '−'}${pct(Math.abs(altG))})이라면` : '집값이 그대로라면';
-    alt = `${altLabel} → ${SUBJ[ar[0][0]]} ${OBJ[ar[1][0]]}보다 ${won(ar[0][1] - ar[1][1])} 더 남아요.`;
+    const a = simulate(inp, p, altG);
+    const rk = a.jeonse >= a.wolse ? 'jeonse' : 'wolse';
+    const altLabel = altG === gr.g5 && !edited ? `최근 5년처럼 ${move(altG)}` : '집값이 그대로라면';
+    alt = a.buy >= a[rk]
+      ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 남아요.`
+      : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 남아요.`;
   }
   $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${alt ? `<span class="why3">${alt}</span>` : ''}`;
 
@@ -801,16 +807,16 @@ function render() {
   $('bars-title').textContent = `${state.years}년 뒤 내 전체 재산` + (state.cash > 0 ? ` (지금 가진 ${won(state.cash * EOK)} 포함)` : '');
   const f = res.flow;
   const flows = {
-    buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['예금 이자', f.bEarn] : null],
-    jeonse: [['대출 이자', -f.jInterest], ['예금 이자', f.jEarn]],
-    wolse: [['월세', -f.wRent], ['예금 이자', f.wEarn]],
+    buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 이자', f.bEarn] : null],
+    jeonse: [['대출 이자', -f.jInterest], ['남는 돈 이자', f.jEarn]],
+    wolse: [['월세', -f.wRent], ['남는 돈 이자', f.wEarn]],
   };
   // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
   const need = {};
   for (const k of ['jeonse', 'wolse']) {
     if (res[k] >= res.buy) continue;
     const r = requiredReturn(inp, p, k, res.buy);
-    need[k] = r === Infinity ? '연 40% 넘게 굴려도 매매보다 적어요' : `매매만큼 남기려면 연 <b>${pct(r)}</b>로 굴려야 해요`;
+    need[k] = r === Infinity ? '남는 돈으로 해마다 40% 넘게 벌어도 매매를 못 따라가요' : `매매를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
   }
   const rows = [['buy', res.buy], ['jeonse', res.jeonse], ['wolse', res.wolse]];
   const max = Math.max(...rows.map(x => x[1]), 1);

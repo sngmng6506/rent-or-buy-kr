@@ -97,6 +97,13 @@ def months_back(end, n):
 
 
 LAWD_ERRORS = {}
+# 2024년 이후 신설된 구 → 개편 전 코드 (과거 거래 비교용)
+HIST_PARENT = {
+    "41192": ["41190"], "41194": ["41190"], "41196": ["41190"],                      # 부천 원미·소사·오정
+    "41591": ["41590"], "41593": ["41590"], "41595": ["41590"], "41597": ["41590"],  # 화성 만세·효행·병점·동탄
+    "28125": ["28110", "28140"], "28155": ["28110"],                                 # 인천 제물포·영종
+    "28275": ["28260"], "28290": ["28260"],                                          # 인천 서해·검단
+}
 
 
 def lawd_sido(name):
@@ -229,8 +236,10 @@ def main():
         try:
             now = window_trades(code, end)
             rents = window_rents(code, end)
-            y5 = window_trades(code, (end[0] - 5, end[1]))
-            y10 = window_trades(code, (end[0] - 10, end[1]))
+            # 새로 생긴 구는 과거 거래가 옛 코드에 있어서 옛 코드로 비교
+            hist = HIST_PARENT.get(code, [code])
+            y5 = [d for h in hist for d in window_trades(h, (end[0] - 5, end[1]))]
+            y10 = [d for h in hist for d in window_trades(h, (end[0] - 10, end[1]))]
         except Exception as e:
             print(f"[{i}/{len(codes)}] {code} {name}: 실패 {e}", file=sys.stderr)
             continue
@@ -246,6 +255,8 @@ def main():
             "g5": cagr(p84, med(in84(y5)), 5),
             "g10": cagr(p84, med(in84(y10)), 10),
         }
+        if code in HIST_PARENT:
+            regions[code]["hist_from"] = HIST_PARENT[code]   # 상승률은 개편 전 지역 전체 기준
         r = regions[code]
         print(f"[{i}/{len(codes)}] {code} {name}: 평균 {r['avg']}만 ({r['cnt']}건), 84㎡ {p84} / 전세 {j84}, "
               f"5년 {r['g5']}% 10년 {r['g10']}%  (누적 호출 {calls})")

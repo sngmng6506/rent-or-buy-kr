@@ -592,8 +592,9 @@ function won(v) {
 }
 function wonShort(v) {                     // 돈 흐름 줄용: 2.1억, 4,300만
   const a = Math.abs(v), sign = v < 0 ? '−' : '+';
-  if (a >= EOK) return `${sign}${(Math.round(a / EOK * 10) / 10).toLocaleString('ko-KR')}억`;
-  return `${sign}${Math.round(a / 1e4 / 10) * 10 >= 10 ? (Math.round(a / 1e5) * 10).toLocaleString('ko-KR') : Math.round(a / 1e4)}만`;
+  const man = Math.round(a / 1e5) * 10;     // 10만 원 단위
+  if (a >= EOK || man >= 10000) return `${sign}${(Math.round(a / EOK * 10) / 10).toLocaleString('ko-KR')}억`;
+  return `${sign}${man.toLocaleString('ko-KR')}만`;
 }
 const pct = v => (Math.round(v * 10) / 10).toFixed(1) + '%';
 const $ = id => document.getElementById(id);
@@ -822,11 +823,11 @@ function render() {
   };
   // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
   const need = {};
-  // 매매보다 적게 남는 쪽 중, 필요한 수익률이 더 낮은 쪽(투자로 따라잡을 수 있는 쪽)에만 표시
-  const req = ['jeonse', 'wolse'].filter(k => res[k] < res.buy).map(k => [k, requiredReturn(inp, p, k, res.buy)]).sort((a, b) => a[1] - b[1]);
-  if (req.length) {
-    const [k, r] = req[0];
-    need[k] = r === Infinity ? '남는 돈으로 해마다 40% 넘게 벌어도 매매를 못 따라가요' : `매매를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
+  // 1등이 아닌 쪽마다: 남는 돈을 해마다 몇 % 벌어야 1등을 따라잡는지
+  for (const k of ['buy', 'jeonse', 'wolse']) {
+    if (k === win) continue;
+    const r = requiredReturn(inp, p, k, res[win]);
+    need[k] = r === Infinity ? `남는 돈으로 해마다 40% 넘게 벌어도 ${OBJ[win]}를 못 따라가요` : `${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
   }
   const rows = [['buy', res.buy], ['jeonse', res.jeonse], ['wolse', res.wolse]];
   const max = Math.max(...rows.map(x => x[1]), 1);

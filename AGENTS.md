@@ -9,6 +9,7 @@ site/index.html            계산기 페이지 (계산 엔진·지도·검색 �
 site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
 site/data/regions.json     지역 시세 (scripts/collect.py가 생성, 직접 수정 금지)
 scripts/collect.py         국토부 실거래가 API 수집 → regions.json
+scripts/rates.py           한국은행 ECOS 금리(주담대·전세대출·정기예금) → rates.json
 data/lawd_codes.json       마지막으로 받은 법정동코드 목록 (API 실패 시 사용, 수집 때 자동 갱신)
 data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코드
 .github/workflows/collect.yml  매달 16일 자동 수집, 수동 실행(test/full)
@@ -19,7 +20,8 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 - 매매: 국토교통부_아파트 매매 실거래가 상세 자료 (RTMSDataSvcAptTradeDev)
 - 전월세: 국토교통부_아파트 전월세 실거래가 자료 (RTMSDataSvcAptRent), 월세 0원 = 전세
 - 시군구 코드: 행정안전부_법정동코드 (StanReginCd), 실패 시 예비 목록
-- 인증키: GitHub Secret `MOLIT_API_KEY` 하나로 공용. 코드·페이지에 키 넣지 않기
+- 금리: 한국은행 ECOS 예금은행 가중평균금리 신규취급액 (121Y006 주택담보대출·전세자금대출, 121Y002 정기예금), 항목은 이름으로 찾음
+- 인증키: GitHub Secret `MOLIT_API_KEY`(공공데이터포털, 매매·전월세·법정동 공용), `ECOS_API_KEY`(한국은행). 코드·페이지에 키 넣지 않기
 - 개발계정은 하루 호출 수 제한이 있음. 상승률은 매달이 아니라 5년·10년 전 같은 3개월 창만 받음
 
 ## 규칙

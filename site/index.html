@@ -315,7 +315,8 @@ const sizeText = k => `${k}㎡(${PYEONG[k]}평형)`;
 const MIN_DEALS = 3;          // 이보다 거래가 적은 크기는 고를 수 없음
 const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
-const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };
+const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };   // 임시값. rates.json(한국은행 ECOS)이 있으면 그 값으로 바뀜
+let RATES_INFO = null;
 const RENT_FALLBACK = { conv: 4.5, wdep: 20, jgrow: 2.5 };   // 지역·시도 데이터가 없을 때만 (임시)
 const YEARS = [2, 4, 6, 10];
 const ASSUME = [
@@ -879,6 +880,7 @@ function render() {
   $('note').textContent =
     `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}으로 계산했어요. ` +
     `셋 다 매달 집에 ${won(res.flow.spend / (state.years * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
+    (RATES_INFO ? `금리는 한국은행 ${RATES_INFO.rates.mort?.month?.slice(0, 4)}년 ${Number(RATES_INFO.rates.mort?.month?.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
     `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${won(holdingTax(state.price * EOK))}).`;
 }
 
@@ -966,9 +968,17 @@ function sourceLine(d) {
   $('source').textContent = `시세는 국토교통부 실거래가 ${ym(a)}~${ym(b)} 계약분의 크기별 중간값이고, 집값 상승률은 5년·10년 전 같은 달(${ym(a).split(' ')[1]}~${ym(b).split(' ')[1]})의 84㎡(34평형) 중간값과 비교했어요 (${d.updated} 갱신).`;
 }
 
-fetch('data/regions.json')
-  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+const ratesReady = fetch('data/rates.json')
+  .then(r => r.ok ? r.json() : null)
   .then(d => {
+    if (!d) return;
+    for (const k of ['mort', 'jloan', 'deposit']) if (d.rates?.[k]?.value) RATES[k] = d.rates[k].value;
+    RATES_INFO = d;
+  })
+  .catch(() => {});
+
+Promise.all([fetch('data/regions.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), ratesReady])
+  .then(([d]) => {
     DATA = d; buildRegions(d); buildIndex(); sourceLine(d);
     buildMap('map-seoul', MAPS.seoul); buildMap('map-cap', MAPS.cap); buildMap('map-nat', MAPS.nat);
     for (const id of ['map-seoul', 'map-cap', 'map-nat']) $(id).dataset.measured = '';

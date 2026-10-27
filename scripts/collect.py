@@ -182,7 +182,9 @@ def lawd_codes(only):
         codes["36110"] = "세종특별자치시"     # 세종은 시군구가 없어서 36110 하나
     src = "행정안전부 법정동코드" + (f" (예비 목록: {', '.join(used_fallback)})" if used_fallback else "")
     # 시 전체 코드(예: 41110 수원시)는 구 코드와 겹치므로 구가 있으면 제외
-    parents = {c for c in codes if c[4] == "0" and any(o != c and o[:4] == c[:4] for o in codes)}
+    # 이름으로도 확인: "경기도 수원시" 아래 "경기도 수원시 장안구"가 있을 때만 부모로 봄
+    # (영동군 43740과 증평군 43745처럼 앞자리만 같은 경우는 제외)
+    parents = {c for c in codes if c[4] == "0" and any(o != c and o[:4] == c[:4] and codes[o].startswith(codes[c] + " ") for o in codes)}
     return {c: n for c, n in sorted(codes.items()) if c not in parents}, src
 
 

@@ -191,6 +191,7 @@ footer p { margin: 0; }
 .sizes .chip { padding: 5px 11px; font-size: 13.5px; min-width: 0; }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ink-2); margin-top: -4px; }
+.flow .need { color: var(--ink); }
 .flow b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .why .why3 { display: block; margin-top: 4px; font-size: 14px; font-weight: 400; color: var(--ink-2); }
 .map .rg.off path { fill: var(--bg); stroke: var(--line); cursor: default; }
@@ -526,6 +527,15 @@ function breakeven(inp, p) {
   for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
   return (lo + hi) / 2;
 }
+// 전세·월세에서 남는 돈을 연 몇 %로 굴려야 매매만큼 남는지
+function requiredReturn(inp, p, kind, target) {
+  const f = r => simulate(inp, { ...p, deposit: r })[kind] - target;
+  let lo = 0, hi = 40;
+  if (f(hi) < 0) return Infinity;
+  if (f(lo) > 0) return 0;
+  for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
+  return (lo + hi) / 2;
+}
 function ranking(r) {
   return [['buy', r.buy], ['jeonse', r.jeonse], ['wolse', r.wolse]].sort((a, b) => b[1] - a[1]);
 }
@@ -761,6 +771,13 @@ function render() {
     jeonse: [['대출 이자', -f.jInterest], ['예금 이자', f.jEarn]],
     wolse: [['월세', -f.wRent], ['예금 이자', f.wEarn]],
   };
+  // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
+  const need = {};
+  for (const k of ['jeonse', 'wolse']) {
+    if (res[k] >= res.buy) continue;
+    const r = requiredReturn(inp, p, k, res.buy);
+    need[k] = r === Infinity ? '연 40% 넘게 굴려도 매매보다 적어요' : `매매만큼 남기려면 연 <b>${pct(r)}</b>로 굴려야 해요`;
+  }
   const rows = [['buy', res.buy], ['jeonse', res.jeonse], ['wolse', res.wolse]];
   const max = Math.max(...rows.map(x => x[1]), 1);
   for (const [id, val] of rows) {
@@ -776,7 +793,8 @@ function render() {
     vEl.style.left = outside ? `calc(${width}% + 10px)` : '10px';
     vEl.style.color = outside ? 'var(--ink)' : '';
     row.querySelector('.flow').innerHTML = flows[id].filter(Boolean).filter(([, x]) => Math.abs(x) >= 1e5)
-      .map(([k, x]) => `<span>${k} <b class="${x < 0 ? 'minus' : 'plus'}">${wonShort(x)}</b></span>`).join('');
+      .map(([k, x]) => `<span>${k} <b class="${x < 0 ? 'minus' : 'plus'}">${wonShort(x)}</b></span>`).join('')
+      + (need[id] ? `<span class="need">→ ${need[id]}</span>` : '');
   }
 
   $('note').textContent =

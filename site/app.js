@@ -625,7 +625,7 @@ function render() {
   $('warn').textContent = '';
 
   // 막대 + 돈 흐름
-  $('bars-title').textContent = `${state.years}년 뒤 남는 내 돈 (매달 집에 쓴 돈은 빼고)`;
+  $('bars-title').textContent = `${state.years}년 뒤 남는 내 돈`;
   const f = res.flow;
   const flows = {
     buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],

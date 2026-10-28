@@ -79,6 +79,19 @@ def main():
     today = dt.date.today()
     end = f"{today.year}{today.month:02d}"
     if args.test:
+        # 통계표 목록에서 연립·오피스텔 등 다른 주택 유형 지수 찾기
+        try:
+            q = urllib.parse.urlencode({"KEY": KEY, "Type": "json", "pIndex": 1, "pSize": 1000})
+            with urllib.request.urlopen("https://www.reb.or.kr/r-one/openapi/SttsApiTbl.do?" + q, timeout=60) as r:
+                d = json.loads(r.read().decode("utf-8"))
+            tbls = d["SttsApiTbl"][1]["row"]
+            want = [x for x in tbls if any(w in (x.get("STATBL_NM") or "") for w in ("연립", "오피스텔", "단독", "종합"))]
+            note("reb-tables", f"전체 {len(tbls)}개, 후보 {len(want)}개")
+            for i in range(0, len(want), 12):
+                note(f"reb-tables-{i // 12}", " | ".join(f"{x.get('STATBL_ID')}={x.get('STATBL_NM')}({x.get('DTACYCLE_INFO') or x.get('DTACYCLE_CD') or ''})" for x in want[i:i + 12]))
+            note("reb-tables-keys", json.dumps(tbls[0], ensure_ascii=False))
+        except Exception as e:
+            note("reb-tables-error", e)
         for k, tbl in TABLES.items():
             try:
                 rows = rows_all(STATBL_ID=tbl, START_WRTTIME=ym_add(end, -4), END_WRTTIME=end)

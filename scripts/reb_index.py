@@ -24,6 +24,12 @@ OUT = ROOT / "site" / "data" / "index.json"
 KEY = os.environ.get("REB_API_KEY", "").strip()
 BASE = "https://www.reb.or.kr/r-one/openapi/SttsApiTblData.do"
 TABLES = {"sale": "A_2024_00045", "jeonse": "A_2024_00050"}
+# 주택 유형별 지수 표와 저장 파일 (TABLES·OUT은 --type에 따라 바뀜)
+TYPE_TABLES = {
+    "apt": ({"sale": "A_2024_00045", "jeonse": "A_2024_00050"}, "index.json", "regions.json"),            # 아파트, 2003.11~
+    "villa": ({"sale": "A_2024_00080", "jeonse": "A_2024_00085"}, "index-villa.json", "regions-villa.json"),  # 연립·다세대
+    "offi": ({"sale": "A_2024_00615", "jeonse": "A_2024_00618"}, "index-offi.json", "regions-offi.json"),    # 오피스텔(시계열), 2018~
+}
 ITEM = "100001"
 gh = os.environ.get("GITHUB_ACTIONS") == "true"
 
@@ -72,7 +78,11 @@ def ym_add(ym, months):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true")
+    ap.add_argument("--type", choices=list(TYPE_TABLES), default="apt")
     args = ap.parse_args()
+    global TABLES, OUT
+    TABLES, out_name, reg_name = TYPE_TABLES[args.type]
+    OUT = ROOT / "site" / "data" / out_name
     if not KEY:
         sys.exit("REB_API_KEY가 없어요.")
 
@@ -112,7 +122,10 @@ def main():
                 note(f"reb-{k}-error", e)
         return
 
-    regions = json.loads((ROOT / "site" / "data" / "regions.json").read_text())["regions"]
+    reg_file = ROOT / "site" / "data" / reg_name
+    if not reg_file.exists():   # 시세 파일이 아직 없으면 아파트 지역 목록으로 맞춤
+        reg_file = ROOT / "site" / "data" / "regions.json"
+    regions = json.loads(reg_file.read_text())["regions"]
     series = {}   # 표 → {경로 키: {달: 지수}}
     names = {}
     for k, tbl in TABLES.items():
@@ -160,7 +173,8 @@ def main():
     OUT.write_text(json.dumps({
         "updated": today.isoformat(),
         "latest": latest,
-        "source": "한국부동산원 전국주택가격동향조사 월간 아파트 매매·전세가격지수 (R-ONE)",
+        "type": args.type,
+        "source": "한국부동산원 R-ONE 월간 매매·전세가격지수 " + ", ".join(TABLES.values()),
         "regions": dict(sorted(out.items())),
     }, ensure_ascii=False, indent=1) + "\n")
     print(f"저장: {OUT.relative_to(ROOT)} ({len(out)}곳, 최신 {latest})")

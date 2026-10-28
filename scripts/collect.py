@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""국토교통부 실거래가 API로 지역별 아파트 시세를 모아 site/data/regions.json을 만든다.
+"""국토교통부 실거래가 API로 지역별 시세를 모아 site/data/regions*.json을 만든다.
+
+주택 유형(--type): apt 아파트 → regions.json, villa 연립·다세대(빌라) → regions-villa.json,
+offi 오피스텔 → regions-offi.json. 유형마다 API·크기 구간·대표 크기가 다름
 
 - 지역 평균 매매가: 최근 3개월 모든 면적 평균
 - 84㎡(34평형) 매매 중간값, 전세 중간값 → 전세가율
@@ -32,6 +35,7 @@ CACHE = ROOT / "data" / "lawd_codes.json"      # 마지막으로 성공한 법�
 
 TRADE = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
 RENT = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent"
+API = "https://apis.data.go.kr/1613000/{0}/get{0}"
 LAWD = "https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList"
 
 AREA_84 = (81.0, 87.0)        # 전용 84㎡(34평형) 구간
@@ -39,6 +43,22 @@ AREA_84 = (81.0, 87.0)        # 전용 84㎡(34평형) 구간
 SIZES = {
     "39": (35.0, 44.9, 16), "49": (45.0, 53.9, 20), "59": (54.0, 64.9, 25), "74": (65.0, 79.9, 30),
     "84": (80.0, 89.9, 34), "101": (90.0, 107.9, 40), "114": (108.0, 125.0, 45),
+}
+# 빌라·오피스텔은 공급면적 '평형'이 정해져 있지 않아서 전용면적 평수로 부름 (세 번째 값 = 전용 평)
+VILLA_SIZES = {
+    "30": (20.0, 34.9, 9), "40": (35.0, 44.9, 12), "50": (45.0, 54.9, 15), "60": (55.0, 64.9, 18), "75": (65.0, 85.0, 23),
+}
+OFFI_SIZES = {
+    "20": (10.0, 24.9, 6), "30": (25.0, 34.9, 9), "40": (35.0, 49.9, 12), "60": (50.0, 69.9, 18), "84": (70.0, 90.0, 25),
+}
+# 유형별 설정: API 이름, 저장 파일, 크기 구간, 대표 크기(상승률·전세가율 계산용)와 그 범위
+TYPES = {
+    "apt": {"trade": "RTMSDataSvcAptTradeDev", "rent": "RTMSDataSvcAptRent", "out": "regions.json",
+            "sizes": SIZES, "main": "84", "main_range": AREA_84, "label": "아파트", "pyeong": "평형"},
+    "villa": {"trade": "RTMSDataSvcRHTrade", "rent": "RTMSDataSvcRHRent", "out": "regions-villa.json",
+              "sizes": VILLA_SIZES, "main": "60", "main_range": VILLA_SIZES["60"][:2], "label": "빌라(연립·다세대)", "pyeong": "평"},
+    "offi": {"trade": "RTMSDataSvcOffiTrade", "rent": "RTMSDataSvcOffiRent", "out": "regions-offi.json",
+             "sizes": OFFI_SIZES, "main": "30", "main_range": OFFI_SIZES["30"][:2], "label": "오피스텔", "pyeong": "평"},
 }
 WINDOW = 3                     # 최근 몇 개월
 SIDO = {"11": "서울특별시", "26": "부산광역시", "27": "대구광역시", "28": "인천광역시", "29": "광주광역시",
@@ -277,13 +297,28 @@ def cagr(now, then, years):
     return round(((now / then) ** (1 / years) - 1) * 100, 2)
 
 
+def use_type(kind):
+    """유형에 맞게 API 주소·크기 구간·저장 파일을 바꿈 (아래 함수들이 이 전역값을 씀)"""
+    global TRADE, RENT, OUT, SIZES, AREA_84, TYPE
+    c = TYPES[kind]
+    TYPE = kind
+    TRADE, RENT = API.format(c["trade"]), API.format(c["rent"])
+    OUT = ROOT / "site" / "data" / c["out"]
+    SIZES, AREA_84 = c["sizes"], c["main_range"]
+
+
+TYPE = "apt"
+
+
 def main():
     global KEY
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true")
     ap.add_argument("--only", nargs="*", default=[])
     ap.add_argument("--end", help="창의 마지막 달 YYYYMM (기본: 지난달)")
+    ap.add_argument("--type", choices=list(TYPES), default="apt", help="주택 유형 (기본 apt)")
     args = ap.parse_args()
+    use_type(args.type)
     if not KEY:
         sys.exit("MOLIT_API_KEY가 없어요. GitHub Secrets 또는 환경변수에 넣어주세요.")
 
@@ -301,7 +336,7 @@ def main():
         gh = os.environ.get("GITHUB_ACTIONS") == "true"
         def note(title, msg):
             print(f"::notice title={title}::{msg}" if gh else f"{title}: {msg}")
-        note("count", f"노원구 {ym} 매매 {len(t)}건, 전월세 {len(r)}건")
+        note("count", f"[{TYPE}] 노원구 {ym} 매매 {len(t)}건, 전월세 {len(r)}건")
         if t:
             note("trade", json.dumps(t[0], ensure_ascii=False))
         if r:
@@ -382,7 +417,7 @@ def main():
             "jg5": cagr(j84, med(in84(r5)), 5), "jg10": cagr(j84, med(in84(r10)), 10),   # 84㎡ 전세 상승률
         })
         # 84㎡ 거래가 없으면 59㎡(25평형)로 상승률 계산
-        if regions[code]["g10"] is None and regions[code]["g5"] is None:
+        if TYPE == "apt" and regions[code]["g10"] is None and regions[code]["g5"] is None:
             p59 = med(in_size(now, "59"))
             regions[code]["g5"] = cagr(p59, med(in_size(y5, "59")), 5)
             regions[code]["g10"] = cagr(p59, med(in_size(y10, "59")), 10)
@@ -418,6 +453,7 @@ def main():
         "source": "국토교통부 실거래가 공개시스템 (공공데이터포털 API)",
         "codes_source": src,
         "unit": "만원",
+        "type": TYPE, "type_label": TYPES[TYPE]["label"], "main": TYPES[TYPE]["main"], "pyeong_word": TYPES[TYPE]["pyeong"],
         "sizes": {k: {"min": v[0], "max": v[1], "pyeong": v[2]} for k, v in SIZES.items()},
         "regions": regions,
     }, ensure_ascii=False, indent=1) + "\n")

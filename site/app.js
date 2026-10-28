@@ -11,9 +11,15 @@ const METRO_OF = { '26': 'm26', '27': 'm27', '30': 'm30', '36': 'm30', '29': 'm2
 // ── 상수 ───────────────────────────────────────────────
 const SIDO = { '12':'전남광주', '11':'서울','26':'부산','27':'대구','28':'인천','29':'광주','30':'대전','31':'울산','36':'세종','41':'경기',
   '42':'강원','51':'강원','43':'충북','44':'충남','45':'전북','52':'전북','46':'전남','47':'경북','48':'경남','50':'제주' };
-const SIZE_KEYS = ['39', '49', '59', '74', '84', '101', '114'];
-const PYEONG = { '39': 16, '49': 20, '59': 25, '74': 30, '84': 34, '101': 40, '114': 45 };
-const sizeText = k => `${k}㎡(${PYEONG[k]}평형)`;
+// 주택 유형: [id, 이름, 시세 파일, 지수 파일]. 크기 구간·평 표기는 시세 파일에 들어 있음
+const TYPES = [['apt', '아파트', 'regions.json', 'index.json'], ['villa', '빌라', 'regions-villa.json', 'index-villa.json'], ['offi', '오피스텔', 'regions-offi.json', 'index-offi.json']];
+const TYPE_DATA = {};      // id → { data, idx } (받아둔 것)
+const TYPE_OK = { apt: true };   // 시세 파일이 있는 유형만 고를 수 있음
+// 아파트는 공급면적 '평형', 빌라·오피스텔은 전용면적 '평'
+let SIZE_KEYS = ['39', '49', '59', '74', '84', '101', '114'];
+let PYEONG = { '39': 16, '49': 20, '59': 25, '74': 30, '84': 34, '101': 40, '114': 45 };
+let PY_WORD = '평형', MAIN_SIZE = '84';
+const sizeText = k => `${k}㎡(${PYEONG[k]}${PY_WORD})`;
 const MIN_DEALS = 3;          // 이보다 거래가 적은 크기는 고를 수 없음
 const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
@@ -167,7 +173,7 @@ function buildRegions(data) {
 const sizeOk = (r, k) => (r.sizes[k]?.n || 0) >= MIN_DEALS;
 function defaultSize(r, want) {
   if (want && sizeOk(r, want)) return want;
-  if (sizeOk(r, '84')) return '84';
+  if (sizeOk(r, MAIN_SIZE)) return MAIN_SIZE;
   const best = SIZE_KEYS.filter(k => sizeOk(r, k)).sort((a, b) => r.sizes[b].n - r.sizes[a].n)[0];
   return best || null;
 }
@@ -215,26 +221,28 @@ function ratioOf(r, k) {
 const priceAt = (r, k) => (k && r.sizes[k]?.p) ? r.sizes[k].p : null;   // 만원
 
 // ── 상태 ───────────────────────────────────────────────
-const state = { region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, p: { ...RATES, ...RENT_FALLBACK, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
+const state = { type: 'apt', region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, p: { ...RATES, ...RENT_FALLBACK, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
 
 function applyRegion(key, keepSize) {
   const r = REG[key]; if (!r) return;
   state.region = key;
-  state.size = defaultSize(r, keepSize ? state.size : '84');
+  state.size = defaultSize(r, keepSize ? state.size : MAIN_SIZE);
   const gr = growthOf(r);
-  state.p = { ...RATES, ...rentTermsOf(r), grow: gr.g ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
+  state.p = { kind: state.type, ...RATES, ...rentTermsOf(r), grow: gr.g ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
   const pr = priceAt(r, state.size);
   if (pr) { state.price = Math.round(pr / 1000) / 10; state.manual = false; } else state.manual = true;
 }
 
 // ── 계산 엔진 (순수 함수) ──────────────────────────────
 const EOK = 1e8;
-function acqTax(P) {                       // 1주택 취득세 + 지방교육세 근사
+function acqTax(P, kind) {                 // 1주택 취득세 + 지방교육세 근사
+  if (kind === 'offi') return P * 0.046;   // 오피스텔은 주택이 아니라 4% + 농특세·지방교육세 = 4.6%
   const e = P / EOK;
   const t = e <= 6 ? 1 : e <= 9 ? (e * 2 / 3 - 3) : 3;
   return P * t / 100 * 1.1;
 }
-function brokerFee(P) {                    // 매매 중개수수료 상한 요율
+function brokerFee(P, kind) {               // 매매 중개수수료 상한 요율
+  if (kind === 'offi') return P * 0.005;   // 주거용 오피스텔(전용 85㎡ 이하) 0.5%
   const e = P / EOK;
   const r = e < 2 ? 0.5 : e < 9 ? 0.4 : e < 12 ? 0.5 : e < 15 ? 0.6 : 0.7;
   return P * r / 100;
@@ -271,7 +279,7 @@ function simulate(inp, p, growOverride) {
   const g = (growOverride ?? p.grow) / 100;
   const rm = p.mort / 1200, rj = p.jloan / 1200, rd = p.deposit / 1200;
 
-  const upfront = acqTax(P) + brokerFee(P);
+  const upfront = acqTax(P, p.kind) + brokerFee(P, p.kind);
   let bal = Math.max(0, P + upfront - C);
   const loan0 = bal;
   const pay = bal > 0 ? bal * rm / (1 - Math.pow(1 + rm, -360)) : 0;
@@ -310,7 +318,7 @@ function simulate(inp, p, growOverride) {
   }
 
   const Pn = P * Math.pow(1 + g, inp.years);
-  const sale = brokerFee(Pn); f.bTax += sale;
+  const sale = brokerFee(Pn, p.kind); f.bTax += sale;
   return {
     buy: Pn - sale - Math.max(0, bal) + invB,
     jeonse: D - jl + invJ,
@@ -514,7 +522,7 @@ function pickSize(k) {
 }
 function drawSizes() {
   const r = REG[state.region];
-  chips($('sizes'), SIZE_KEYS.map(k => [k, PYEONG[k] + '평형', `전용 ${k}㎡`]), state.size, pickSize, k => !r || !sizeOk(r, k));
+  chips($('sizes'), SIZE_KEYS.map(k => [k, PYEONG[k] + PY_WORD, `전용 ${k}㎡`]), state.size, pickSize, k => !r || !sizeOk(r, k));
 }
 
 // ── 결과 ───────────────────────────────────────────────
@@ -619,6 +627,7 @@ function render() {
     `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}으로 계산했어요. ` +
     `셋 다 매달 집에 ${won(res.flow.spend / (state.years * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
     (RATES_INFO ? `금리는 한국은행 ${RATES_INFO.rates.mort?.month?.slice(0, 4)}년 ${Number(RATES_INFO.rates.mort?.month?.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
+    (state.type === 'offi' ? '오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산했고, 주거용으로 써서 집처럼 재산세를 낸다고 봤어요. ' : '') +
     `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${won(holdingTax(state.price * EOK))}).`;
 }
 
@@ -663,11 +672,12 @@ $('years-n').addEventListener('change', e => {
 }
 
 // ── 주소에 입력값 담기 (공유 링크) ───────────────────────
-// ?r=시군구코드(또는 묶음 키)&s=평형(전용㎡)&p=직접 넣은 집값(억)&c=가진 돈(억)&y=년
+// ?t=유형(villa·offi, 아파트면 생략)&r=시군구코드(또는 묶음 키)&s=크기(전용㎡)&p=직접 넣은 집값(억)&c=가진 돈(억)&y=년
 const regionParam = key => { const r = REG[key]; if (!r) return null; return r.key.startsWith('c:') ? r.key.slice(2) : r.key; };
 function shareUrl() {
   const q = new URLSearchParams();
   const rp = regionParam(state.region); if (rp && rp !== window.PRESET_REGION) q.set('r', rp);
+  if (state.type !== 'apt') q.set('t', state.type);
   if (state.size) q.set('s', state.size);
   if (state.manual) q.set('p', state.price);
   q.set('c', state.cash); q.set('y', state.years);
@@ -753,6 +763,46 @@ function sourceLine(d) {
   $('source').textContent = `시세는 국토교통부 실거래가 ${ym(a)}~${ym(b)} 계약분의 크기별 중간값이고, 집값 상승률은 5년·10년 전 같은 달(${ym(a).split(' ')[1]}~${ym(b).split(' ')[1]})의 84㎡(34평형) 중간값과 비교했어요 (${d.updated} 갱신).`;
 }
 
+// ── 주택 유형 ───────────────────────────────────────────
+function loadType(id) {
+  if (TYPE_DATA[id]) return Promise.resolve(TYPE_DATA[id]);
+  const [, , file, ifile] = TYPES.find(x => x[0] === id);
+  return Promise.all([
+    fetch('data/' + file).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+    fetch('data/' + ifile).then(r => r.ok ? r.json() : null).catch(() => null),
+  ]).then(([data, idx]) => (TYPE_DATA[id] = { data, idx }));
+}
+function useType(id, td) {
+  state.type = id;
+  DATA = td.data; IDX = td.idx;
+  const sz = td.data.sizes || {};
+  if (Object.keys(sz).length) {
+    SIZE_KEYS = Object.keys(sz).sort((a, b) => sz[a].min - sz[b].min);
+    PYEONG = Object.fromEntries(SIZE_KEYS.map(k => [k, sz[k].pyeong]));
+  }
+  PY_WORD = td.data.pyeong_word || '평형';
+  MAIN_SIZE = td.data.main || '84';
+  for (const k of Object.keys(REG)) delete REG[k];
+  buildRegions(td.data); buildIndex();
+  buildMap('map-seoul', MAPS.seoul); buildMap('map-cap', MAPS.cap); buildMap('map-nat', MAPS.nat);
+  for (const m of ['map-seoul', 'map-cap', 'map-nat']) $(m).dataset.measured = '';
+  metroShown = null;
+}
+function drawTypes() {
+  chips($('types'), TYPES.map(([id, name]) => [id, name]), state.type, pickType, id => !TYPE_OK[id]);
+  for (const b of $('types').children) if (b.disabled) b.title = '시세를 준비하고 있어요';
+}
+function pickType(id) {
+  if (id === state.type) return;
+  loadType(id).then(td => {
+    const prev = state.region, prevSido = REG[prev]?.sido;
+    useType(id, td);
+    const key = REG[prev] ? prev : (REG['sido:' + prevSido] ? 'sido:' + prevSido : Object.keys(REG)[0]);
+    applyRegion(key, false);
+    drawTypes(); syncInputs(); buildAssume(); drawSizes(); showTab(tabOf(key) || tab); paintMaps(); render();
+  }).catch(() => { TYPE_OK[id] = false; drawTypes(); });
+}
+
 const ratesReady = fetch('data/rates.json')
   .then(r => r.ok ? r.json() : null)
   .then(d => {
@@ -762,16 +812,14 @@ const ratesReady = fetch('data/rates.json')
   })
   .catch(() => {});
 
-const idxReady = fetch('data/index.json')
-  .then(r => r.ok ? r.json() : null)
-  .then(d => { IDX = d; })
-  .catch(() => {});
+const firstType = (() => { const t = new URLSearchParams(location.search).get('t'); return TYPES.some(x => x[0] === t) ? t : 'apt'; })();
+// 다른 유형 시세 파일이 있는지 미리 확인 (없으면 버튼을 흐리게)
+for (const [id] of TYPES) if (id !== firstType) loadType(id).then(() => { TYPE_OK[id] = true; drawTypes(); }).catch(() => { TYPE_OK[id] = false; drawTypes(); });
 
-Promise.all([fetch('data/regions.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), ratesReady, idxReady])
-  .then(([d]) => {
-    DATA = d; buildRegions(d); buildIndex(); sourceLine(d);
-    buildMap('map-seoul', MAPS.seoul); buildMap('map-cap', MAPS.cap); buildMap('map-nat', MAPS.nat);
-    for (const id of ['map-seoul', 'map-cap', 'map-nat']) $(id).dataset.measured = '';
+Promise.all([loadType(firstType).catch(() => firstType === 'apt' ? Promise.reject() : loadType('apt')), ratesReady])
+  .then(([td]) => {
+    TYPE_OK[td.data.type || 'apt'] = true;
+    useType(td.data.type || 'apt', td); sourceLine(td.data); drawTypes();
     const u = readUrl();
     const start = u.region || (REG['seoul:노원구'] ? 'seoul:노원구' : Object.keys(REG)[0]);
     applyRegion(start, false);

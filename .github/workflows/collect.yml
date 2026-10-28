@@ -20,6 +20,10 @@ on:
         description: "시도 코드 앞 2자리, 공백 구분 (예: 11 41 28). 비우면 전국"
         required: false
         default: ""
+      types:
+        description: "주택 유형, 공백 구분 (apt 아파트, villa 빌라, offi 오피스텔). 비우면 셋 다"
+        required: false
+        default: ""
   schedule:
     - cron: "17 21 15 * *"   # 매달 16일 06:17 KST (실거래 신고 기한 30일 반영)
 
@@ -27,62 +31,113 @@ permissions:
   contents: write
 
 jobs:
-  collect:
+  # 키·응답 확인 (수동 test / reb-test)
+  test:
+    if: github.event_name == 'workflow_dispatch' && (inputs.mode == 'test' || inputs.mode == 'reb-test')
     runs-on: ubuntu-latest
-    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Test key
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'test'
+        if: inputs.mode == 'test'
+        continue-on-error: true
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           PROBE_NAMES: ${{ inputs.probe_names }}
           PROBE_CODES: ${{ inputs.probe_codes }}
-        run: python scripts/collect.py --test
+        run: |
+          for t in ${{ inputs.types || 'apt villa offi' }}; do python scripts/collect.py --test --type $t || echo "::warning title=test-$t::실패"; done
       - name: Test REB
-        if: github.event_name == 'workflow_dispatch' && (inputs.mode == 'test' || inputs.mode == 'reb-test')
         continue-on-error: true
         env:
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
         run: python scripts/reb_index.py --test
       - name: Test ECOS
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'test'
+        if: inputs.mode == 'test'
         continue-on-error: true
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python scripts/rates.py --test
+
+  # 유형별 시세(실거래가)와 지수: 아파트·빌라·오피스텔을 따로 돌려서 각자 자기 파일만 커밋
+  collect:
+    if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'reb'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [apt, villa, offi]
+    steps:
+      - uses: actions/checkout@v4
+        if: contains(inputs.types || 'apt villa offi', matrix.type)
+      - uses: actions/setup-python@v5
+        if: contains(inputs.types || 'apt villa offi', matrix.type)
+        with:
+          python-version: "3.12"
       - name: Collect
-        if: github.event_name == 'schedule' || inputs.mode == 'full'
+        if: contains(inputs.types || 'apt villa offi', matrix.type) && (github.event_name == 'schedule' || inputs.mode == 'full')
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
-        run: python scripts/collect.py ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
-      - name: Rates
-        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates'
-        continue-on-error: true
-        env:
-          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
-        run: python scripts/rates.py
+        run: python scripts/collect.py --type ${{ matrix.type }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
       - name: REB index
-        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'reb'
+        if: contains(inputs.types || 'apt villa offi', matrix.type)
         continue-on-error: true
         env:
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
-        run: python scripts/reb_index.py
-      - name: Commit data
-        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates' || inputs.mode == 'reb'
+        run: python scripts/reb_index.py --type ${{ matrix.type }}
+      - name: Commit
+        if: contains(inputs.types || 'apt villa offi', matrix.type)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data/regions.json data/lawd_codes.json
-          for f in site/data/rates.json site/data/index.json; do if [ -f $f ]; then git add $f; fi; done
-          git diff --cached --quiet || git commit -m "data: 실거래가·금리·지수 갱신 $(date +%Y-%m-%d)"
-          # 수집하는 동안 main에 다른 커밋이 올라왔을 수 있어서 먼저 위에 얹음
+          if [ "${{ matrix.type }}" = apt ]; then files="site/data/regions.json site/data/index.json data/lawd_codes.json"
+          else files="site/data/regions-${{ matrix.type }}.json site/data/index-${{ matrix.type }}.json"; fi
+          for f in $files; do if [ -f $f ]; then git add $f; fi; done
+          git diff --cached --quiet || git commit -m "data(${{ matrix.type }}): 실거래가·지수 갱신 $(date +%Y-%m-%d)"
+          # 다른 유형 작업도 동시에 올리니까 다시 얹어서 올림
+          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done
+
+  rates:
+    if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rates
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+        run: python scripts/rates.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data/rates.json
+          git diff --cached --quiet || git commit -m "data: 금리 갱신 $(date +%Y-%m-%d)"
+          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done
+
+  # 데이터가 다 올라간 뒤 지역 페이지·검색 태그를 최신 데이터로 다시 만듦
+  pages:
+    needs: [collect, rates]
+    if: always() && (github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates' || inputs.mode == 'reb')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin main
-          # 지역별 페이지(site/r)는 최신 index.html과 새 시세로 다시 만듦
           python scripts/build_pages.py
-          git add -A site/r
+          git add -A site
           git diff --cached --quiet || git commit -m "pages: 지역별 페이지 갱신 $(date +%Y-%m-%d)"
-          for i in 1 2 3; do git pull --rebase origin main && git push && break; sleep 5; done
+          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done

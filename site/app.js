@@ -285,13 +285,13 @@ function simulate(inp, p, growOverride) {
   const pay = bal > 0 ? bal * rm / (1 - Math.pow(1 + rm, -360)) : 0;
   let invB = Math.max(0, C - P - upfront);
 
-  let D = P * p.ratio / 100;
+  let D = p.Dfix ?? P * p.ratio / 100;      // Dfix·Wfix·rentFix: '이 금액이면 뒤집혀요' 계산용 고정값
   let jl = Math.max(0, D - C);
   const jl0 = jl, D0 = D;
   let invJ = Math.max(0, C - D);
 
-  const W = Math.min(C, D * p.wdep / 100); // 월세 보증금은 그 지역 월세 계약의 보통 비율만큼
-  const rent0 = (D - W) * p.conv / 100 / 12;
+  const W = p.Wfix ?? Math.min(C, D * p.wdep / 100); // 월세 보증금은 그 지역 월세 계약의 보통 비율만큼
+  const rent0 = p.rentFix ?? (D - W) * p.conv / 100 / 12;
   let invW = C - W;
 
   // 돈 흐름 합계
@@ -327,6 +327,27 @@ function simulate(inp, p, growOverride) {
     gain: Pn - P, flow: f,
     ltv: P > 0 ? loan0 / P : 0, jltv: D0 > 0 ? jl0 / D0 : 0, rent0, W, D0,
   };
+}
+
+// 같은 크기 집을 이 금액 이하로 빌리면(또는 사면) 결과가 뒤집히는 금액. f는 값이 커질수록 줄어든다고 보고 반씩 좁힘
+function solveDown(f, lo, hi) {
+  if (f(lo) < 0 || f(hi) > 0) return null;   // 범위 안에 답이 없음
+  for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) lo = mid; else hi = mid; }
+  return lo;
+}
+function equivalents(inp, p, res) {
+  const fixed = { Dfix: res.D0, Wfix: res.W, rentFix: res.rent0 };
+  if (res.buy >= Math.max(res.jeonse, res.wolse)) {
+    // 매매가 이길 때: 전세금 / 월세(보증금은 그대로)를 얼마까지 낮춰야 매매만큼 남나
+    const P = inp.price * EOK;
+    const jeonse = solveDown(D => { const r = simulate(inp, { ...p, ...fixed, Dfix: D }); return r.jeonse - r.buy; }, 0, P * 1.5);
+    const rent = solveDown(m => { const r = simulate(inp, { ...p, ...fixed, rentFix: m }); return r.wolse - r.buy; }, 0, 1e7);
+    return { side: 'rent', jeonse, rent, W: res.W };
+  }
+  // 빌리는 쪽이 이길 때: 집값이 얼마 이하면 매매가 따라잡나 (전세·월세 조건은 지금 그대로)
+  // 같은 계산 안에서 비교해야 '매달 같은 돈' 기준이 맞음 (집값이 바뀌면 그 기준 금액도 바뀜)
+  const price = solveDown(x => { const r = simulate({ ...inp, price: x }, { ...p, ...fixed }); return Math.max(r.jeonse, r.wolse) - r.buy; }, inp.price * 3, 0.1);
+  return { side: 'buy', price: price != null ? price * EOK : null };
 }
 
 function breakeven(inp, p) {
@@ -535,7 +556,9 @@ function render() {
   const p = state.p;
   const res = simulate(inp, p);
   const rank = ranking(res);
-  const win = rank[0][0], gap = rank[0][1] - rank[1][1];
+  const win = rank[0][0];
+  // 판정은 항상 '매매'와 비교: 매매가 이기면 가장 나은 빌리는 쪽과, 빌리는 쪽이 이기면 매매와
+  const vs = win === 'buy' ? rank[1][0] : 'buy', gap = res[win] - res[vs];
   const buyWins = win === 'buy';
   const gr = growthOf(r0);
 
@@ -554,7 +577,7 @@ function render() {
   lastVerdict = win;
 
   // 결론 + 가정 + 다른 흐름
-  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[rank[1][0]]}보다 <b>${won(gap)}</b> 더 남아요.`;
+  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 남아요.`;
   const g = p.grow;
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
@@ -576,7 +599,19 @@ function render() {
       ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 남아요.`
       : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 남아요.`;
   }
-  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>`;
+  // NYT식: 같은 크기 집을 이 금액 이하로 빌리면/사면 결과가 뒤집힘
+  const eq = equivalents(inp, p, res);
+  const down = (v, u) => Math.floor(v / u) * u;
+  let flip = '';
+  if (eq.side === 'rent') {
+    const bits = [];
+    if (eq.jeonse != null && eq.jeonse > 0) bits.push(`전세 <b>${won(down(eq.jeonse, 1e6))} 이하</b>`);
+    if (eq.rent != null && eq.rent > 0) bits.push(`월세 <b>${won(down(eq.rent, 1e4))} 이하</b>(보증금 ${won(eq.W)})`);
+    if (bits.length) flip = `같은 크기 집을 ${bits.join('나 ')}로 구하면 빌리는 게 더 남아요.`;
+  } else if (eq.price != null && eq.price > 0) {
+    flip = `같은 크기 집을 <b>${won(down(eq.price, 1e6))} 이하</b>로 살 수 있으면 매매가 더 남아요.`;
+  }
+  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${flip ? `<span class="why3">${flip}</span>` : ''}`;
   saveUrl();
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
 

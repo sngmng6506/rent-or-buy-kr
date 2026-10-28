@@ -302,6 +302,7 @@ function simulate(inp, p, growOverride) {
     if (m > 1 && (m - 1) % 24 === 0) {     // 2년마다 전세금 인상분은 대출로
       const nd = D * Math.pow(1 + p.jgrow / 100, 2);
       jl += nd - D; D = nd;
+      if (jl < 0) { invJ += -jl; jl = 0; }   // 전세금이 내리면 돌려받은 돈은 대출부터 갚고 남으면 예금
     }
     const tax = holdingTax(P * Math.pow(1 + g, yr)) / 12;   // 그해 집값 기준
     let outB = tax; f.bTax += tax;
@@ -583,6 +584,9 @@ function render() {
   const warns = {};
   if (res.ltv > 0.7) warns.buy = `대출이 집값의 ${Math.round(res.ltv * 100)}%라 이만큼 대출이 안 될 수 있어요`;
   if (res.jltv > 0.8) warns.jeonse = `대출이 전세금의 ${Math.round(res.jltv * 100)}%라 이만큼 대출이 안 될 수 있어요`;
+  // 전세금이 집값에 가까우면(깡통전세) 보증금을 못 돌려받을 위험
+  if (p.ratio >= 90) warns.jeonse = (warns.jeonse ? warns.jeonse + ' · ' : '') +
+    `전세금이 집값의 ${Math.round(p.ratio)}%라 나중에 보증금을 다 못 돌려받을 위험이 커요`;
   $('warn').textContent = '';
 
   // 막대 + 돈 흐름
@@ -628,7 +632,7 @@ function render() {
     `셋 다 매달 집에 ${won(res.flow.spend / (state.years * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
     (RATES_INFO ? `금리는 한국은행 ${RATES_INFO.rates.mort?.month?.slice(0, 4)}년 ${Number(RATES_INFO.rates.mort?.month?.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
     (state.type === 'offi' ? '오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산했고, 주거용으로 써서 집처럼 재산세를 낸다고 봤어요. ' : '') +
-    `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${won(holdingTax(state.price * EOK))}).`;
+    `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${holdingTax(state.price * EOK) < 1e4 ? '1만 원 미만' : won(holdingTax(state.price * EOK))}).`;
 }
 
 // ── 입력 ───────────────────────────────────────────────

@@ -611,7 +611,9 @@ function render() {
   } else if (eq.price != null && eq.price > 0) {
     flip = `이 집을 <b>${won(down(eq.price, 1e6))}</b>보다 싸게 사면 매매가 이득이에요.`;
   }
-  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${flip ? `<span class="why3">${flip}</span>` : ''}`;
+  // 도장 옆에는 결론만, 가정·뒤집히는 조건은 '왜 그런지 보기'에
+  $('why').innerHTML = lead;
+  $('why-detail').innerHTML = `<p>${assume}</p>${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
 

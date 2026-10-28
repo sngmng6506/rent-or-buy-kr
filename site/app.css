@@ -230,10 +230,14 @@ footer p { margin: 0; }
 .map .rg.off path { fill: var(--bg); stroke: var(--line); cursor: default; }
 .map .rg.off text { fill: var(--ink-2); }
 footer a { color: inherit; }
+/* 공유하기: 결과 칸 오른쪽 위 (넓은 화면은 결과 칸이 sticky라 그 자체가 기준) */
+@media (max-width: 959px) { .result { position: relative; } }
 .share {
-  justify-self: start; font: 500 var(--fs-m) var(--body); color: var(--ink); background: transparent;
-  border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer;
+  position: absolute; top: 16px; right: 16px; z-index: 1; display: inline-flex; align-items: center; gap: 6px;
+  font: 500 var(--fs-s) var(--body); color: var(--ink-2); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer;
 }
+.share:hover { color: var(--ink); }
 .share:hover { border-color: var(--ink); }
 .share.done { border-color: var(--ink); background: var(--ink); color: var(--surface); }
 /* 지역 페이지(r/코드/)의 시세 설명 */
@@ -343,3 +347,18 @@ a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid 
 .chart-tip b { font-variant-numeric: tabular-nums; }
 .chart-note { margin: 0; font-size: var(--fs-s); color: var(--ink-2); }
 .chart-svg .now-l { font: 500 var(--fs-xs) var(--body); fill: var(--ink-2); }
+@media (min-width: 521px) { .verdict { padding-right: 104px; } }
+
+/* 밝게/어둡게 버튼 (머리 오른쪽). 지금 어두우면 해, 밝으면 달 아이콘 */
+.top-row { display: flex; justify-content: space-between; align-items: center; }
+.theme-btn {
+  width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: 50%; padding: 0; cursor: pointer;
+  color: var(--ink-2); background: var(--surface); border: 1.5px solid var(--line);
+}
+.theme-btn:hover { color: var(--ink); border-color: var(--ink-2); }
+.theme-btn .i-sun { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .theme-btn .i-sun { display: block; } :root:not([data-theme="light"]) .theme-btn .i-moon { display: none; } }
+:root[data-theme="dark"] .theme-btn .i-sun { display: block; }
+:root[data-theme="dark"] .theme-btn .i-moon { display: none; }
+@media (pointer: coarse) { .theme-btn { width: 44px; height: 44px; } }
+.kofi a { color: var(--ink); font-weight: 500; }

@@ -474,7 +474,7 @@ function render() {
   $('warn').textContent = '';
 
   // 막대 + 돈 흐름
-  $('bars-title').textContent = `${state.years}년 뒤 남는 내 돈`;
+  $('bars-title').textContent = `${state.years}년 뒤 내 자산`;
   $('bars-note').textContent = `막대 아래 대출 이자·예금 이자·월세·세금은 ${state.years}년 동안 합친 금액이에요. 지금 가진 돈에 더하고 빼면 막대 금액이 돼요.`;
   const f = res.flow;
   const flows = {
@@ -683,6 +683,23 @@ $('chart-svg').addEventListener('pointerleave', chartLeave);
 let chartResize = null;
 window.addEventListener('resize', () => { clearTimeout(chartResize); chartResize = setTimeout(drawChart, 150); });
 
+// ── 밝게/어둡게 ─────────────────────────────────────────
+// 처음엔 기기 설정을 따르고, 버튼을 누르면 반대로 바꿔서 저장 (다른 페이지도 머리의 짧은 스크립트가 적용)
+const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+function syncThemeBtn() {
+  const dark = isDark();
+  $('theme-btn').setAttribute('aria-label', dark ? '밝게 보기' : '어둡게 보기');
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = dark ? '#111318' : '#f3f5f8';
+}
+$('theme-btn').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('yk-theme', next); } catch (e) {}
+  syncThemeBtn();
+  if (view === 'chart') drawChart();
+});
+syncThemeBtn();
+
 // ── 주소에 입력값 담기 (공유 링크) ───────────────────────
 // ?t=유형(villa·offi, 아파트면 생략)&r=시군구코드(또는 묶음 키)&s=크기(전용㎡)&p=직접 넣은 집값(억)&c=가진 돈(억)&y=년
 const regionParam = key => { const r = REG[key]; if (!r) return null; return r.key.startsWith('c:') ? r.key.slice(2) : r.key; };
@@ -713,8 +730,8 @@ $('share').addEventListener('click', async () => {
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: '영끌각', text, url }); return; }
     await navigator.clipboard.writeText(url);
-    btn.textContent = '링크를 복사했어요'; btn.classList.add('done');
-    setTimeout(() => { btn.textContent = '공유하기'; btn.classList.remove('done'); }, 2000);
+    btn.querySelector('span').textContent = '링크를 복사했어요'; btn.classList.add('done');
+    setTimeout(() => { btn.querySelector('span').textContent = '공유하기'; btn.classList.remove('done'); }, 2000);
   } catch (e) {
     if (e && e.name === 'AbortError') return;
     window.prompt('이 링크를 복사하세요', url);

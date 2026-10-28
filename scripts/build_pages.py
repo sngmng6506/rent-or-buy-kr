@@ -61,6 +61,8 @@ def seo(title, desc, path, jsonld=None):
     img = absu("og.png") or "/og.png"
     out = [
         "<!-- seo -->",
+        # 사용자가 고른 밝게/어둡게를 그리기 전에 적용 (깜빡임 방지). 저장값이 없으면 기기 설정을 따름
+        "<script>try{var t=localStorage.getItem('yk-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>",
         f"<title>{e(title)}</title>",
         f'<meta name="description" content="{e(desc)}">',
     ]

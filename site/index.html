@@ -94,8 +94,12 @@
       </details>
       <p class="warn" id="warn"></p>
 
-      <div class="bars">
-        <p class="bars-title" id="bars-title"></p>
+      <div class="bars" id="bars">
+        <div class="bars-head">
+          <p class="bars-title" id="bars-title"></p>
+          <button class="help" id="bars-help" type="button" aria-expanded="false" aria-controls="bars" aria-label="금액이 어떻게 나왔는지 보기">?</button>
+        </div>
+        <p class="bars-note" id="bars-note"></p>
         <div class="bar-row" id="row-buy"><span class="name">매매</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
         <div class="bar-row" id="row-jeonse"><span class="name">전세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
         <div class="bar-row" id="row-wolse"><span class="name">월세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>

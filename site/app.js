@@ -461,6 +461,7 @@ function render() {
   $('why').innerHTML = `${lead} <button class="help" id="why-help" type="button" aria-expanded="${whyOpen}" aria-controls="why-more" aria-label="왜 그런지 보기">?</button>`;
   $('why-detail').innerHTML = `<p>${assume}</p><p>${beLine}</p>${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
+  if (view === 'chart') drawChart();
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;
 
   // 대출 경고는 해당 막대 아래에
@@ -573,6 +574,115 @@ $('bars-help').addEventListener('click', () => {
   peek.addEventListener('click', e => { e.preventDefault(); $('result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
 }
 
+// ── 그래프로 비교하기 ───────────────────────────────────
+// 1~30년 각각 그만큼 살았을 때 남는 내 돈(막대와 같은 값: 결과 − 매달 집에 쓴 돈 합계)
+const CHART_YEARS = 30;
+const SERIES = [['buy', '매매'], ['jeonse', '전세'], ['wolse', '월세']];
+let view = 'bars', chartData = null;
+function yearly(inp, p) {
+  const rows = [];
+  for (let y = 1; y <= CHART_YEARS; y++) {
+    const r = simulate({ ...inp, years: y }, p);
+    rows.push({ y, buy: r.buy - r.flow.spend, jeonse: r.jeonse - r.flow.spend, wolse: r.wolse - r.flow.spend });
+  }
+  return rows;
+}
+function setView(v, save = true) {
+  view = v;
+  const chart = v === 'chart';
+  $('chart').hidden = !chart; $('bars').hidden = chart;
+  $('tab-chart').setAttribute('aria-selected', String(chart)); $('tab-bars').setAttribute('aria-selected', String(!chart));
+  $('tab-chart').tabIndex = chart ? 0 : -1; $('tab-bars').tabIndex = chart ? -1 : 0;
+  if (chart) drawChart();
+  if (save) saveUrl();
+}
+for (const [id, v] of [['tab-bars', 'bars'], ['tab-chart', 'chart']]) $(id).addEventListener('click', () => setView(v));
+document.querySelector('.view-tabs').addEventListener('keydown', e => {   // 좌우 화살표로 탭 이동
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const next = view === 'chart' ? 'bars' : 'chart'; setView(next); $('tab-' + next).focus(); e.preventDefault();
+});
+function niceStep(range, n) {
+  const raw = range / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (raw <= m * mag) return m * mag;
+  return 10 * mag;
+}
+function axisWon(v) {                       // 축 눈금: 3억, 1.5억, 5,000만, 0
+  if (v === 0) return '0';
+  const a = Math.abs(v), s = v < 0 ? '−' : '';
+  if (a >= EOK) return s + (Math.round(a / EOK * 10) / 10).toLocaleString('ko-KR') + '억';
+  return s + Math.round(a / 1e4).toLocaleString('ko-KR') + '만';
+}
+function drawChart() {
+  if (view !== 'chart' || !REG[state.region]) return;
+  const inp = { price: state.price, cash: state.cash, years: state.years };
+  const rows = chartData = yearly(inp, state.p);
+  const svg = $('chart-svg'), W = Math.max(280, $('chart-box').clientWidth), H = W < 480 ? 230 : 270;
+  const m = { l: 46, r: W < 480 ? 12 : 44, t: 12, b: 26 };
+  const vals = rows.flatMap(r => SERIES.map(([k]) => r[k]));
+  let lo = Math.min(0, ...vals), hi = Math.max(...vals);
+  const step = niceStep(hi - lo || EOK, 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const x = y => m.l + (y - 1) / (CHART_YEARS - 1) * (W - m.l - m.r);
+  const yv = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  let s = '';
+  for (let v = lo; v <= hi + 1; v += step) {   // 가로 눈금선(옅게)과 금액
+    s += `<line class="grid${v === 0 ? ' zero' : ''}" x1="${m.l}" x2="${W - m.r}" y1="${yv(v)}" y2="${yv(v)}"/>`;
+    s += `<text class="tick" x="${m.l - 6}" y="${yv(v) + 4}" text-anchor="end">${axisWon(v)}</text>`;
+  }
+  for (const y of [1, 5, 10, 15, 20, 25, 30]) s += `<text class="tick" x="${x(y)}" y="${H - 6}" text-anchor="middle">${y}년</text>`;
+  const cy = state.years;
+  s += `<line class="now" x1="${x(cy)}" x2="${x(cy)}" y1="${m.t}" y2="${H - m.b}"/>`;
+  const nearRight = x(cy) > W - m.r - 60;   // 오른쪽 끝이면 이름표를 선 왼쪽에
+  s += `<text class="now-l" x="${x(cy) + (nearRight ? -5 : 5)}" y="${m.t + 10}" text-anchor="${nearRight ? 'end' : 'start'}">지금 고른 ${cy}년</text>`;
+  for (const [k] of SERIES) s += `<polyline class="ln ln-${k}" points="${rows.map(r => `${x(r.y).toFixed(1)},${yv(r[k]).toFixed(1)}`).join(' ')}"/>`;
+  const at = rows[cy - 1];
+  for (const [k] of SERIES) s += `<circle class="dot dot-${k}" cx="${x(cy)}" cy="${yv(at[k])}" r="4.5"/>`;
+  // 오른쪽 끝 이름표: 서로 14px 넘게 떨어질 때만 (겹치면 범례로 충분)
+  if (m.r > 20) {
+    const last = rows[CHART_YEARS - 1], ys = SERIES.map(([k, n]) => [yv(last[k]), n]).sort((a, b) => a[0] - b[0]);
+    const apart = ys.every((v, i) => i === 0 || v[0] - ys[i - 1][0] >= 14);
+    if (apart) for (const [py, n] of ys) s += `<text class="end" x="${W - m.r + 6}" y="${py + 4}">${n}</text>`;
+  }
+  s += `<line class="cross" id="chart-cross" y1="${m.t}" y2="${H - m.b}" visibility="hidden"/>`;
+  s += `<rect class="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/>`;
+  svg.innerHTML = s;
+  chartGeom = { x, m, W };
+
+  // 머리글: 매매가 언제부터 앞서는지
+  const lead = rows.map(r => r.buy >= Math.max(r.jeonse, r.wolse));
+  const first = lead.indexOf(true), stays = first >= 0 && lead.slice(first).every(Boolean);
+  let head;
+  if (first === 0 && stays) head = '1년만 살아도 매매가 가장 이득이에요.';
+  else if (stays) head = `<b>${first + 1}년</b> 넘게 살면 매매가 전세·월세보다 이득이에요.`;
+  else if (first < 0) head = '30년 안에는 전세나 월세가 매매보다 이득이에요.';
+  else head = `<b>${first + 1}년</b>부터 매매가 앞서다가 다시 뒤집혀요. 세로선 근처를 눌러 해마다 비교해보세요.`;
+  $('chart-head').innerHTML = head;
+  // 화면 읽기용 표
+  $('chart-table').innerHTML = `<caption>해마다 남는 내 돈</caption><tr><th>기간</th>${SERIES.map(([, n]) => `<th>${n}</th>`).join('')}</tr>` +
+    rows.map(r => `<tr><td>${r.y}년</td>${SERIES.map(([k]) => `<td>${won(r[k])}</td>`).join('')}</tr>`).join('');
+}
+let chartGeom = null;
+function chartHover(e) {
+  if (!chartData || !chartGeom) return;
+  const svg = $('chart-svg'), box = svg.getBoundingClientRect(), { x, m, W } = chartGeom;
+  const px = (e.clientX - box.left) * (W / box.width);
+  const y = Math.min(CHART_YEARS, Math.max(1, Math.round(1 + (px - m.l) / (W - m.l - m.r) * (CHART_YEARS - 1))));
+  const r = chartData[y - 1];
+  const cross = $('chart-cross'); cross.setAttribute('x1', x(y)); cross.setAttribute('x2', x(y)); cross.setAttribute('visibility', 'visible');
+  const tip = $('chart-tip');
+  tip.innerHTML = `<b>${y}년 살면</b>` + SERIES.map(([k, n]) => `<span><i class="k-${k}"></i>${n} <b>${won(r[k])}</b></span>`).join('');
+  tip.hidden = false;
+  const left = x(y) / W * box.width;
+  tip.style.left = Math.min(Math.max(left - tip.offsetWidth / 2, 0), box.width - tip.offsetWidth) + 'px';
+}
+function chartLeave() { $('chart-tip').hidden = true; const c = $('chart-cross'); if (c) c.setAttribute('visibility', 'hidden'); }
+$('chart-svg').addEventListener('pointermove', chartHover);
+$('chart-svg').addEventListener('pointerdown', chartHover);
+$('chart-svg').addEventListener('pointerleave', chartLeave);
+let chartResize = null;
+window.addEventListener('resize', () => { clearTimeout(chartResize); chartResize = setTimeout(drawChart, 150); });
+
 // ── 주소에 입력값 담기 (공유 링크) ───────────────────────
 // ?t=유형(villa·offi, 아파트면 생략)&r=시군구코드(또는 묶음 키)&s=크기(전용㎡)&p=직접 넣은 집값(억)&c=가진 돈(억)&y=년
 const regionParam = key => { const r = REG[key]; if (!r) return null; return r.key.startsWith('c:') ? r.key.slice(2) : r.key; };
@@ -580,6 +690,7 @@ function shareUrl() {
   const q = new URLSearchParams();
   const rp = regionParam(state.region); if (rp && rp !== window.PRESET_REGION) q.set('r', rp);
   if (state.type !== 'apt') q.set('t', state.type);
+  if (view === 'chart') q.set('v', 'chart');
   if (state.size) q.set('s', state.size);
   if (state.manual) q.set('p', state.price);
   q.set('c', state.cash); q.set('y', state.years);
@@ -594,7 +705,7 @@ function saveUrl() {
 function readUrl() {
   const q = new URLSearchParams(location.search), num = k => { const v = parseFloat(q.get(k)); return isNaN(v) ? null : v; };
   const r = q.get('r') || window.PRESET_REGION;
-  return { region: r ? (REG['c:' + r] ? 'c:' + r : (REG[r] ? r : null)) : null, size: q.get('s'), price: num('p'), cash: num('c'), years: num('y') };
+  return { region: r ? (REG['c:' + r] ? 'c:' + r : (REG[r] ? r : null)) : null, size: q.get('s'), price: num('p'), cash: num('c'), years: num('y'), view: q.get('v') };
 }
 $('share').addEventListener('click', async () => {
   const url = shareUrl(), btn = $('share'), r = REG[state.region];
@@ -727,6 +838,7 @@ Promise.all([loadType(firstType).catch(() => firstType === 'apt' ? Promise.rejec
     if (u.price > 0 && u.price <= 100) { state.price = u.price; state.manual = true; }
     if (u.cash != null && u.cash >= 0 && u.cash <= 100) state.cash = u.cash;
     if (u.years >= 1 && u.years <= 30) state.years = Math.round(u.years);
+    if (u.view === 'chart') setView('chart', false);
     syncInputs(); buildAssume(); drawSizes(); drawYears(); showTab(tabOf(start) || 'seoul'); paintMaps(); render();
     urlLive = true;
   })

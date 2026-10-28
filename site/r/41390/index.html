@@ -98,7 +98,25 @@
       <div class="why-more" id="why-more" hidden><div id="why-detail"></div></div>
       <p class="warn" id="warn"></p>
 
-      <div class="bars" id="bars">
+      <div class="view-tabs" role="tablist" aria-label="결과 보기 방식">
+        <button class="view-tab" role="tab" id="tab-bars" type="button" aria-selected="true" aria-controls="bars">지금 결과</button>
+        <button class="view-tab" role="tab" id="tab-chart" type="button" aria-selected="false" aria-controls="chart" tabindex="-1">그래프로 비교하기</button>
+      </div>
+
+      <div class="chart" id="chart" role="tabpanel" aria-labelledby="tab-chart" hidden>
+        <p class="chart-head" id="chart-head"></p>
+        <div class="chart-legend" aria-hidden="true">
+          <span><i class="k-buy"></i>매매</span><span><i class="k-jeonse"></i>전세</span><span><i class="k-wolse"></i>월세</span>
+        </div>
+        <div class="chart-box" id="chart-box">
+          <svg class="chart-svg" id="chart-svg" role="img" aria-labelledby="chart-head"></svg>
+          <div class="chart-tip" id="chart-tip" hidden></div>
+        </div>
+        <p class="chart-note">해마다 그만큼 살았을 때 남는 내 돈이에요. 세로선은 지금 고른 기간이에요.</p>
+        <table class="sr-only" id="chart-table"></table>
+      </div>
+
+      <div class="bars" id="bars" role="tabpanel" aria-labelledby="tab-bars">
         <div class="bars-head">
           <p class="bars-title" id="bars-title"></p>
           <button class="help" id="bars-help" type="button" aria-expanded="false" aria-controls="bars" aria-label="금액이 어떻게 나왔는지 보기">?</button>

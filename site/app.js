@@ -714,7 +714,7 @@ $('share').addEventListener('click', async () => {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: '영끌각', text, url }); return; }
     await navigator.clipboard.writeText(url);
     btn.textContent = '링크를 복사했어요'; btn.classList.add('done');
-    setTimeout(() => { btn.textContent = '이 결과 링크로 보내기'; btn.classList.remove('done'); }, 2000);
+    setTimeout(() => { btn.textContent = '공유하기'; btn.classList.remove('done'); }, 2000);
   } catch (e) {
     if (e && e.name === 'AbortError') return;
     window.prompt('이 링크를 복사하세요', url);

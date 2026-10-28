@@ -52,5 +52,5 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 - `site/index.html`·`app.css`·`app.js`·`engine.js`를 바꾸면 `python scripts/build_pages.py`를 돌려 `site/r/`도 같은 커밋에 넣기 (수집 워크플로우도 매달 다시 만듦)
 - 주소에 입력값을 담음: `?t=유형(villa·offi, 아파트면 생략)&r=시군구코드&s=크기(전용㎡)&p=직접 넣은 집값&c=가진 돈&y=년`. 지역 페이지는 `window.PRESET_REGION`으로 지역을 정함
 - 계산 결과가 바뀌는 수정은 `tests/engine.test.mjs` 기준값도 같이 고치기. 엔진 함수는 `engine.js`에만 두고 화면 코드에서 DOM을 엔진에 넘기지 않기
-- 결과는 두 탭: "지금 결과"(막대, 기본)와 "그래프로 비교하기"(1~30년 선 그래프, 주소 `v=chart`). 그래프 색은 `.chart`의 `--c-*` (dataviz 검사 통과값, 바꾸면 다시 검사)
+- 결과는 두 탭: "결과"(막대, 기본)와 "그래프로 비교하기"(1~30년 선 그래프, 주소 `v=chart`). 그래프 색은 `.chart`의 `--c-*` (dataviz 검사 통과값, 바꾸면 다시 검사)
 - UI: 글씨 크기는 `--fs-*` 6단계만, 펼치기는 꺾쇠(›) 또는 "?" 두 가지만. 폰 입력칸 16px 이상, 누르는 영역 44px

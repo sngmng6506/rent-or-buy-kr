@@ -123,7 +123,12 @@ def main():
         for r in rows:
             if r.get("DTA_VAL") is None:
                 continue
-            key = path_key(r.get("CLS_FULLNM") or "")
+            full = r.get("CLS_FULLNM") or ""
+            if r.get("GRP_FULLNM"):   # 오피스텔 표: 지역은 GRP, CLS는 크기(전체·40㎡이하…) → 전체만
+                if r.get("CLS_NM") != "전체":
+                    continue
+                full = r["GRP_FULLNM"].replace("(구)", "")
+            key = path_key(full)
             if key:
                 s.setdefault(key, {})[r["WRTTIME_IDTFR_ID"]] = float(r["DTA_VAL"])
                 names[key] = r.get("CLS_FULLNM")

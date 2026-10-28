@@ -109,6 +109,7 @@ def main():
                 note(f"reb-{k}", f"{tbl}: {len(rows)}행, 달 {months}")
                 if rows:
                     note(f"reb-{k}-row", json.dumps(rows[0], ensure_ascii=False))
+                    note(f"reb-{k}-grp", " | ".join(sorted({f"{r.get('GRP_FULLNM')}/{r.get('CLS_FULLNM')}" for r in rows})[:80]))
                     last = [r for r in rows if r.get("WRTTIME_IDTFR_ID") == months[-1]]
                     names = [f"{r.get('CLS_ID')}={r.get('CLS_FULLNM') or r.get('CLS_NM')}" for r in last]
                     note(f"reb-{k}-regions", f"{len(names)}곳: " + " | ".join(names[:60]))

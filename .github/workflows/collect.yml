@@ -53,7 +53,8 @@ jobs:
         continue-on-error: true
         env:
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
-        run: python scripts/reb_index.py --test
+        run: |
+          for t in ${{ inputs.types || 'apt villa offi' }}; do python scripts/reb_index.py --test --type $t || true; done
       - name: Test ECOS
         if: inputs.mode == 'test'
         continue-on-error: true

@@ -47,6 +47,7 @@ jobs:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           PROBE_NAMES: ${{ inputs.probe_names }}
           PROBE_CODES: ${{ inputs.probe_codes }}
+          PROBE_URLS: ${{ inputs.probe_names == 'urls' && 'https://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade,http://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade,https://apis.data.go.kr/1613000/RTMSDataSvcRHTradeDev/getRTMSDataSvcRHTradeDev,https://apis.data.go.kr/1613000/RTMSDataSvcSHTrade/getRTMSDataSvcSHTrade' || '' }}
         run: |
           for t in ${{ inputs.types || 'apt villa offi' }}; do python scripts/collect.py --test --type $t || echo "::warning title=test-$t::실패"; done
       - name: Test REB

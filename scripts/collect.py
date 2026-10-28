@@ -346,6 +346,12 @@ def main():
             note("trade", json.dumps(t[0], ensure_ascii=False))
         if r:
             note("rent", json.dumps(r[0], ensure_ascii=False))
+        for u in os.environ.get("PROBE_URLS", "").split(","):   # 다른 주소 후보 시험 (권한 문제 확인용)
+            if u.strip():
+                try:
+                    note("probe-url", f"{u.strip()}: {len(fetch_items(u.strip(), '11350', ym))}건")
+                except Exception as e:
+                    note("probe-url", f"{u.strip()}: {e}")
         for probe in os.environ.get("PROBE_NAMES", "").split(","):
             if not probe.strip():
                 continue

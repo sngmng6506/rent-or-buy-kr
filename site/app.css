@@ -259,16 +259,10 @@ footer a { color: inherit; }
 .types .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 .types .chip:disabled { opacity: .4; }
 
-/* 결론 아래 접힌 추가 정보 */
-.why-more { border: 0; padding: 0; margin-top: -8px; }
-.why-more summary { display: inline-flex; gap: 6px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
-.why-more summary::after, .why-more[open] summary::after { content: none; }
-.why-more summary::-webkit-details-marker { display: none; }
-.why-more .c, .why-more[open] .o { display: none; }
-.why-more[open] .c { display: inline; }
-.why-more summary .o::after { content: " ›"; }
-.why-more summary:hover { color: var(--ink); }
-#why-detail { display: grid; gap: 6px; margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: var(--bg); font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
+/* 결론 옆 ? 를 누르면 펼쳐지는 추가 정보 */
+.why-more { margin-top: -8px; }
+.why .help { vertical-align: 2px; margin-left: 2px; }
+#why-detail { display: grid; gap: 6px; padding: 12px 14px; border-radius: 10px; background: var(--bg); font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
 #why-detail p { margin: 0; }
 #why-detail b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 

@@ -27,6 +27,7 @@ const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };   // 임시값. rates.jso
 let RATES_INFO = null;
 // 한국부동산원 월간 아파트 지수 (data/index.json). 있으면 상승률은 이걸 우선 씀
 let IDX = null;
+let whyOpen = false;   // 결론 옆 '?' 펼침 상태
 // 기본 상승률: 지수가 시작된 달(대부분 2003년 11월)부터 지금까지 연평균.
 // 오르고 내린 시기를 여러 번 포함해서, 몇 년 전과 비교하느냐에 덜 흔들림
 const GROW_BASIS = ['gall', 'g20', 'g15', 'g10', 'g5'];
@@ -582,12 +583,14 @@ function render() {
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
-  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} ${gr.basis === 'gall' && gr.from ? gr.from.slice(0, 4) + '년부터 평균' : BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원' : ''})`}`;
+  const basis = edited ? '' : ` (${gr.label} ${gr.basis === 'gall' && gr.from ? gr.from.slice(0, 4) + '년부터 평균' : BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원' : ''})`;
+  const assume = `집값이 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '오른다고' : '떨어진다고'} 봤어요${basis}.`;
   const be = breakeven(inp, p);
-  if (be === -Infinity) assume += ' · 집값이 떨어져도 매매가 유리';
-  else if (be === Infinity) assume += ' · 집값이 많이 올라도 매매가 불리';
-  else if (buyWins) assume += be >= 0 ? ` · <b>${pct(be)}보다 덜 오르면 ${rentNow}가 유리</b>` : ` · <b>해마다 ${pct(-be)}보다 더 떨어지면 ${rentNow}가 유리</b>`;
-  else assume += be >= 0 ? ` · <b>${pct(be)}보다 더 오르면 매매가 유리</b>` : ` · <b>해마다 ${pct(-be)}보다 덜 떨어지면 매매가 유리</b>`;
+  let beLine = '';
+  if (be === -Infinity) beLine = '집값이 떨어져도 매매가 유리해요.';
+  else if (be === Infinity) beLine = '집값이 많이 올라도 매매가 불리해요.';
+  else if (buyWins) beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 덜 오르면 ${rentNow}가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 더 떨어지면 ${rentNow}가 유리해요.`;
+  else beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 더 오르면 매매가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 덜 떨어지면 매매가 유리해요.`;
   // 다른 흐름: 항상 매매와 비교
   let alt = '';
   const altG = gr.g5 != null && !edited ? gr.g5 : (Math.abs(g) > 0.05 ? 0 : null);
@@ -612,8 +615,8 @@ function render() {
     flip = `이 집을 <b>${won(down(eq.price, 1e6))}</b>보다 싸게 사면 매매가 이득이에요.`;
   }
   // 도장 옆에는 결론만, 가정·뒤집히는 조건은 '왜 그런지 보기'에
-  $('why').innerHTML = lead;
-  $('why-detail').innerHTML = `<p>${assume}</p>${flip ? `<p>${flip}</p>` : ''}`;
+  $('why').innerHTML = `${lead} <button class="help" id="why-help" type="button" aria-expanded="${whyOpen}" aria-controls="why-more" aria-label="왜 그런지 보기">?</button>`;
+  $('why-detail').innerHTML = `<p>${assume}</p><p>${beLine}</p>${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
 
@@ -700,6 +703,14 @@ $('years-n').addEventListener('change', e => {
   const v = Math.round(parseFloat(e.target.value));
   if (isNaN(v)) { drawYears(); return; }
   state.years = Math.min(30, Math.max(1, v)); e.target.value = state.years; drawYears(); render();
+});
+
+// 결론 옆 '?': 가정·뒤집히는 조건 펼치기 (버튼은 render마다 새로 그려서 위임으로 받음)
+document.addEventListener('click', e => {
+  if (!e.target.closest('#why-help')) return;
+  whyOpen = !whyOpen;
+  $('why-more').hidden = !whyOpen;
+  e.target.closest('#why-help').setAttribute('aria-expanded', String(whyOpen));
 });
 
 // 막대 '?': 막대 아래 금액이 고른 기간 합계라는 안내 펼치기

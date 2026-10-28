@@ -628,7 +628,7 @@ function render() {
 
   // 막대 + 돈 흐름
   $('bars-title').textContent = `${state.years}년 뒤 남는 내 돈`;
-  $('bars-note').textContent = `막대 아래 금액은 ${state.years}년 동안 합친 금액이에요. 지금 가진 돈에 더하고 빼면 막대 금액이 돼요.`;
+  $('bars-note').textContent = `막대 아래 대출 이자·예금 이자·월세·세금은 ${state.years}년 동안 합친 금액이에요. 지금 가진 돈에 더하고 빼면 막대 금액이 돼요.`;
   const f = res.flow;
   const flows = {
     buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],
@@ -659,7 +659,6 @@ function render() {
     const outside = width < 45;
     vEl.style.left = outside ? `calc(${width}% + 10px)` : '10px';
     vEl.style.color = outside ? 'var(--ink)' : '';
-    // 항목별 금액·따라잡기 줄은 '?'를 눌렀을 때만 (detail), 대출·보증금 경고는 항상
     row.querySelector('.flow').innerHTML = flows[id].filter(Boolean).filter(([, x]) => Math.abs(x) >= 1e5)
       .map(([k, x]) => `<span class="detail">${k} <b class="${x < 0 ? 'minus' : 'plus'}">${wonShort(x)}</b></span>`).join('')
       + (need[id] ? `<span class="need detail">→ ${need[id]}</span>` : '')
@@ -703,7 +702,7 @@ $('years-n').addEventListener('change', e => {
   state.years = Math.min(30, Math.max(1, v)); e.target.value = state.years; drawYears(); render();
 });
 
-// 막대 '?': 항목별 금액 펼치기
+// 막대 '?': 막대 아래 금액이 고른 기간 합계라는 안내 펼치기
 $('bars-help').addEventListener('click', () => {
   const open = $('bars').classList.toggle('open');
   $('bars-help').setAttribute('aria-expanded', String(open));

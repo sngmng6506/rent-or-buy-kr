@@ -604,12 +604,12 @@ function render() {
   const down = (v, u) => Math.floor(v / u) * u;
   let flip = '';
   if (eq.side === 'rent') {
-    const bits = [];
-    if (eq.jeonse != null && eq.jeonse > 0) bits.push(`전세 <b>${won(down(eq.jeonse, 1e6))} 이하</b>`);
-    if (eq.rent != null && eq.rent > 0) bits.push(`월세 <b>${won(down(eq.rent, 1e4))} 이하</b>(보증금 ${won(eq.W)})`);
-    if (bits.length) flip = `같은 크기 집을 ${bits.join('나 ')}로 구하면 빌리는 게 더 남아요.`;
+    const j = eq.jeonse > 0 ? won(down(eq.jeonse, 1e6)) : null, m = eq.rent > 0 ? won(down(eq.rent, 1e4)) : null;
+    if (j && m) flip = `전세는 <b>${j}</b>보다, 월세는 <b>${m}</b>보다 싸면 빌리는 게 더 남아요 (월세 보증금 ${won(eq.W)} 기준).`;
+    else if (j) flip = `전세가 <b>${j}</b>보다 싸면 전세가 더 남아요.`;
+    else if (m) flip = `월세가 <b>${m}</b>보다 싸면 월세가 더 남아요 (보증금 ${won(eq.W)} 기준).`;
   } else if (eq.price != null && eq.price > 0) {
-    flip = `같은 크기 집을 <b>${won(down(eq.price, 1e6))} 이하</b>로 살 수 있으면 매매가 더 남아요.`;
+    flip = `이 집을 <b>${won(down(eq.price, 1e6))}</b>보다 싸게 사면 매매가 더 남아요.`;
   }
   $('why').innerHTML = `${lead}<span class="why2">${assume}</span>${flip ? `<span class="why3">${flip}</span>` : ''}`;
   saveUrl();

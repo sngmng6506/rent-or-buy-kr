@@ -19,6 +19,11 @@ const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
 const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };   // 임시값. rates.json(한국은행 ECOS)이 있으면 그 값으로 바뀜
 let RATES_INFO = null;
+// 한국부동산원 월간 아파트 지수 (data/index.json). 있으면 상승률은 이걸 우선 씀
+let IDX = null;
+const GROW_BASIS = ['g15', 'gall', 'g10', 'g5'];   // 기본 상승률: 15년 평균 → (없으면) 지수 시작부터 → 10년 → 5년
+const BASIS_LABEL = { g15: '15년 평균', gall: '장기 평균', g10: '10년 평균', g5: '5년 평균' };
+const basisOf = g => { if (!g) return null; for (const k of GROW_BASIS) if (g[k] != null) return k; return null; };
 const RENT_FALLBACK = { conv: 4.5, wdep: 20, jgrow: 2.5 };   // 지역·시도 데이터가 없을 때만 (임시)
 const YEARS = [2, 4, 6, 10];
 const ASSUME = [
@@ -73,6 +78,19 @@ function combine(list) {
   out.nconv = list.reduce((s, r) => s + (r.nconv || 0), 0);
   out.jg5 = wavg(list.filter(r => r.jg5 != null).map(r => [r.jg5, Math.max(r.n84, 1)]));
   out.jg10 = wavg(list.filter(r => r.jg10 != null).map(r => [r.jg10, Math.max(r.n84, 1)]));
+  // 지수: 묶인 지역들의 같은 기간 값을 거래 건수로 가중 평균
+  const withIdx = list.filter(r => r.idx?.sale);
+  if (withIdx.length) {
+    const mix = part => {
+      const g = {};
+      for (const k of ['g5', 'g10', 'g15', 'g20', 'gall']) {
+        const v = wavg(withIdx.filter(r => r.idx[part]?.[k] != null).map(r => [r.idx[part][k], Math.max(r.cnt, 1)]));
+        if (v != null) g[k] = Math.round(v * 100) / 100;
+      }
+      return Object.keys(g).length ? g : null;
+    };
+    out.idx = { level: 'mix', label: null, sale: mix('sale'), jeonse: mix('jeonse') };
+  }
   return out;
 }
 const norm = t => t.replace(/\s+/g, '').toLowerCase();
@@ -84,13 +102,13 @@ function buildRegions(data) {
   for (const [code, r] of Object.entries(raw)) {
     if (!r.cnt && !(r.sizes && Object.keys(r.sizes).length)) continue;
     const sc = code.slice(0, 2), name = shortName(r.name);
-    const e = { key: 'c:' + code, code, sido: sc, name: `${SIDO[sc] || ''} ${name}`.trim(), short: name, alias: ALIAS[code] || '', ...normalize(r) };
+    const e = { key: 'c:' + code, code, sido: sc, name: `${SIDO[sc] || ''} ${name}`.trim(), short: name, alias: ALIAS[code] || '', ...normalize(r), idx: IDX?.regions?.[code] || null };
     REG[e.key] = e;
     (bySido[sc] ||= []).push(e);
   }
   // 시도 전체
   for (const [sc, list] of Object.entries(bySido)) {
-    REG['sido:' + sc] = { key: 'sido:' + sc, sido: sc, name: `${SIDO[sc]} 전체`, short: SIDO[sc], whole: true, ...combine(list) };
+    REG['sido:' + sc] = { key: 'sido:' + sc, sido: sc, name: `${SIDO[sc]} 전체`, short: SIDO[sc], whole: true, ...combine(list), idx: IDX?.regions?.['sido:' + sc] || null };
   }
   // 서울 지도: 구 = 코드 하나
   for (const gu of Object.keys(MAPS.seoul.gu)) {
@@ -152,13 +170,25 @@ function defaultSize(r, want) {
   return best || null;
 }
 function growthOf(r) {
-  // 지역 표본이 적으면 시도 전체 값을 씀
+  // 1순위: 부동산원 지수 (같은 표본 아파트를 따라가서 단지 구성에 덜 흔들림)
+  const ix = r.idx?.sale ? r.idx : (REG['sido:' + r.sido]?.idx?.sale ? REG['sido:' + r.sido].idx : null);
+  if (ix) {
+    const k = basisOf(ix.sale);
+    const who = ix !== r.idx || ix.level === 'sido' ? `${SIDO[r.sido]} 전체` : ix.level === 'parent' ? ix.label : r.short;
+    return { g: ix.sale[k], g5: ix.sale.g5 ?? null, g10: ix.sale.g10 ?? null, basis: k, label: who, src: 'idx' };
+  }
+  // 2순위: 실거래 중간값 비교 (지수가 없는 지역). 지역 표본이 적으면 시도 전체 값
   const sido = REG['sido:' + r.sido];
   const own = !r.whole && r.n84 >= 10;
   const g10 = own && r.g10 != null ? r.g10 : (r.whole && r.g10 != null ? r.g10 : sido?.g10);
   const g5 = own && r.g5 != null ? r.g5 : (r.whole && r.g5 != null ? r.g5 : sido?.g5);
   const label = (own || r.whole) && r.g10 != null ? r.short : `${SIDO[r.sido]} 전체`;
-  return { g10: g10 ?? null, g5: g5 ?? null, label };
+  return { g: g10 ?? null, g5: g5 ?? null, g10: g10 ?? null, basis: 'g10', label, src: 'deal' };
+}
+function jeonseGrowth(r) {
+  const ix = r.idx?.jeonse ? r.idx : REG['sido:' + r.sido]?.idx;
+  const g = ix?.jeonse; const k = basisOf(g);
+  return k ? g[k] : null;
 }
 // 전월세 조건: 지역 → 시도 전체 → 임시값 순으로
 function rentTermsOf(r) {
@@ -170,7 +200,7 @@ function rentTermsOf(r) {
   return {
     conv: Math.round(pick(r.conv, convOk, sido.conv, RENT_FALLBACK.conv) * 100) / 100,
     wdep: Math.round(pick(r.wdep, enough, sido.wdep, RENT_FALLBACK.wdep / 100) * 1000) / 10,
-    jgrow: Math.round(pick(r.jg10, r.n84 >= 10, sido.jg10, RENT_FALLBACK.jgrow) * 10) / 10,
+    jgrow: Math.round((jeonseGrowth(r) ?? pick(r.jg10, r.n84 >= 10, sido.jg10, RENT_FALLBACK.jgrow)) * 10) / 10,
   };
 }
 function ratioOf(r, k) {
@@ -190,7 +220,7 @@ function applyRegion(key, keepSize) {
   state.region = key;
   state.size = defaultSize(r, keepSize ? state.size : '84');
   const gr = growthOf(r);
-  state.p = { ...RATES, ...rentTermsOf(r), grow: gr.g10 ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
+  state.p = { ...RATES, ...rentTermsOf(r), grow: gr.g ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
   const pr = priceAt(r, state.size);
   if (pr) { state.price = Math.round(pr / 1000) / 10; state.manual = false; } else state.manual = true;
 }
@@ -515,10 +545,10 @@ function render() {
   // 결론 + 가정 + 다른 흐름
   const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[rank[1][0]]}보다 <b>${won(gap)}</b> 더 남아요.`;
   const g = p.grow;
-  const edited = gr.g10 == null || Math.abs(g - gr.g10) > 0.05;
+  const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
-  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} 10년 평균)`}`;
+  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} ${BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원 지수' : ''})`}`;
   const be = breakeven(inp, p);
   if (be === -Infinity) assume += ' · 집값이 떨어져도 매매가 유리';
   else if (be === Infinity) assume += ' · 집값이 많이 올라도 매매가 불리';
@@ -730,7 +760,12 @@ const ratesReady = fetch('data/rates.json')
   })
   .catch(() => {});
 
-Promise.all([fetch('data/regions.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), ratesReady])
+const idxReady = fetch('data/index.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(d => { IDX = d; })
+  .catch(() => {});
+
+Promise.all([fetch('data/regions.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), ratesReady, idxReady])
   .then(([d]) => {
     DATA = d; buildRegions(d); buildIndex(); sourceLine(d);
     buildMap('map-seoul', MAPS.seoul); buildMap('map-cap', MAPS.cap); buildMap('map-nat', MAPS.nat);

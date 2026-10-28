@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = 키 확인, full = 전체 수집(시세+금리), rates = 금리만, reb-test = 부동산원 지수 확인"
+        description: "test = 키 확인, full = 전체 수집(시세+금리+지수), rates = 금리만, reb = 부동산원 지수만, reb-test = 지수 확인"
         type: choice
-        options: [test, full, rates, reb-test]
+        options: [test, full, rates, reb, reb-test]
         default: test
       probe_names:
         description: "test 때 법정동코드로 조회해볼 이름, 쉼표 구분 (예: 충청북도 영동군)"
@@ -65,14 +65,20 @@ jobs:
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python scripts/rates.py
+      - name: REB index
+        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'reb'
+        continue-on-error: true
+        env:
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
+        run: python scripts/reb_index.py
       - name: Commit data
-        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates'
+        if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates' || inputs.mode == 'reb'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add site/data/regions.json data/lawd_codes.json
-          if [ -f site/data/rates.json ]; then git add site/data/rates.json; fi
-          git diff --cached --quiet || git commit -m "data: 실거래가·금리 갱신 $(date +%Y-%m-%d)"
+          for f in site/data/rates.json site/data/index.json; do if [ -f $f ]; then git add $f; fi; done
+          git diff --cached --quiet || git commit -m "data: 실거래가·금리·지수 갱신 $(date +%Y-%m-%d)"
           # 수집하는 동안 main에 다른 커밋이 올라왔을 수 있어서 먼저 위에 얹음
           git pull --rebase origin main
           # 지역별 페이지(site/r)는 최신 index.html과 새 시세로 다시 만듦

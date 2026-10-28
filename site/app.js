@@ -436,7 +436,6 @@ function render() {
   const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`;
   const g = p.grow;
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
-  const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
   const basis = edited ? '' : ` (${gr.label} ${gr.basis === 'gall' && gr.from ? gr.from.slice(0, 4) + '년부터 평균' : BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원' : ''})`;
   const assume = `집값이 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '오른다고' : '떨어진다고'} 봤어요${basis}.`;
@@ -446,17 +445,6 @@ function render() {
   else if (be === Infinity) beLine = '집값이 많이 올라도 매매가 불리해요.';
   else if (buyWins) beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 덜 오르면 ${rentNow}가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 더 떨어지면 ${rentNow}가 유리해요.`;
   else beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 더 오르면 매매가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 덜 떨어지면 매매가 유리해요.`;
-  // 다른 흐름: 항상 매매와 비교
-  let alt = '';
-  const altG = gr.g5 != null && !edited ? gr.g5 : (Math.abs(g) > 0.05 ? 0 : null);
-  if (altG != null && Math.abs(altG - g) > 0.3) {
-    const a = simulate(inp, p, altG);
-    const rk = a.jeonse >= a.wolse ? 'jeonse' : 'wolse';
-    const altLabel = altG === gr.g5 && !edited ? `최근 5년처럼 ${move(altG)}` : '집값이 그대로라면';
-    alt = a.buy >= a[rk]
-      ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 이득이에요.`
-      : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 이득이에요.`;
-  }
   // NYT식: 같은 크기 집을 이 금액 이하로 빌리면/사면 결과가 뒤집힘
   const eq = equivalents(inp, p, res);
   const down = (v, u) => Math.floor(v / u) * u;
@@ -473,7 +461,7 @@ function render() {
   $('why').innerHTML = `${lead} <button class="help" id="why-help" type="button" aria-expanded="${whyOpen}" aria-controls="why-more" aria-label="왜 그런지 보기">?</button>`;
   $('why-detail').innerHTML = `<p>${assume}</p><p>${beLine}</p>${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
-  $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
+  $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;
 
   // 대출 경고는 해당 막대 아래에
   const warns = {};
@@ -670,12 +658,6 @@ bindAmount('cash', 'cash-n', 'cash');
 $('reset').addEventListener('click', () => { applyRegion(state.region, true); syncInputs(); buildAssume(); drawSizes(); render(); });
 syncInputs(); drawYears(); buildAssume(); showTab('seoul');
 
-function sourceLine(d) {
-  if (!$('source')) return;
-  const [a, b] = d.window || [];
-  const ym = s => s ? `${s.slice(0, 4)}년 ${Number(s.slice(4))}월` : '';
-  $('source').textContent = `시세는 국토교통부 실거래가 ${ym(a)}~${ym(b)} 계약분의 크기별 중간값이고, 집값 상승률은 5년·10년 전 같은 달(${ym(a).split(' ')[1]}~${ym(b).split(' ')[1]})의 84㎡(34평형) 중간값과 비교했어요 (${d.updated} 갱신).`;
-}
 
 // ── 주택 유형 ───────────────────────────────────────────
 function loadType(id) {
@@ -733,7 +715,7 @@ for (const [id] of TYPES) if (id !== firstType) loadType(id).then(() => { TYPE_O
 Promise.all([loadType(firstType).catch(() => firstType === 'apt' ? Promise.reject() : loadType('apt')), ratesReady])
   .then(([td]) => {
     TYPE_OK[td.data.type || 'apt'] = true;
-    useType(td.data.type || 'apt', td); sourceLine(td.data); drawTypes();
+    useType(td.data.type || 'apt', td); drawTypes();
     const u = readUrl();
     const start = u.region || (REG['seoul:노원구'] ? 'seoul:노원구' : Object.keys(REG)[0]);
     applyRegion(start, false);

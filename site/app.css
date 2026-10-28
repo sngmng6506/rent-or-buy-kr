@@ -180,8 +180,6 @@ input[type="range"] { width: 100%; accent-color: var(--seal); margin: 0; }
 @keyframes pop { from { transform: rotate(-9deg) scale(1.12); } to { transform: rotate(-9deg) scale(1); } }
 .why { margin: 0; font-size: var(--fs-l); font-weight: 500; line-height: 1.5; text-wrap: pretty; }
 .why b { font-variant-numeric: tabular-nums; }
-.why .why2 { display: block; margin-top: 6px; font-size: var(--fs-base); font-weight: 400; color: var(--ink-2); }
-.why .why2 b { color: var(--ink); font-weight: 600; }
 .warn { margin: 0; font-size: var(--fs-m); color: var(--warn); }
 .warn:empty { display: none; }
 
@@ -221,9 +219,6 @@ footer p { margin: 0; }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: var(--fs-s); color: var(--ink-2); margin-top: -4px; }
 .flow .need { color: var(--ink); }
-.base { margin: -6px 0 2px; font-size: var(--fs-s); color: var(--ink-2); }
-.base b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.muted-l { color: var(--ink-2); font-weight: 400; }
 .sub-l { display: block; font-size: var(--fs-s); color: var(--ink-2); font-weight: 400; }
 .amount { flex: none; }
 .amount span { white-space: nowrap; }
@@ -232,7 +227,6 @@ footer p { margin: 0; }
 .more-foot .reset { margin-top: 0; }
 .faq-link { font-size: var(--fs-s); color: var(--ink); font-weight: 500; }
 .flow b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.why .why3 { display: block; margin-top: 4px; font-size: var(--fs-m); font-weight: 400; color: var(--ink-2); }
 .map .rg.off path { fill: var(--bg); stroke: var(--line); cursor: default; }
 .map .rg.off text { fill: var(--ink-2); }
 footer a { color: inherit; }

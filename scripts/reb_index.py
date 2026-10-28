@@ -19,6 +19,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from common import SIDO_SHORT, SIDO_SHORT_BY_CODE
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "data" / "index.json"
 KEY = os.environ.get("REB_API_KEY", "").strip()
@@ -178,15 +180,6 @@ def main():
     print(f"저장: {OUT.relative_to(ROOT)} ({len(out)}곳, 최신 {latest})")
 
 
-SIDO_SHORT = {
-    "서울특별시": "서울", "부산광역시": "부산", "대구광역시": "대구", "인천광역시": "인천", "대전광역시": "대전",
-    "울산광역시": "울산", "세종특별자치시": "세종", "경기도": "경기", "강원특별자치도": "강원", "충청북도": "충북",
-    "충청남도": "충남", "전북특별자치도": "전북", "전남광주통합특별시": "전남광주", "경상북도": "경북",
-    "경상남도": "경남", "제주특별자치도": "제주",
-}
-SIDO_SHORT_BY_CODE = {"11": "서울", "26": "부산", "27": "대구", "28": "인천", "29": "광주", "30": "대전", "31": "울산",
-                      "36": "세종", "41": "경기", "42": "강원", "43": "충북", "44": "충남", "45": "전북", "51": "강원",
-                      "52": "전북", "46": "전남", "12": "전남광주", "47": "경북", "48": "경남", "50": "제주"}
 
 
 def path_key(full):

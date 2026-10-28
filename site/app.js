@@ -575,7 +575,7 @@ $('bars-help').addEventListener('click', () => {
 }
 
 // ── 그래프로 비교하기 ───────────────────────────────────
-// 1~30년 각각 그만큼 살았을 때 남는 내 돈(막대와 같은 값: 결과 − 매달 집에 쓴 돈 합계)
+// 1~30년 각각 그만큼 살았을 때 내 자산(막대와 같은 값: 결과 − 매달 집에 쓴 돈 합계)
 const CHART_YEARS = 30;
 const SERIES = [['buy', '매매'], ['jeonse', '전세'], ['wolse', '월세']];
 let view = 'bars', chartData = null;
@@ -634,7 +634,7 @@ function drawChart() {
   const cy = state.years;
   s += `<line class="now" x1="${x(cy)}" x2="${x(cy)}" y1="${m.t}" y2="${H - m.b}"/>`;
   const nearRight = x(cy) > W - m.r - 60;   // 오른쪽 끝이면 이름표를 선 왼쪽에
-  s += `<text class="now-l" x="${x(cy) + (nearRight ? -5 : 5)}" y="${m.t + 10}" text-anchor="${nearRight ? 'end' : 'start'}">지금 고른 ${cy}년</text>`;
+  s += `<text class="now-l" x="${x(cy) + (nearRight ? -5 : 5)}" y="${m.t + 10}" text-anchor="${nearRight ? 'end' : 'start'}">${cy}년</text>`;
   for (const [k] of SERIES) s += `<polyline class="ln ln-${k}" points="${rows.map(r => `${x(r.y).toFixed(1)},${yv(r[k]).toFixed(1)}`).join(' ')}"/>`;
   const at = rows[cy - 1];
   for (const [k] of SERIES) s += `<circle class="dot dot-${k}" cx="${x(cy)}" cy="${yv(at[k])}" r="4.5"/>`;
@@ -659,7 +659,7 @@ function drawChart() {
   else head = `<b>${first + 1}년</b>부터 매매가 앞서다가 다시 뒤집혀요. 세로선 근처를 눌러 해마다 비교해보세요.`;
   $('chart-head').innerHTML = head;
   // 화면 읽기용 표
-  $('chart-table').innerHTML = `<caption>해마다 남는 내 돈</caption><tr><th>기간</th>${SERIES.map(([, n]) => `<th>${n}</th>`).join('')}</tr>` +
+  $('chart-table').innerHTML = `<caption>해마다 내 자산</caption><tr><th>기간</th>${SERIES.map(([, n]) => `<th>${n}</th>`).join('')}</tr>` +
     rows.map(r => `<tr><td>${r.y}년</td>${SERIES.map(([k]) => `<td>${won(r[k])}</td>`).join('')}</tr>`).join('');
 }
 let chartGeom = null;

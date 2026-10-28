@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo -->
+<title>영끌각 소개</title>
+<meta name="description" content="영끌각은 매매·전세·월세 중 몇 년 뒤 돈이 더 남는 쪽을 공공 데이터로 계산해주는 무료 웹 계산기예요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="영끌각">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="영끌각 소개">
+<meta property="og:description" content="영끌각은 매매·전세·월세 중 몇 년 뒤 돈이 더 남는 쪽을 공공 데이터로 계산해주는 무료 웹 계산기예요.">
+<meta property="og:image" content="/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#cf2f25">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- /seo -->
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: FAQ와 같은 한 줄 읽기 폭 문서 */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #15181e; --ink-2: #5a6170; --line: #dde1e8; --seal: #cf2f25;
+  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.75 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  word-break: keep-all; overflow-wrap: break-word;
+}
+.doc { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--seal); text-decoration: none; letter-spacing: 0.02em; }
+.back { color: var(--ink); font-weight: 500; text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.back:hover, .back:focus-visible { border-color: var(--ink); outline: none; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.25; text-wrap: balance; }
+.lead { margin: 8px 0 0; color: var(--ink-2); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a { color: var(--ink); text-decoration: none; font-size: 14px; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+nav.toc a:hover { border-color: var(--ink); }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 22px; }
+section > h2 { font-size: 13px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 500; margin: 14px 0 0; }
+.q { padding: 16px 0; border-top: 1px solid var(--line); }
+section > h2 + .q { border-top: 0; }
+.q:first-child { border-top: 0; }
+.q h2, .q h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.45; text-wrap: balance; }
+.q p { margin: 0 0 8px; }
+.q p:last-child, .q ul:last-child, .q .table:last-child { margin-bottom: 0; }
+.q ul { margin: 0 0 8px; padding-left: 20px; }
+.q li { margin: 2px 0; }
+.table { overflow-x: auto; margin: 6px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 500; }
+.muted { color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 13px; }
+a { color: inherit; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "결과 막대의 금액은 무엇인가요?", "acceptedAnswer": {"@type": "Answer", "text": "지금 가진 돈이 고른 기간 뒤 얼마가 되는지예요. 지금 가진 돈에 막대 아래 항목(집값 상승, 이자, 세금, 월세, 예금 이자)을 더하면 막대 금액이에요."}},
+    {"@type": "Question", "name": "왜 셋 다 매달 같은 돈을 쓴다고 가정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "공정하게 비교하려고요. 매달 나가는 돈이 가장 많은 쪽에 맞추고, 덜 쓰는 쪽은 그 차이를 예금에 넣는다고 계산해요."}},
+    {"@type": "Question", "name": "집값과 금리는 어디서 가져오나요?", "acceptedAnswer": {"@type": "Answer", "text": "국토교통부 아파트 매매·전월세 실거래가 자료에서 최근 3개월 거래를 받아 크기별 중간값을 써요. 대출·예금 금리는 한국은행 경제통계시스템(ECOS)의 은행 평균 금리를 써요. 매달 16일에 갱신해요."}},
+    {"@type": "Question", "name": "집값 상승률은 어떻게 정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "같은 지역의 전용 84㎡(34평형) 거래 중간값을 10년 전 같은 달과 비교한 연평균 상승률을 기본으로 써요."}},
+    {"@type": "Question", "name": "재산세와 종부세는 어떻게 계산하나요?", "acceptedAnswer": {"@type": "Answer", "text": "1세대 1주택 기준 법정 세율로 계산해요. 공시가격은 시세의 69%로 가정하고, 매년 그해 집값 기준으로 다시 계산해요."}}
+  ]
+}
+</script>
+</head>
+<body>
+<main class="doc">
+  <div class="top">
+    <a class="brand" href="../">영끌각</a>
+    <a class="back" href="../">← 계산기로</a>
+  </div>
+
+  <header>
+    <h1>영끌각 소개</h1>
+    <p class="lead">집을 살지, 전세로 살지, 월세로 살지 고민될 때 숫자로 비교해보는 무료 계산기예요.</p>
+  </header>
+
+  <section>
+    <div class="q">
+      <h2>무엇을 알려주나요?</h2>
+      <p>지역, 집 크기, 지금 가진 돈, 살 기간을 넣으면 매매·전세·월세 각각 그 기간 뒤에 내 돈이 얼마나 남는지 계산해요. 가장 많이 남는 쪽과 차이 금액, 집값이 해마다 얼마보다 덜 오르면 결과가 뒤집히는지도 함께 보여줘요.</p>
+    </div>
+    <div class="q">
+      <h2>숫자는 어디서 오나요?</h2>
+      <p>집값과 전세금은 국토교통부 아파트 실거래가, 금리는 한국은행이 발표하는 은행 평균 금리예요. 세금은 법에 정해진 세율로 계산하고, 매달 16일에 새 자료로 바꿔요. 자세한 기준은 <a href="../faq/">계산 방법</a>에 있어요.</p>
+    </div>
+    <div class="q">
+      <h2>믿고 결정해도 되나요?</h2>
+      <p>참고용 시뮬레이션이에요. 실제 대출 한도와 금리, 앞으로의 집값은 사람과 시장에 따라 달라요. 투자나 대출 조언이 아니니 큰 결정 전에는 은행, 세무사, 공인중개사와 꼭 확인하세요.</p>
+    </div>
+    <div class="q">
+      <h2>누가 만들었나요?</h2>
+      <p>개인이 만들어 운영하는 사이트예요. 회원가입 없이 무료로 쓸 수 있고, 운영비는 광고로 충당해요.</p>
+    </div>
+    <div class="q">
+      <h2>문의</h2>
+      <p>틀린 숫자나 고쳤으면 하는 점은 여기로 알려주세요: <!-- contact -->연락처를 준비하고 있어요<!-- /contact --></p>
+    </div>
+  </section>
+
+  <footer>
+    <p><a href="../privacy/">개인정보 처리방침</a></p>
+  </footer>
+</main>
+</body>
+</html>

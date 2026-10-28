@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo -->
+<title>개인정보 처리방침 | 영끌각</title>
+<meta name="description" content="영끌각은 회원가입이 없고 입력한 값을 서버로 보내지 않아요. 광고 쿠키와 접속 기록 처리 방식을 설명해요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="영끌각">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="개인정보 처리방침 | 영끌각">
+<meta property="og:description" content="영끌각은 회원가입이 없고 입력한 값을 서버로 보내지 않아요. 광고 쿠키와 접속 기록 처리 방식을 설명해요.">
+<meta property="og:image" content="/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#cf2f25">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- /seo -->
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: FAQ와 같은 한 줄 읽기 폭 문서 */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #15181e; --ink-2: #5a6170; --line: #dde1e8; --seal: #cf2f25;
+  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.75 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  word-break: keep-all; overflow-wrap: break-word;
+}
+.doc { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--seal); text-decoration: none; letter-spacing: 0.02em; }
+.back { color: var(--ink); font-weight: 500; text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.back:hover, .back:focus-visible { border-color: var(--ink); outline: none; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.25; text-wrap: balance; }
+.lead { margin: 8px 0 0; color: var(--ink-2); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a { color: var(--ink); text-decoration: none; font-size: 14px; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+nav.toc a:hover { border-color: var(--ink); }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 22px; }
+section > h2 { font-size: 13px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 500; margin: 14px 0 0; }
+.q { padding: 16px 0; border-top: 1px solid var(--line); }
+section > h2 + .q { border-top: 0; }
+.q:first-child { border-top: 0; }
+.q h2, .q h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.45; text-wrap: balance; }
+.q p { margin: 0 0 8px; }
+.q p:last-child, .q ul:last-child, .q .table:last-child { margin-bottom: 0; }
+.q ul { margin: 0 0 8px; padding-left: 20px; }
+.q li { margin: 2px 0; }
+.table { overflow-x: auto; margin: 6px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 500; }
+.muted { color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 13px; }
+a { color: inherit; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "결과 막대의 금액은 무엇인가요?", "acceptedAnswer": {"@type": "Answer", "text": "지금 가진 돈이 고른 기간 뒤 얼마가 되는지예요. 지금 가진 돈에 막대 아래 항목(집값 상승, 이자, 세금, 월세, 예금 이자)을 더하면 막대 금액이에요."}},
+    {"@type": "Question", "name": "왜 셋 다 매달 같은 돈을 쓴다고 가정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "공정하게 비교하려고요. 매달 나가는 돈이 가장 많은 쪽에 맞추고, 덜 쓰는 쪽은 그 차이를 예금에 넣는다고 계산해요."}},
+    {"@type": "Question", "name": "집값과 금리는 어디서 가져오나요?", "acceptedAnswer": {"@type": "Answer", "text": "국토교통부 아파트 매매·전월세 실거래가 자료에서 최근 3개월 거래를 받아 크기별 중간값을 써요. 대출·예금 금리는 한국은행 경제통계시스템(ECOS)의 은행 평균 금리를 써요. 매달 16일에 갱신해요."}},
+    {"@type": "Question", "name": "집값 상승률은 어떻게 정하나요?", "acceptedAnswer": {"@type": "Answer", "text": "같은 지역의 전용 84㎡(34평형) 거래 중간값을 10년 전 같은 달과 비교한 연평균 상승률을 기본으로 써요."}},
+    {"@type": "Question", "name": "재산세와 종부세는 어떻게 계산하나요?", "acceptedAnswer": {"@type": "Answer", "text": "1세대 1주택 기준 법정 세율로 계산해요. 공시가격은 시세의 69%로 가정하고, 매년 그해 집값 기준으로 다시 계산해요."}}
+  ]
+}
+</script>
+</head>
+<body>
+<main class="doc">
+  <div class="top">
+    <a class="brand" href="../">영끌각</a>
+    <a class="back" href="../">← 계산기로</a>
+  </div>
+
+  <header>
+    <h1>개인정보 처리방침</h1>
+    <p class="lead">영끌각은 회원가입이 없고, 이름이나 연락처 같은 개인정보를 받지 않아요.</p>
+  </header>
+
+  <section>
+    <div class="q">
+      <h2>입력한 값</h2>
+      <p>지역, 집값, 가진 돈, 기간 같은 입력값은 브라우저 안에서만 계산하고 서버로 보내지 않아요. 결과를 링크로 보내면 그 값이 링크 주소에 담겨서, 링크를 받은 사람도 같은 값을 볼 수 있어요.</p>
+    </div>
+    <div class="q">
+      <h2>자동으로 처리되는 정보</h2>
+      <ul>
+        <li>사이트를 호스팅하는 Cloudflare가 보안과 운영을 위해 접속 기록(IP 주소, 브라우저 종류, 접속 시간 등)을 처리할 수 있어요.</li>
+        <li>글꼴을 Google Fonts에서 받아와서, 글꼴을 받을 때 IP 주소가 Google에 전달될 수 있어요.</li>
+        <li>영끌각은 따로 방문 분석 도구를 쓰지 않아요.</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h2>광고와 쿠키</h2>
+      <p>이 사이트는 Google AdSense 광고를 보여줄 수 있어요. Google을 포함한 제3자 광고 회사는 쿠키를 써서 이 사이트와 다른 사이트 방문 기록을 바탕으로 광고를 보여줄 수 있어요.</p>
+      <ul>
+        <li>Google은 광고 쿠키로 이 사이트나 다른 사이트 방문 기록에 따라 맞춤 광고를 보여줘요.</li>
+        <li>맞춤 광고는 <a href="https://adssettings.google.com" rel="noopener">Google 광고 설정</a>에서 끌 수 있어요. 다른 광고 회사의 맞춤 광고는 <a href="https://www.aboutads.info/choices/" rel="noopener">aboutads.info</a>에서 끌 수 있어요.</li>
+        <li>Google이 정보를 어떻게 쓰는지는 <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">Google 파트너 사이트 정책</a>에 있어요.</li>
+      </ul>
+      <p>브라우저 설정에서 쿠키를 막거나 지울 수도 있어요. 쿠키를 막아도 계산기는 그대로 쓸 수 있어요.</p>
+    </div>
+    <div class="q">
+      <h2>문의</h2>
+      <p><!-- contact -->연락처를 준비하고 있어요<!-- /contact --></p>
+    </div>
+    <div class="q">
+      <h2>시행일</h2>
+      <p>2026년 10월 28일. 내용이 바뀌면 이 페이지에 바로 알려요.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><a href="../about/">소개</a> · <a href="../faq/">계산 방법</a></p>
+  </footer>
+</main>
+</body>
+</html>

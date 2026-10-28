@@ -5,10 +5,13 @@
 ## 구조
 
 ```
-site/index.html            계산기 페이지 (계산 엔진·지도·검색 포함, 한 파일)
+site/index.html            계산기 페이지 뼈대 (지역 페이지도 이걸 틀로 씀)
+site/app.js, site/app.css  계산 엔진·지도·검색·화면 (모든 페이지 공용)
+site/r/<시군구코드>/       지역별 페이지 (scripts/build_pages.py가 생성, 직접 수정 금지)
 site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
 site/data/regions.json     지역 시세 (scripts/collect.py가 생성, 직접 수정 금지)
 scripts/collect.py         국토부 실거래가 API 수집 → regions.json
+scripts/build_pages.py     regions.json + index.html → site/r/ 지역 페이지·목록
 scripts/rates.py           한국은행 ECOS 금리(주담대·전세대출·정기예금) → rates.json
 data/lawd_codes.json       마지막으로 받은 법정동코드 목록 (API 실패 시 사용, 수집 때 자동 갱신)
 data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코드
@@ -32,3 +35,5 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 - 판정 문구는 매매/전세/월세 중 이기는 쪽 + 얼마 더 남는지 금액
 - 계산 방식·기본값·데이터 기준을 바꾸면 `site/faq/index.html`의 설명과 숫자도 같은 커밋에서 고치기
 - 재산세·종부세·취득세는 법정 세율로 계산(사용자 조정 항목 아님). 세법이 바뀌면 `holdingTax`·`acqTax`와 FAQ 함께 수정
+- `site/index.html`·`app.css`·`app.js`를 바꾸면 `python scripts/build_pages.py`를 돌려 `site/r/`도 같은 커밋에 넣기 (수집 워크플로우도 매달 다시 만듦)
+- 주소에 입력값을 담음: `?r=시군구코드&s=평형(전용㎡)&p=직접 넣은 집값&c=가진 돈&y=년`. 지역 페이지는 `window.PRESET_REGION`으로 지역을 정함

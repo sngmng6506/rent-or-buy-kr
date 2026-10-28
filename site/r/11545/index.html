@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>서울 금천구 아파트 매매·전세·월세 비교 | 영끌각</title>
+<meta name="description" content="서울특별시 금천구 아파트, 84㎡(34평형) 매매 중간값 7억 1,500만 원, 전세 5억 1,200만 원. 가진 돈과 사는 기간을 넣으면 매매·전세·월세 중 어디가 돈이 더 남는지 바로 계산해요.">
+<base href="../../">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">영끌각</div>
+    <h1>서울 금천구 아파트, 영끌해서 사야 하나?</h1>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+    <section class="panel" aria-label="지역 선택">
+      <div class="maps-head">
+        <h2>어디에 살고 싶어요?</h2>
+        <div class="chips tabs" id="tabs" role="group" aria-label="지도"></div>
+        <select class="tab-select" id="tab-select" aria-label="지도 고르기"></select>
+      </div>
+      <div class="search">
+        <input id="q" type="search" autocomplete="off" placeholder="이름으로 찾기 (예: 판교, 해운대, 평택)" aria-label="지역 검색" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list">
+        <ul id="q-list" role="listbox" hidden></ul>
+      </div>
+      <div class="map-box" id="box-seoul"><svg class="map" id="map-seoul" role="group" aria-label="서울 구 지도"></svg></div>
+      <div class="map-box" id="box-cap" hidden><svg class="map" id="map-cap" role="group" aria-label="경기·인천 지도"></svg></div>
+      <div class="map-box" id="box-metro" hidden><svg class="map" id="map-metro" role="group" aria-label="광역시 구 지도"></svg></div>
+      <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="전국 시군구 지도"></svg></div>
+      <span class="legend">싸다 <i></i> 비싸다</span>
+      <p class="picked" id="picked"></p>
+    </section>    <section class="panel" aria-label="입력">
+      <div class="field">
+        <div class="field-head">
+          <label for="price">사고 싶은 집</label>
+          <div class="amount"><input id="price-n" type="number" inputmode="decimal" min="0.5" max="40" step="0.1" aria-label="집 가격(억 원)"><span>억 원</span></div>
+        </div>
+        <div class="chips sizes" id="sizes" role="group" aria-label="집 크기"></div>
+        <input id="price" type="range" min="0.5" max="40" step="0.1">
+        <span class="hint" id="price-hint"></span>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="cash">지금 가진 돈<span class="sub-l">대출은 빼고 적어요</span></label>
+          <div class="amount"><input id="cash-n" type="number" inputmode="decimal" min="0" max="40" step="0.1" aria-label="가진 돈(억 원)"><span>억 원</span></div>
+        </div>
+        <input id="cash" type="range" min="0" max="15" step="0.1">
+      </div>
+
+      <div class="field">
+        <span class="label" id="years-l">몇 년 살 거예요?</span>
+        <div class="years-row">
+          <div class="chips" role="group" aria-labelledby="years-l" id="years"></div>
+          <label class="custom-years"><input id="years-n" type="number" inputmode="numeric" min="1" max="30" step="1" placeholder="15" aria-label="직접 입력(년)">년</label>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <section class="panel result" id="result" aria-live="polite" aria-label="결과">
+      <div class="verdict">
+        <div class="seal" id="seal"><div class="s1" id="seal1">매매</div></div>
+        <p class="why" id="why"></p>
+      </div>
+      <p class="warn" id="warn"></p>
+
+      <div class="bars">
+        <p class="bars-title" id="bars-title"></p>
+        <div class="bar-row" id="row-buy"><span class="name">매매</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
+        <div class="bar-row" id="row-jeonse"><span class="name">전세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
+        <div class="bar-row" id="row-wolse"><span class="name">월세</span><div class="track"><div class="fill"></div><span class="val"></span></div><div class="flow"></div></div>
+      </div>
+
+      <button class="share" id="share" type="button">이 결과 링크로 보내기</button>
+
+      <details id="more">
+        <summary>직접 조정</summary>
+        <p class="note" id="note"></p>
+        <div class="assume" id="assume"></div>
+        <div class="more-foot">
+          <button class="reset" id="reset" type="button">기본값으로 되돌리기</button>
+          <a class="faq-link" href="faq/index.html">계산 방법 자세히 보기 →</a>
+        </div>
+      </details>
+    </section>
+  </div>
+
+
+  <section class="panel facts" aria-labelledby="facts-h">
+    <h2 id="facts-h">서울특별시 금천구 아파트 시세</h2>
+    <p>2026년 7월~2026년 9월 실거래가 기준이에요. 이 기간 매매 거래는 314건이에요. 전세금은 보통 집값의 75% 정도예요.</p><p>84㎡(34평형) 집값은 10년 전 같은 달보다 해마다 평균 6.8% 올랐어요. 5년 전과 비교하면 해마다 0.7% 올랐어요.</p>
+    <div class="table"><table><thead><tr><th>크기</th><th>매매 중간값(원)</th><th>전세 중간값(원)</th><th>매매 거래</th></tr></thead><tbody><tr><td>39㎡(16평형)</td><td>3억 2,000만</td><td>2억 2,000만</td><td>21건</td></tr><tr><td>49㎡(20평형)</td><td>4억 9,000만</td><td>2억 4,600만</td><td>17건</td></tr><tr><td>59㎡(25평형)</td><td>5억 5,000만</td><td>3억 6,800만</td><td>97건</td></tr><tr><td>74㎡(30평형)</td><td>6억 6,800만</td><td>3억 5,500만</td><td>34건</td></tr><tr><td>84㎡(34평형)</td><td>7억 1,500만</td><td>5억 1,200만</td><td>107건</td></tr><tr><td>101㎡(40평형)</td><td class="few">9억 9,800만</td><td>8억 5,000만</td><td>4건</td></tr><tr><td>114㎡(45평형)</td><td>6억 5,000만</td><td>4억 6,500만</td><td>21건</td></tr></tbody></table></div>
+    <nav aria-label="같은 시도 다른 지역"><a href="r/11110/index.html">종로구</a> <a href="r/11140/index.html">중구</a> <a href="r/11170/index.html">용산구</a> <a href="r/11200/index.html">성동구</a> <a href="r/11215/index.html">광진구</a> <a href="r/11230/index.html">동대문구</a> <a href="r/11260/index.html">중랑구</a> <a href="r/11290/index.html">성북구</a> <a href="r/11305/index.html">강북구</a> <a href="r/11320/index.html">도봉구</a> <a href="r/11350/index.html">노원구</a> <a href="r/11380/index.html">은평구</a> <a href="r/11410/index.html">서대문구</a> <a href="r/11440/index.html">마포구</a> <a href="r/11470/index.html">양천구</a> <a href="r/11500/index.html">강서구</a> <a href="r/11530/index.html">구로구</a> <span class="here">금천구</span> <a href="r/11560/index.html">영등포구</a> <a href="r/11590/index.html">동작구</a> <a href="r/11620/index.html">관악구</a> <a href="r/11650/index.html">서초구</a> <a href="r/11680/index.html">강남구</a> <a href="r/11710/index.html">송파구</a> <a href="r/11740/index.html">강동구</a></nav>
+    <p><a href="r/index.html">전체 지역 보기</a> · <a href="index.html">처음 화면</a></p>
+  </section>
+
+  <a class="peek" id="peek" href="#result" hidden></a>
+
+  <footer>
+    <p>참고용 시뮬레이션이에요 · <a href="faq/index.html">계산 방법 보기</a> · <a href="r/index.html">지역별 시세</a></p>
+  </footer>
+</div>
+
+<script>window.PRESET_REGION = '11545';</script>
+<script src="app.js"></script>
+
+</body>
+</html>

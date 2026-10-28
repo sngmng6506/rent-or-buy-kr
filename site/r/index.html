@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>지역별 아파트 매매·전세·월세 비교 | 영끌각</title>
+<meta name="description" content="전국 시군구별 아파트 매매·전세 중간 가격과, 매매·전세·월세 중 어디가 돈이 더 남는지 계산하는 페이지 모음이에요.">
+<base href="../">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+
+/* 레이아웃: 한 줄 읽기 폭의 문서, 질문은 주제별로 묶음 */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #15181e; --ink-2: #5a6170; --line: #dde1e8; --seal: #cf2f25;
+  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.75 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.doc { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--seal); text-decoration: none; letter-spacing: 0.02em; }
+.back { color: var(--ink); font-weight: 500; text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.back:hover, .back:focus-visible { border-color: var(--ink); outline: none; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.25; text-wrap: balance; }
+.lead { margin: 8px 0 0; color: var(--ink-2); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a { color: var(--ink); text-decoration: none; font-size: 14px; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+nav.toc a:hover { border-color: var(--ink); }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 22px; }
+section > h2 { font-size: 13px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 500; margin: 14px 0 0; }
+.q { padding: 16px 0; border-top: 1px solid var(--line); }
+section > h2 + .q { border-top: 0; }
+.q h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.45; text-wrap: balance; }
+.q p { margin: 0 0 8px; }
+.q p:last-child, .q ul:last-child, .q .table:last-child { margin-bottom: 0; }
+.q ul { margin: 0 0 8px; padding-left: 20px; }
+.q li { margin: 2px 0; }
+.table { overflow-x: auto; margin: 6px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 500; }
+.muted { color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 13px; }
+a { color: inherit; }
+
+section h2 { font-size: 18px; margin: 14px 0 6px; }
+.links { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 14px; }
+.links a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="top"><a class="brand" href="index.html">영끌각</a><a class="back" href="index.html">계산하러 가기</a></div>
+  <header>
+    <h1>지역별 아파트 시세</h1>
+    <p class="lead">2026년 7월~2026년 9월 실거래가 기준이에요. 지역을 누르면 그 지역으로 매매·전세·월세를 비교해요.</p>
+  </header>
+  <section><h2>서울특별시</h2><p class="links"><a href="r/11110/index.html">종로구</a> <a href="r/11140/index.html">중구</a> <a href="r/11170/index.html">용산구</a> <a href="r/11200/index.html">성동구</a> <a href="r/11215/index.html">광진구</a> <a href="r/11230/index.html">동대문구</a> <a href="r/11260/index.html">중랑구</a> <a href="r/11290/index.html">성북구</a> <a href="r/11305/index.html">강북구</a> <a href="r/11320/index.html">도봉구</a> <a href="r/11350/index.html">노원구</a> <a href="r/11380/index.html">은평구</a> <a href="r/11410/index.html">서대문구</a> <a href="r/11440/index.html">마포구</a> <a href="r/11470/index.html">양천구</a> <a href="r/11500/index.html">강서구</a> <a href="r/11530/index.html">구로구</a> <a href="r/11545/index.html">금천구</a> <a href="r/11560/index.html">영등포구</a> <a href="r/11590/index.html">동작구</a> <a href="r/11620/index.html">관악구</a> <a href="r/11650/index.html">서초구</a> <a href="r/11680/index.html">강남구</a> <a href="r/11710/index.html">송파구</a> <a href="r/11740/index.html">강동구</a></p></section><section><h2>인천광역시</h2><p class="links"><a href="r/28125/index.html">제물포구</a> <a href="r/28155/index.html">영종구</a> <a href="r/28177/index.html">미추홀구</a> <a href="r/28185/index.html">연수구</a> <a href="r/28200/index.html">남동구</a> <a href="r/28237/index.html">부평구</a> <a href="r/28245/index.html">계양구</a> <a href="r/28275/index.html">서해구</a> <a href="r/28290/index.html">검단구</a> <a href="r/28710/index.html">강화군</a></p></section><section><h2>경기도</h2><p class="links"><a href="r/41111/index.html">수원시 장안구</a> <a href="r/41113/index.html">수원시 권선구</a> <a href="r/41115/index.html">수원시 팔달구</a> <a href="r/41117/index.html">수원시 영통구</a> <a href="r/41131/index.html">성남시 수정구</a> <a href="r/41133/index.html">성남시 중원구</a> <a href="r/41135/index.html">성남시 분당구</a> <a href="r/41150/index.html">의정부시</a> <a href="r/41171/index.html">안양시 만안구</a> <a href="r/41173/index.html">안양시 동안구</a> <a href="r/41192/index.html">부천시 원미구</a> <a href="r/41194/index.html">부천시 소사구</a> <a href="r/41196/index.html">부천시 오정구</a> <a href="r/41210/index.html">광명시</a> <a href="r/41220/index.html">평택시</a> <a href="r/41250/index.html">동두천시</a> <a href="r/41271/index.html">안산시 상록구</a> <a href="r/41273/index.html">안산시 단원구</a> <a href="r/41281/index.html">고양시 덕양구</a> <a href="r/41285/index.html">고양시 일산동구</a> <a href="r/41287/index.html">고양시 일산서구</a> <a href="r/41290/index.html">과천시</a> <a href="r/41310/index.html">구리시</a> <a href="r/41360/index.html">남양주시</a> <a href="r/41370/index.html">오산시</a> <a href="r/41390/index.html">시흥시</a> <a href="r/41410/index.html">군포시</a> <a href="r/41430/index.html">의왕시</a> <a href="r/41450/index.html">하남시</a> <a href="r/41461/index.html">용인시 처인구</a> <a href="r/41463/index.html">용인시 기흥구</a> <a href="r/41465/index.html">용인시 수지구</a> <a href="r/41480/index.html">파주시</a> <a href="r/41500/index.html">이천시</a> <a href="r/41550/index.html">안성시</a> <a href="r/41570/index.html">김포시</a> <a href="r/41591/index.html">화성시 만세구</a> <a href="r/41593/index.html">화성시 효행구</a> <a href="r/41595/index.html">화성시 병점구</a> <a href="r/41597/index.html">화성시 동탄구</a> <a href="r/41610/index.html">광주시</a> <a href="r/41630/index.html">양주시</a> <a href="r/41650/index.html">포천시</a> <a href="r/41670/index.html">여주시</a> <a href="r/41800/index.html">연천군</a> <a href="r/41820/index.html">가평군</a> <a href="r/41830/index.html">양평군</a></p></section><section><h2>부산광역시</h2><p class="links"><a href="r/26110/index.html">중구</a> <a href="r/26140/index.html">서구</a> <a href="r/26170/index.html">동구</a> <a href="r/26200/index.html">영도구</a> <a href="r/26230/index.html">부산진구</a> <a href="r/26260/index.html">동래구</a> <a href="r/26290/index.html">남구</a> <a href="r/26320/index.html">북구</a> <a href="r/26350/index.html">해운대구</a> <a href="r/26380/index.html">사하구</a> <a href="r/26410/index.html">금정구</a> <a href="r/26440/index.html">강서구</a> <a href="r/26470/index.html">연제구</a> <a href="r/26500/index.html">수영구</a> <a href="r/26530/index.html">사상구</a> <a href="r/26710/index.html">기장군</a></p></section><section><h2>대구광역시</h2><p class="links"><a href="r/27110/index.html">중구</a> <a href="r/27140/index.html">동구</a> <a href="r/27170/index.html">서구</a> <a href="r/27200/index.html">남구</a> <a href="r/27230/index.html">북구</a> <a href="r/27260/index.html">수성구</a> <a href="r/27290/index.html">달서구</a> <a href="r/27710/index.html">달성군</a> <a href="r/27720/index.html">군위군</a></p></section><section><h2>대전광역시</h2><p class="links"><a href="r/30110/index.html">동구</a> <a href="r/30140/index.html">중구</a> <a href="r/30170/index.html">서구</a> <a href="r/30200/index.html">유성구</a> <a href="r/30230/index.html">대덕구</a></p></section><section><h2>세종특별자치시</h2><p class="links"><a href="r/36110/index.html">세종</a></p></section><section><h2>전남광주통합특별시</h2><p class="links"><a href="r/12110/index.html">목포시</a> <a href="r/12130/index.html">여수시</a> <a href="r/12150/index.html">순천시</a> <a href="r/12170/index.html">나주시</a> <a href="r/12190/index.html">광양시</a> <a href="r/12210/index.html">동구</a> <a href="r/12240/index.html">서구</a> <a href="r/12270/index.html">남구</a> <a href="r/12300/index.html">북구</a> <a href="r/12330/index.html">광산구</a> <a href="r/12710/index.html">담양군</a> <a href="r/12720/index.html">곡성군</a> <a href="r/12730/index.html">구례군</a> <a href="r/12740/index.html">고흥군</a> <a href="r/12750/index.html">보성군</a> <a href="r/12760/index.html">화순군</a> <a href="r/12770/index.html">장흥군</a> <a href="r/12780/index.html">강진군</a> <a href="r/12790/index.html">해남군</a> <a href="r/12800/index.html">영암군</a> <a href="r/12810/index.html">무안군</a> <a href="r/12820/index.html">함평군</a> <a href="r/12830/index.html">영광군</a> <a href="r/12840/index.html">장성군</a> <a href="r/12850/index.html">완도군</a> <a href="r/12860/index.html">진도군</a> <a href="r/12870/index.html">신안군</a></p></section><section><h2>울산광역시</h2><p class="links"><a href="r/31110/index.html">중구</a> <a href="r/31140/index.html">남구</a> <a href="r/31170/index.html">동구</a> <a href="r/31200/index.html">북구</a> <a href="r/31710/index.html">울주군</a></p></section><section><h2>충청북도</h2><p class="links"><a href="r/43111/index.html">청주시 상당구</a> <a href="r/43112/index.html">청주시 서원구</a> <a href="r/43113/index.html">청주시 흥덕구</a> <a href="r/43114/index.html">청주시 청원구</a> <a href="r/43130/index.html">충주시</a> <a href="r/43150/index.html">제천시</a> <a href="r/43720/index.html">보은군</a> <a href="r/43730/index.html">옥천군</a> <a href="r/43740/index.html">영동군</a> <a href="r/43745/index.html">증평군</a> <a href="r/43750/index.html">진천군</a> <a href="r/43760/index.html">괴산군</a> <a href="r/43770/index.html">음성군</a> <a href="r/43800/index.html">단양군</a></p></section><section><h2>충청남도</h2><p class="links"><a href="r/44131/index.html">천안시 동남구</a> <a href="r/44133/index.html">천안시 서북구</a> <a href="r/44150/index.html">공주시</a> <a href="r/44180/index.html">보령시</a> <a href="r/44200/index.html">아산시</a> <a href="r/44210/index.html">서산시</a> <a href="r/44230/index.html">논산시</a> <a href="r/44250/index.html">계룡시</a> <a href="r/44270/index.html">당진시</a> <a href="r/44710/index.html">금산군</a> <a href="r/44760/index.html">부여군</a> <a href="r/44770/index.html">서천군</a> <a href="r/44790/index.html">청양군</a> <a href="r/44800/index.html">홍성군</a> <a href="r/44810/index.html">예산군</a> <a href="r/44825/index.html">태안군</a></p></section><section><h2>전북특별자치도</h2><p class="links"><a href="r/52111/index.html">전주시 완산구</a> <a href="r/52113/index.html">전주시 덕진구</a> <a href="r/52130/index.html">군산시</a> <a href="r/52140/index.html">익산시</a> <a href="r/52180/index.html">정읍시</a> <a href="r/52190/index.html">남원시</a> <a href="r/52210/index.html">김제시</a> <a href="r/52710/index.html">완주군</a> <a href="r/52720/index.html">진안군</a> <a href="r/52730/index.html">무주군</a> <a href="r/52740/index.html">장수군</a> <a href="r/52750/index.html">임실군</a> <a href="r/52770/index.html">순창군</a> <a href="r/52790/index.html">고창군</a> <a href="r/52800/index.html">부안군</a></p></section><section><h2>경상북도</h2><p class="links"><a href="r/47111/index.html">포항시 남구</a> <a href="r/47113/index.html">포항시 북구</a> <a href="r/47130/index.html">경주시</a> <a href="r/47150/index.html">김천시</a> <a href="r/47170/index.html">안동시</a> <a href="r/47190/index.html">구미시</a> <a href="r/47210/index.html">영주시</a> <a href="r/47230/index.html">영천시</a> <a href="r/47250/index.html">상주시</a> <a href="r/47280/index.html">문경시</a> <a href="r/47290/index.html">경산시</a> <a href="r/47730/index.html">의성군</a> <a href="r/47750/index.html">청송군</a> <a href="r/47760/index.html">영양군</a> <a href="r/47770/index.html">영덕군</a> <a href="r/47820/index.html">청도군</a> <a href="r/47830/index.html">고령군</a> <a href="r/47840/index.html">성주군</a> <a href="r/47850/index.html">칠곡군</a> <a href="r/47900/index.html">예천군</a> <a href="r/47920/index.html">봉화군</a> <a href="r/47930/index.html">울진군</a> <a href="r/47940/index.html">울릉군</a></p></section><section><h2>경상남도</h2><p class="links"><a href="r/48121/index.html">창원시 의창구</a> <a href="r/48123/index.html">창원시 성산구</a> <a href="r/48125/index.html">창원시 마산합포구</a> <a href="r/48127/index.html">창원시 마산회원구</a> <a href="r/48129/index.html">창원시 진해구</a> <a href="r/48170/index.html">진주시</a> <a href="r/48220/index.html">통영시</a> <a href="r/48240/index.html">사천시</a> <a href="r/48250/index.html">김해시</a> <a href="r/48270/index.html">밀양시</a> <a href="r/48310/index.html">거제시</a> <a href="r/48330/index.html">양산시</a> <a href="r/48720/index.html">의령군</a> <a href="r/48730/index.html">함안군</a> <a href="r/48740/index.html">창녕군</a> <a href="r/48820/index.html">고성군</a> <a href="r/48840/index.html">남해군</a> <a href="r/48850/index.html">하동군</a> <a href="r/48860/index.html">산청군</a> <a href="r/48870/index.html">함양군</a> <a href="r/48880/index.html">거창군</a> <a href="r/48890/index.html">합천군</a></p></section><section><h2>강원특별자치도</h2><p class="links"><a href="r/51110/index.html">춘천시</a> <a href="r/51130/index.html">원주시</a> <a href="r/51150/index.html">강릉시</a> <a href="r/51170/index.html">동해시</a> <a href="r/51190/index.html">태백시</a> <a href="r/51210/index.html">속초시</a> <a href="r/51230/index.html">삼척시</a> <a href="r/51720/index.html">홍천군</a> <a href="r/51730/index.html">횡성군</a> <a href="r/51750/index.html">영월군</a> <a href="r/51760/index.html">평창군</a> <a href="r/51770/index.html">정선군</a> <a href="r/51780/index.html">철원군</a> <a href="r/51790/index.html">화천군</a> <a href="r/51800/index.html">양구군</a> <a href="r/51810/index.html">인제군</a> <a href="r/51820/index.html">고성군</a> <a href="r/51830/index.html">양양군</a></p></section><section><h2>제주특별자치도</h2><p class="links"><a href="r/50110/index.html">제주시</a> <a href="r/50130/index.html">서귀포시</a></p></section>
+</div>
+</body>
+</html>

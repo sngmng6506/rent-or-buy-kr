@@ -67,5 +67,10 @@ jobs:
           git add site/data/regions.json data/lawd_codes.json
           if [ -f site/data/rates.json ]; then git add site/data/rates.json; fi
           git diff --cached --quiet || git commit -m "data: 실거래가·금리 갱신 $(date +%Y-%m-%d)"
-          # 수집하는 동안 main에 다른 커밋이 올라왔을 수 있어서 위에 다시 얹고 올림
+          # 수집하는 동안 main에 다른 커밋이 올라왔을 수 있어서 먼저 위에 얹음
+          git pull --rebase origin main
+          # 지역별 페이지(site/r)는 최신 index.html과 새 시세로 다시 만듦
+          python scripts/build_pages.py
+          git add -A site/r
+          git diff --cached --quiet || git commit -m "pages: 지역별 페이지 갱신 $(date +%Y-%m-%d)"
           for i in 1 2 3; do git pull --rebase origin main && git push && break; sleep 5; done

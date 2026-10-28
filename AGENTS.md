@@ -26,7 +26,7 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 ## 데이터
 
 - 주택 유형: apt 아파트(regions.json·index.json), villa 연립·다세대(regions-villa.json·index-villa.json), offi 오피스텔(regions-offi.json·index-offi.json). `collect.py --type`, `reb_index.py --type`. 단독·다가구는 매매(건물)와 임대(방) 단위가 달라 제외
-- 매매: 국토교통부_아파트 매매 실거래가 상세 자료 (RTMSDataSvcAptTradeDev), 연립다세대(RTMSDataSvcRHTrade), 오피스텔(RTMSDataSvcOffiTrade)
+- 매매: 국토교통부_아파트 매매 실거래가 상세 자료 (RTMSDataSvcAptTradeDev), 연립다세대(RTMSDataSvcRHTrade2, 끝에 2), 오피스텔(RTMSDataSvcOffiTrade)
 - 전월세: 국토교통부_아파트 전월세 실거래가 자료 (RTMSDataSvcAptRent), 연립다세대(RTMSDataSvcRHRent), 오피스텔(RTMSDataSvcOffiRent). 월세 0원 = 전세
 - 지수 표: 아파트 A_2024_00045·00050, 연립/다세대 A_2024_00080·00085, 오피스텔(시계열) A_2024_00615·00618
 - 시군구 코드: 행정안전부_법정동코드 (StanReginCd), 실패 시 예비 목록

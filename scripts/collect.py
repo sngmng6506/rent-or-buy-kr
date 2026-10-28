@@ -55,7 +55,7 @@ OFFI_SIZES = {
 TYPES = {
     "apt": {"trade": "RTMSDataSvcAptTradeDev", "rent": "RTMSDataSvcAptRent", "out": "regions.json",
             "sizes": SIZES, "main": "84", "main_range": AREA_84, "label": "아파트", "pyeong": "평형"},
-    "villa": {"trade": "RTMSDataSvcRHTrade", "rent": "RTMSDataSvcRHRent", "out": "regions-villa.json",
+    "villa": {"trade": "RTMSDataSvcRHTrade2", "rent": "RTMSDataSvcRHRent", "out": "regions-villa.json",
               "sizes": VILLA_SIZES, "main": "60", "main_range": VILLA_SIZES["60"][:2], "label": "빌라(연립·다세대)", "pyeong": "평"},
     "offi": {"trade": "RTMSDataSvcOffiTrade", "rent": "RTMSDataSvcOffiRent", "out": "regions-offi.json",
              "sizes": OFFI_SIZES, "main": "30", "main_range": OFFI_SIZES["30"][:2], "label": "오피스텔", "pyeong": "평"},

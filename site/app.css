@@ -276,3 +276,15 @@ footer a { color: inherit; }
 .bars:not(.open) .bars-note { display: none; }
 .bars-note { margin: -4px 0 2px; font-size: 13px; color: var(--ink-2); }
 .flow:empty { display: none; }
+
+/* ── 터치 화면: 확대 방지·누르는 영역 ───────────────────────── */
+html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@media (pointer: coarse) {
+  /* iOS는 16px보다 작은 입력칸을 누르면 화면을 확대함 */
+  input:not([type="range"]), select, textarea { font-size: 16px !important; }
+  /* 겉모양은 그대로, 누르는 영역만 44px 높이로 */
+  .chip, .help, .share, summary, .reset { position: relative; }
+  .chip::after, .share::after { content: ""; position: absolute; inset: -6px 0; }
+  .help::after { content: ""; position: absolute; inset: -11px; border-radius: 50%; }
+  input[type="range"] { height: 32px; }
+}

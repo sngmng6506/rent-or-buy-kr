@@ -330,12 +330,17 @@ def main():
 
     if args.test:
         ym = f"{end[0]}{end[1]:02d}"
-        t = fetch_items(TRADE, "11350", ym)
-        r = fetch_items(RENT, "11350", ym)
         # GitHub Actions 알림으로도 남겨서 로그를 열지 않아도 결과가 보이게
         gh = os.environ.get("GITHUB_ACTIONS") == "true"
         def note(title, msg):
             print(f"::notice title={title}::{msg}" if gh else f"{title}: {msg}")
+        t, r = [], []
+        for name, url in (("trade", TRADE), ("rent", RENT)):
+            try:
+                rows = fetch_items(url, "11350", ym)
+                (t if name == "trade" else r).extend(rows)
+            except Exception as e:
+                note(f"{TYPE}-{name}-error", f"{url.split('/')[-1]}: {e}")
         note("count", f"[{TYPE}] 노원구 {ym} 매매 {len(t)}건, 전월세 {len(r)}건")
         if t:
             note("trade", json.dumps(t[0], ensure_ascii=False))

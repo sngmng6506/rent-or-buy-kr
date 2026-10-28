@@ -144,6 +144,10 @@ def main():
             if key in series["sale"]:
                 hit = (level, key)
                 break
+        if not hit:   # 시도 지수도 없으면 전국 지수 (오피스텔은 광역시·경기 정도만 지역 지수가 있음)
+            nat = next((k for k in ("전국", "전체") if k in series["sale"]), None)
+            if nat:
+                hit = ("nation", nat)
         if not hit:
             how["none"] += 1
             continue
@@ -157,7 +161,7 @@ def main():
             out["sido:" + sc] = {"level": "sido", "label": f"{short} 전체",
                                  "sale": growth(series["sale"][short], latest),
                                  "jeonse": growth(series["jeonse"].get(short), latest)}
-    note("reb-match", f"지역 {len(regions)}곳: 자기 지수 {how['own']}, 상위 시 지수 {how['parent']}, 시도 지수 {how['sido']}, 없음 {how['none']}")
+    note("reb-match", f"지역 {len(regions)}곳: 자기 지수 {how['own']}, 상위 시 지수 {how['parent']}, 시도 지수 {how['sido']}, 전국 지수 {how['nation']}, 없음 {how['none']}")
     unmatched = [n for n in series["sale"] if n not in {v for c in regions.values() for _, v in our_keys(c["name"])}]
     note("reb-unused", " | ".join(names.get(n, n) for n in unmatched)[:900])
     for c in ["11350", "11680", "26350", "41135", "51190", "12330"]:
@@ -193,6 +197,8 @@ def path_key(full):
     if not raw or group(raw[-1]):   # '서울>강북지역' 같은 권역 묶음은 안 씀 (시도 지수와 이름이 겹침)
         return None
     parts = [p for p in raw if not group(p)]
+    if parts == ["전체"]:   # 오피스텔 표의 전국
+        return "전체"
     if not parts or parts[0] in ("전국", "수도권", "지방권", "5대광역시", "4대광역시", "기타지방", "8개도", "6대광역시"):
         return None
     if parts[0] == "전남광주" and len(parts) > 1 and parts[1] in ("광주", "전남"):
@@ -220,6 +226,8 @@ def our_keys(name):
 
 
 def label_of(key, level):
+    if level == "nation":
+        return "전국"
     parts = key.split()
     return f"{parts[0]} 전체" if level == "sido" else parts[-1] if level == "own" else parts[-1]
 

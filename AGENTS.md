@@ -9,9 +9,13 @@ site/index.html            계산기 페이지 뼈대 (지역 페이지도 이�
 site/app.js, site/app.css  계산 엔진·지도·검색·화면 (모든 페이지 공용)
 site/r/<시군구코드>/       지역별 페이지 (scripts/build_pages.py가 생성, 직접 수정 금지)
 site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
+site/about/, site/privacy/ 소개, 개인정보 처리방침 (광고·쿠키·데이터 처리 바꾸면 같이 수정)
+site/og.png, favicon*      공유 이미지(1200×630), 파비콘(집 도장)
+site/robots.txt, llms.txt, sitemap.xml  build_pages.py가 생성
 site/data/regions.json     지역 시세 (scripts/collect.py가 생성, 직접 수정 금지)
 scripts/collect.py         국토부 실거래가 API 수집 → regions.json
-scripts/build_pages.py     regions.json + index.html → site/r/ 지역 페이지·목록
+scripts/build_pages.py     지역 페이지(site/r/)·목록, 모든 페이지의 <!-- seo --> 태그·연락처, robots·sitemap·llms.txt 생성
+scripts/site_config.json   배포 주소(url)·연락처. url이 비면 canonical·sitemap 생략
 scripts/rates.py           한국은행 ECOS 금리(주담대·전세대출·정기예금) → rates.json
 data/lawd_codes.json       마지막으로 받은 법정동코드 목록 (API 실패 시 사용, 수집 때 자동 갱신)
 data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코드

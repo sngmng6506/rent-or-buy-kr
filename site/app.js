@@ -577,7 +577,7 @@ function render() {
   lastVerdict = win;
 
   // 결론 + 가정 + 다른 흐름
-  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 남아요.`;
+  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`;
   const g = p.grow;
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
@@ -596,8 +596,8 @@ function render() {
     const rk = a.jeonse >= a.wolse ? 'jeonse' : 'wolse';
     const altLabel = altG === gr.g5 && !edited ? `최근 5년처럼 ${move(altG)}` : '집값이 그대로라면';
     alt = a.buy >= a[rk]
-      ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 남아요.`
-      : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 남아요.`;
+      ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 이득이에요.`
+      : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 이득이에요.`;
   }
   // NYT식: 같은 크기 집을 이 금액 이하로 빌리면/사면 결과가 뒤집힘
   const eq = equivalents(inp, p, res);

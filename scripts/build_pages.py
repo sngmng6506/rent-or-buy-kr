@@ -78,7 +78,8 @@ def seo(title, desc, path, jsonld=None):
         out.append(f'<meta property="og:url" content="{absu(path)}">')
     out += [
         '<meta name="twitter:card" content="summary_large_image">',
-        '<meta name="theme-color" content="#cf2f25">',
+        '<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">',
+        '<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">',
         '<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
         '<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">',
         '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',

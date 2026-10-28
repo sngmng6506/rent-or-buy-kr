@@ -511,7 +511,7 @@ function render() {
     row.classList.toggle('win', isWin);
     row.classList.toggle('no-buy', isWin && !buyWins);
     const width = Math.max(0, val / max) * 100;
-    row.querySelector('.fill').style.width = width + '%';
+    row.querySelector('.fill').style.setProperty('--w', width + '%');   // 길이는 clip-path로 (레이아웃 안 건드림)
     const vEl = row.querySelector('.val');
     vEl.textContent = won(val);
     const outside = width < 45;

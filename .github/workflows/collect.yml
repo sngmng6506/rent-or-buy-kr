@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = 키 확인, full = 전체 수집(시세+금리), rates = 금리만"
+        description: "test = 키 확인, full = 전체 수집(시세+금리), rates = 금리만, reb-test = 부동산원 지수 확인"
         type: choice
-        options: [test, full, rates]
+        options: [test, full, rates, reb-test]
         default: test
       probe_names:
         description: "test 때 법정동코드로 조회해볼 이름, 쉼표 구분 (예: 충청북도 영동군)"
@@ -42,6 +42,12 @@ jobs:
           PROBE_NAMES: ${{ inputs.probe_names }}
           PROBE_CODES: ${{ inputs.probe_codes }}
         run: python scripts/collect.py --test
+      - name: Test REB
+        if: github.event_name == 'workflow_dispatch' && (inputs.mode == 'test' || inputs.mode == 'reb-test')
+        continue-on-error: true
+        env:
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
+        run: python scripts/reb_index.py --test
       - name: Test ECOS
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'test'
         continue-on-error: true

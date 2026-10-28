@@ -122,6 +122,14 @@ HIST_PARENT = {
 }
 
 
+def drop_legacy(regions):
+    """개편으로 없어진 코드(예: 인천 중구 28110)는 새 코드에 거래가 있고 자기 거래가 없으면 뺌.
+    법정동코드 API가 폐지 코드를 같이 주는 달이 있어서."""
+    old_codes = {o for olds in HIST_PARENT.values() for o in olds}
+    alive = {o for new, olds in HIST_PARENT.items() if (regions.get(new) or {}).get("cnt") for o in olds}
+    return {c: r for c, r in regions.items() if not (c in old_codes and c in alive and not r.get("cnt"))}
+
+
 def lawd_sido(name):
     """한 시도의 시군구 {코드: 이름}"""
     codes, page = {}, 1
@@ -387,6 +395,7 @@ def main():
               f"5년 {r['g5']}% 10년 {r['g10']}%  (누적 호출 {calls})")
         time.sleep(0.05)
 
+    regions = drop_legacy(regions)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     window = months_back(end, WINDOW)
     if OUT.exists():
@@ -402,7 +411,7 @@ def main():
             kept = {c: r for c, r in old.items() if c in codes and c not in regions}
         if kept:
             print(f"기존 데이터 유지: {len(kept)}곳", file=sys.stderr)
-        regions = dict(sorted({**kept, **regions}.items()))
+        regions = drop_legacy(dict(sorted({**kept, **regions}.items())))
     OUT.write_text(json.dumps({
         "updated": today.isoformat(),
         "window": [window[-1], window[0]],

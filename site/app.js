@@ -165,8 +165,10 @@ function rentTermsOf(r) {
   const sido = REG['sido:' + r.sido] || {};
   const pick = (own, ok, sv, fb) => (ok && own != null) ? own : (sv ?? fb);
   const enough = (r.nconv || 0) >= 10;
+  // 전환율이 연 2~10%를 벗어나면 표본이 이상하다고 보고 시도 값을 씀 (작은 시군 몇 곳)
+  const convOk = enough && r.conv >= 2 && r.conv <= 10;
   return {
-    conv: Math.round(pick(r.conv, enough, sido.conv, RENT_FALLBACK.conv) * 100) / 100,
+    conv: Math.round(pick(r.conv, convOk, sido.conv, RENT_FALLBACK.conv) * 100) / 100,
     wdep: Math.round(pick(r.wdep, enough, sido.wdep, RENT_FALLBACK.wdep / 100) * 1000) / 10,
     jgrow: Math.round(pick(r.jg10, r.n84 >= 10, sido.jg10, RENT_FALLBACK.jgrow) * 10) / 10,
   };

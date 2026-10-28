@@ -147,11 +147,11 @@ def describe(code, r, window):
         if g5 is not None:
             s += f". 5년 전과 비교하면 해마다 {pct(g5)} {'올랐' if g5 >= 0 else '떨어졌'}어요"
         lines.append(s + ".")
-    if r.get("conv") and r.get("nconv", 0) >= 10:
+    if r.get("conv") and r.get("nconv", 0) >= 10 and 2 <= r["conv"] <= 10:   # 계산기와 같은 기준
         per1 = r["conv"] / 12 * 100   # 전세 1억당 월 (만 원)
         s = f"월세는 전세 1억당 월 {per1:.0f}만 원 꼴이에요"
         if r.get("wdep"):
-            s += f" (보증금은 전세금의 {round(r['wdep'])}% 정도)"
+            s += f" (보증금은 전세금의 {round(r['wdep'] * 100)}% 정도)"   # wdep는 비율(0.14)
         lines.append(s + ".")
 
     rows = []

@@ -4511,24 +4511,6 @@
    "jg5": null,
    "jg10": null
   },
-  "28110": {
-   "name": "인천광역시 중구",
-   "avg": null,
-   "cnt": 0,
-   "p84": null,
-   "n84": 0,
-   "j84": null,
-   "nj84": 0,
-   "jratio": null,
-   "g5": null,
-   "g10": null,
-   "sizes": {},
-   "conv": null,
-   "wdep": null,
-   "nconv": 0,
-   "jg5": null,
-   "jg10": null
-  },
   "28125": {
    "name": "인천광역시 제물포구",
    "avg": 22616.8,
@@ -4593,24 +4575,6 @@
     "28110",
     "28140"
    ]
-  },
-  "28140": {
-   "name": "인천광역시 동구",
-   "avg": null,
-   "cnt": 0,
-   "p84": null,
-   "n84": 0,
-   "j84": null,
-   "nj84": 0,
-   "jratio": null,
-   "g5": null,
-   "g10": null,
-   "sizes": {},
-   "conv": null,
-   "wdep": null,
-   "nconv": 0,
-   "jg5": null,
-   "jg10": null
   },
   "28155": {
    "name": "인천광역시 영종구",
@@ -4974,24 +4938,6 @@
    "nconv": 369,
    "jg5": -1.37,
    "jg10": 3.42
-  },
-  "28260": {
-   "name": "인천광역시 서구",
-   "avg": null,
-   "cnt": 0,
-   "p84": null,
-   "n84": 0,
-   "j84": null,
-   "nj84": 0,
-   "jratio": null,
-   "g5": null,
-   "g10": null,
-   "sizes": {},
-   "conv": null,
-   "wdep": null,
-   "nconv": 0,
-   "jg5": null,
-   "jg10": null
   },
   "28275": {
    "name": "인천광역시 서해구",

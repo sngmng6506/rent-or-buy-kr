@@ -436,6 +436,8 @@ def main():
         time.sleep(0.05)
 
     regions = drop_legacy(regions)
+    if not regions:   # 전부 실패(권한·호출 한도 등)면 기존 파일을 건드리지 않음
+        sys.exit(f"[{TYPE}] 받은 지역이 하나도 없어요. 저장하지 않아요.")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     window = months_back(end, WINDOW)
     if OUT.exists():

@@ -21,8 +21,10 @@ const RATES = { mort: 4.2, jloan: 4.0, deposit: 3.0 };   // 임시값. rates.jso
 let RATES_INFO = null;
 // 한국부동산원 월간 아파트 지수 (data/index.json). 있으면 상승률은 이걸 우선 씀
 let IDX = null;
-const GROW_BASIS = ['g15', 'gall', 'g10', 'g5'];   // 기본 상승률: 15년 평균 → (없으면) 지수 시작부터 → 10년 → 5년
-const BASIS_LABEL = { g15: '15년 평균', gall: '장기 평균', g10: '10년 평균', g5: '5년 평균' };
+// 기본 상승률: 지수가 시작된 달(대부분 2003년 11월)부터 지금까지 연평균.
+// 오르고 내린 시기를 여러 번 포함해서, 몇 년 전과 비교하느냐에 덜 흔들림
+const GROW_BASIS = ['gall', 'g20', 'g15', 'g10', 'g5'];
+const BASIS_LABEL = { gall: '장기 평균', g20: '20년 평균', g15: '15년 평균', g10: '10년 평균', g5: '5년 평균' };
 const basisOf = g => { if (!g) return null; for (const k of GROW_BASIS) if (g[k] != null) return k; return null; };
 const RENT_FALLBACK = { conv: 4.5, wdep: 20, jgrow: 2.5 };   // 지역·시도 데이터가 없을 때만 (임시)
 const YEARS = [2, 4, 6, 10];
@@ -174,8 +176,8 @@ function growthOf(r) {
   const ix = r.idx?.sale ? r.idx : (REG['sido:' + r.sido]?.idx?.sale ? REG['sido:' + r.sido].idx : null);
   if (ix) {
     const k = basisOf(ix.sale);
-    const who = ix !== r.idx || ix.level === 'sido' ? `${SIDO[r.sido]} 전체` : ix.level === 'parent' ? ix.label : r.short;
-    return { g: ix.sale[k], g5: ix.sale.g5 ?? null, g10: ix.sale.g10 ?? null, basis: k, label: who, src: 'idx' };
+    const who = ix !== r.idx ? `${SIDO[r.sido]} 전체` : ix.level === 'own' ? r.short : (ix.label || `${SIDO[r.sido]} 전체`);
+    return { g: ix.sale[k], g5: ix.sale.g5 ?? null, g10: ix.sale.g10 ?? null, basis: k, label: who, src: 'idx', from: ix.sale.from };
   }
   // 2순위: 실거래 중간값 비교 (지수가 없는 지역). 지역 표본이 적으면 시도 전체 값
   const sido = REG['sido:' + r.sido];
@@ -548,7 +550,7 @@ function render() {
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const move = v => v >= 0 ? `해마다 ${pct(v)}씩 오르면` : `해마다 ${pct(-v)}씩 떨어지면`;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
-  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} ${BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원 지수' : ''})`}`;
+  let assume = `집값 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '상승' : '하락'} 가정${edited ? '' : ` (${gr.label} ${gr.basis === 'gall' && gr.from ? gr.from.slice(0, 4) + '년부터 평균' : BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원' : ''})`}`;
   const be = breakeven(inp, p);
   if (be === -Infinity) assume += ' · 집값이 떨어져도 매매가 유리';
   else if (be === Infinity) assume += ' · 집값이 많이 올라도 매매가 불리';

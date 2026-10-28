@@ -17,6 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 OUT = SITE / "r"
+IDX_FILE = SITE / "data" / "index.json"
+IDX = json.loads(IDX_FILE.read_text())["regions"] if IDX_FILE.exists() else {}
 CONFIG = json.loads((ROOT / "scripts" / "site_config.json").read_text())
 URL = (CONFIG.get("url") or "").rstrip("/")
 CONTACT = (CONFIG.get("contact") or "").strip()
@@ -141,8 +143,16 @@ def describe(code, r, window):
     if r.get("jratio"):
         first += f" 전세금은 보통 집값의 {round(r['jratio'])}% 정도예요."
     lines.append(first)
+    ix = (IDX.get(code) or {}) if IDX else {}
+    sale = ix.get("sale") or {}
+    if sale.get("gall") is not None:
+        who = "이 지역" if ix.get("level") == "own" else ix.get("label", "시도 전체")
+        s = (f"한국부동산원 아파트 매매가격지수로 보면 {who} 아파트값은 {sale['from'][:4]}년부터 해마다 평균 "
+             f"{pct(sale['gall'])} {'올랐' if sale['gall'] >= 0 else '떨어졌'}어요")
+        bits = [f"{y}년은 {'+' if sale[k] >= 0 else '−'}{pct(sale[k])}" for y, k in ((10, "g10"), (5, "g5")) if sale.get(k) is not None]
+        lines.append(s + (f" (최근 {', '.join(bits)}씩)" if bits else "") + ".")
     g10, g5 = r.get("g10"), r.get("g5")
-    if g10 is not None:
+    if g10 is not None and sale.get("gall") is None:
         s = f"84㎡(34평형) 집값은 10년 전 같은 달보다 해마다 평균 {pct(g10)} {'올랐' if g10 >= 0 else '떨어졌'}어요"
         if g5 is not None:
             s += f". 5년 전과 비교하면 해마다 {pct(g5)} {'올랐' if g5 >= 0 else '떨어졌'}어요"
@@ -229,7 +239,7 @@ def llms(window):
 - 입력: 지역(시군구), 집 크기(평형), 지금 가진 돈, 살 기간(년)
 - 결과: 매매·전세·월세 각각 N년 뒤 남는 돈, 이기는 쪽과 차이 금액, 결과가 뒤집히는 집값 상승률
 - 시세: 국토교통부 아파트 매매·전월세 실거래가, 최근 3개월 크기별 중간값 ({ym(a)}~{ym(b)})
-- 집값 상승률: 같은 지역 84㎡(34평형) 중간값을 10년 전 같은 달과 비교한 연평균
+- 집값·전세 상승률: 한국부동산원 월간 아파트 매매·전세가격지수의 장기 연평균(대부분 2003년 11월부터). 지수가 없는 시군은 시도 지수
 - 금리: 한국은행 ECOS 예금은행 가중평균금리(주택담보대출, 전세자금대출, 정기예금, 신규취급액 기준)
 - 세금: 취득세, 재산세, 종합부동산세를 1세대 1주택 법정 세율로 계산
 - 매달 16일 갱신. 참고용 시뮬레이션이며 투자·대출 조언이 아님

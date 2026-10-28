@@ -12,7 +12,7 @@
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 [hidden] { display: none !important; }
-/* 레이아웃: 위에 넓은 지도 칸(서울 | 경기·인천), 아래에 입력 | 판정 도장 */
+/* 레이아웃: 넓은 화면은 왼쪽 지도·입력, 오른쪽 결과(따라옴). 좁은 화면은 한 줄로, 결과가 안 보이면 아래에 결론 한 줄 */
 :root {
   --bg: #f3f5f8;
   --surface: #ffffff;
@@ -45,6 +45,7 @@ body {
   background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 28px 48px;
+  word-break: keep-all; overflow-wrap: break-word;
 }
 .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
 header { display: grid; gap: 4px; }
@@ -58,16 +59,18 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.2; text-wrap: 
 .maps-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
 .maps-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
 .picked { margin: 0; font-size: 15px; }
-.picked b { font-variant-numeric: tabular-nums; }
+.picked b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .picked .muted { color: var(--ink-2); }
 .map-box { min-width: 0; }
 .map { width: 100%; height: auto; display: block; margin-inline: auto; user-select: none; -webkit-user-select: none; caret-color: transparent; -webkit-tap-highlight-color: transparent; }
 .map text { cursor: pointer; }
-.years-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.years-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.15fr); gap: 8px; max-width: 420px; }
+#years { display: contents; }
+.years-row .chip { min-width: 0; padding: 8px 0; text-align: center; }
 /* 직접 입력도 다른 버튼과 같은 알약 모양 */
 .custom-years {
   display: inline-flex; align-items: center; gap: 2px; font: 500 15px var(--body); color: var(--ink);
-  border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 16px; min-width: 64px; cursor: text; line-height: 1.55;
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 10px; min-width: 0; justify-content: center; cursor: text; line-height: 1.55;
 }
 .custom-years:focus-within { border-color: var(--seal); }
 .custom-years.on { border-color: var(--ink); background: var(--ink); color: var(--surface); }
@@ -76,16 +79,16 @@ h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.2; text-wrap: 
   font-variant-numeric: tabular-nums;
 }
 .custom-years input:focus { outline: none; }
-.custom-years input::placeholder { color: var(--ink-2); }
-.custom-years.on input::placeholder { color: inherit; }
+.custom-years input::placeholder { color: var(--ink-2); opacity: .55; }
+.custom-years.on input::placeholder { color: inherit; opacity: .55; }
 /* 숫자 칸의 위아래 화살표 없애기 */
 input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 #map-seoul { max-width: 700px; }
 #map-cap { max-width: 520px; }
 #map-nat { max-width: 560px; }
-.maps-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-.search { position: relative; flex: 1 1 260px; max-width: 360px; }
+.maps-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; }
+.search { position: relative; }
 .search input {
   width: 100%; font: 400 15px var(--body); color: var(--ink); background: var(--bg);
   border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 12px;
@@ -121,7 +124,26 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .legend i { width: 64px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--cool) 6%, var(--surface)), color-mix(in srgb, var(--cool) 62%, var(--surface))); }
 
 .grid { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: start; }
-@media (min-width: 860px) { .grid { grid-template-columns: 1fr 1.05fr; } .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); } }
+.col { display: grid; gap: 20px; min-width: 0; }
+@media (min-width: 960px) {
+  .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+  #map-seoul { max-width: 520px; }
+  .maps-head { flex-direction: column; align-items: stretch; }
+  .tabs { justify-content: flex-start; gap: 6px; }
+  .tabs .chip { padding: 6px 12px; font-size: 14px; min-width: 0; }
+}
+/* 좁은 화면: 결과가 화면 밖이면 아래에 결론 한 줄 */
+.peek {
+  position: fixed; z-index: 10; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px;
+  background: var(--ink); color: var(--surface); text-decoration: none; font-size: 14.5px; line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18);
+}
+.peek .pk-seal { flex: none; font: 20px var(--display); color: #fff; background: var(--seal); border-radius: 8px; padding: 3px 8px; }
+.peek .pk-seal.no { background: var(--cool); }
+.peek b { font-variant-numeric: tabular-nums; }
+@media (min-width: 960px) { .peek { display: none !important; } }
 
 .field { display: grid; gap: 8px; }
 .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
@@ -152,6 +174,11 @@ input[type="range"] { width: 100%; accent-color: var(--seal); margin: 0; }
   transform: rotate(-9deg); font-family: var(--display); line-height: 1.05;
 }
 .seal .s1 { font-size: 40px; letter-spacing: 0.02em; }
+@media (max-width: 520px) {
+  .verdict { grid-template-columns: 1fr; gap: 12px; justify-items: start; }
+  .seal { width: 88px; height: 88px; }
+  .seal .s1 { font-size: 31px; }
+}
 .seal.no { border-color: var(--cool); color: var(--cool); background: var(--cool-soft); }
 
 @media (prefers-reduced-motion: no-preference) { .seal.pop { animation: pop 260ms ease-out; } }
@@ -188,14 +215,18 @@ details[open] summary::after { content: "닫기"; }
 .reset { font: 500 13px var(--body); color: var(--ink-2); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; margin-top: 10px; }
 footer { font-size: 12.5px; color: var(--ink-2); max-width: 80ch; display: grid; gap: 6px; }
 footer p { margin: 0; }
-.sizes { gap: 6px; }
-.sizes .chip { padding: 5px 11px; font-size: 13.5px; min-width: 0; }
+.sizes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.sizes .chip { padding: 5px 0; font-size: 13.5px; min-width: 0; text-align: center; }
+@media (max-width: 520px) { .sizes { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .chip:disabled { opacity: .35; cursor: not-allowed; }
 .flow { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ink-2); margin-top: -4px; }
 .flow .need { color: var(--ink); }
 .base { margin: -6px 0 2px; font-size: 13px; color: var(--ink-2); }
 .base b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .muted-l { color: var(--ink-2); font-weight: 400; }
+.sub-l { display: block; font-size: 13px; color: var(--ink-2); font-weight: 400; }
+.amount { flex: none; }
+.amount span { white-space: nowrap; }
 .flow .rwarn { flex-basis: 100%; color: var(--warn); }
 .more-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-top: 10px; }
 .more-foot .reset { margin-top: 0; }
@@ -215,28 +246,27 @@ footer a { color: inherit; }
     <h1>이 집, 영끌해서 사야 하나?</h1>
   </header>
 
-  <section class="panel" aria-label="지역 선택">
-    <div class="maps-head">
-      <h2>어디에 살고 싶어요?</h2>
-      <div class="chips tabs" id="tabs" role="group" aria-label="지도"></div>
-      <select class="tab-select" id="tab-select" aria-label="지도 고르기"></select>
-    </div>
-    <div class="map-box" id="box-seoul"><svg class="map" id="map-seoul" role="group" aria-label="서울 구 지도"></svg></div>
-    <div class="map-box" id="box-cap" hidden><svg class="map" id="map-cap" role="group" aria-label="경기·인천 지도"></svg></div>
-    <div class="map-box" id="box-metro" hidden><svg class="map" id="map-metro" role="group" aria-label="광역시 구 지도"></svg></div>
-    <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="전국 시군구 지도"></svg></div>
-    <div class="maps-foot">
+  <div class="grid">
+    <div class="col">
+    <section class="panel" aria-label="지역 선택">
+      <div class="maps-head">
+        <h2>어디에 살고 싶어요?</h2>
+        <div class="chips tabs" id="tabs" role="group" aria-label="지도"></div>
+        <select class="tab-select" id="tab-select" aria-label="지도 고르기"></select>
+      </div>
       <div class="search">
         <input id="q" type="search" autocomplete="off" placeholder="이름으로 찾기 (예: 판교, 해운대, 평택)" aria-label="지역 검색" role="combobox" aria-expanded="false" aria-controls="q-list" aria-autocomplete="list">
         <ul id="q-list" role="listbox" hidden></ul>
       </div>
-      <span class="legend">싸다 <i></i> 비싸다</span>
-    </div>
-    <p class="picked" id="picked"></p>
-  </section>
-
-  <div class="grid">
-    <section class="panel" aria-label="입력">
+      <div class="map-box" id="box-seoul"><svg class="map" id="map-seoul" role="group" aria-label="서울 구 지도"></svg></div>
+      <div class="map-box" id="box-cap" hidden><svg class="map" id="map-cap" role="group" aria-label="경기·인천 지도"></svg></div>
+      <div class="map-box" id="box-metro" hidden><svg class="map" id="map-metro" role="group" aria-label="광역시 구 지도"></svg></div>
+      <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="전국 시군구 지도"></svg></div>
+      <div class="maps-foot">
+        <span class="legend">싸다 <i></i> 비싸다</span>
+      </div>
+      <p class="picked" id="picked"></p>
+    </section>    <section class="panel" aria-label="입력">
       <div class="field">
         <div class="field-head">
           <label for="price">사고 싶은 집</label>
@@ -249,7 +279,7 @@ footer a { color: inherit; }
 
       <div class="field">
         <div class="field-head">
-          <label for="cash">지금 가진 돈 <span class="muted-l">(대출 빼고)</span></label>
+          <label for="cash">지금 가진 돈<span class="sub-l">대출은 빼고 적어요</span></label>
           <div class="amount"><input id="cash-n" type="number" inputmode="decimal" min="0" max="40" step="0.1" aria-label="가진 돈(억 원)"><span>억 원</span></div>
         </div>
         <input id="cash" type="range" min="0" max="15" step="0.1">
@@ -259,12 +289,13 @@ footer a { color: inherit; }
         <span class="label" id="years-l">몇 년 살 거예요?</span>
         <div class="years-row">
           <div class="chips" role="group" aria-labelledby="years-l" id="years"></div>
-          <label class="custom-years"><input id="years-n" type="number" inputmode="numeric" min="1" max="30" step="1" aria-label="직접 입력(년)">년</label>
+          <label class="custom-years"><input id="years-n" type="number" inputmode="numeric" min="1" max="30" step="1" placeholder="15" aria-label="직접 입력(년)">년</label>
         </div>
       </div>
     </section>
+    </div>
 
-    <section class="panel result" aria-live="polite" aria-label="결과">
+    <section class="panel result" id="result" aria-live="polite" aria-label="결과">
       <div class="verdict">
         <div class="seal" id="seal"><div class="s1" id="seal1">매매</div></div>
         <p class="why" id="why"></p>
@@ -289,6 +320,8 @@ footer a { color: inherit; }
       </details>
     </section>
   </div>
+
+  <a class="peek" id="peek" href="#result" hidden></a>
 
   <footer>
     <p>참고용 시뮬레이션이에요 · <a href="faq/index.html">계산 방법 보기</a></p>
@@ -831,7 +864,8 @@ function render() {
       ? `${altLabel} → 매매가 ${OBJ[rk]}보다 ${won(a.buy - a[rk])} 더 남아요.`
       : `${altLabel} → ${SUBJ[rk]} 매매보다 ${won(a[rk] - a.buy)} 더 남아요.`;
   }
-  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
+  $('why').innerHTML = `${lead}<span class="why2">${assume}</span>`;
+  $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;   // 최근 5년 흐름 줄은 뺌 (alt는 계산만 남겨둠)
 
   // 대출 경고는 해당 막대 아래에
   const warns = {};
@@ -912,6 +946,17 @@ $('years-n').addEventListener('change', e => {
   if (isNaN(v)) { drawYears(); return; }
   state.years = Math.min(30, Math.max(1, v)); e.target.value = state.years; drawYears(); render();
 });
+
+// 좁은 화면: 결과 칸이 안 보이면 아래에 결론 한 줄
+{
+  const peek = $('peek');
+  let resultVisible = true, typing = false;
+  const sync = () => { peek.hidden = resultVisible || typing; };
+  new IntersectionObserver(([e]) => { resultVisible = e.isIntersecting; sync(); }, { threshold: 0.6 }).observe(document.querySelector('.verdict'));
+  document.addEventListener('focusin', e => { typing = e.target.matches('#q, input[type="number"]'); sync(); });
+  document.addEventListener('focusout', () => { typing = false; setTimeout(sync, 0); });
+  peek.addEventListener('click', e => { e.preventDefault(); $('result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
+}
 
 // ── 검색 ───────────────────────────────────────────────
 let INDEX = [], hits = [], cursor = -1;

@@ -68,6 +68,8 @@ def seo(title, desc, path, jsonld=None):
     ]
     if URL:
         out.append(f'<link rel="canonical" href="{absu(path)}">')
+    for name, content in (CONFIG.get("verify") or {}).items():   # 네이버·구글 소유 확인
+        out.append(f'<meta name="{e(name)}" content="{e(content)}">')
     out += [
         '<meta property="og:type" content="website">',
         '<meta property="og:site_name" content="영끌각">',

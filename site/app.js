@@ -43,7 +43,7 @@ const ASSUME = EN ? [
   { key: 'jloan',   label: 'Jeonse loan rate' },
   { key: 'deposit', label: 'Savings rate' },
   { key: 'wdep',    label: 'Rent deposit (% of jeonse)' },
-  { key: 'conv',    label: 'Jeonse → rent conversion rate (per year)' },
+  { key: 'conv',    label: 'Jeonse-to-rent rate (per year)' },
 ] : [
   { key: 'grow',    label: '집값이 1년에 오르는 비율' },
   { key: 'ratio',   label: '전세금 (집값의 몇 %)' },
@@ -52,7 +52,7 @@ const ASSUME = EN ? [
   { key: 'jloan',   label: '전세 대출 금리' },
   { key: 'deposit', label: '예금 금리' },
   { key: 'wdep',    label: '월세 보증금 (전세금의 몇 %)' },
-  { key: 'conv',    label: '월세: 전세 1억당 월 (만 원)', unit: '만 원', to: v => Math.round(v / 12 * 100 * 10) / 10, from: v => v * 12 / 100 },
+  { key: 'conv',    label: '월세 환산 기준 (만 원)', unit: '만 원', to: v => Math.round(v / 12 * 100 * 10) / 10, from: v => v * 12 / 100 },
 ];
 // 동네 이름으로도 찾게 (법정동 코드 기준)
 const ALIAS = {
@@ -304,7 +304,7 @@ function buildAssume() {
     const l = document.createElement('label'); l.htmlFor = 'a-' + a.key;
     const t = document.createElement('span'); t.textContent = a.label; l.appendChild(t);
     const i = document.createElement('input');
-    // 대부분은 %, 월세는 '전세 1억당 월 만 원'으로 보여주고 내부에서는 연 %로 바꿈
+    // 대부분은 %, 월세는 '전세금−월세 보증금 1억 원당 월 만 원'으로 보여주고 내부에서는 연 %로 바꿈
     i.type = 'number'; i.step = '0.1'; i.id = 'a-' + a.key; i.value = a.to ? a.to(state.p[a.key]) : state.p[a.key];
     i.setAttribute('aria-label', a.label + (a.unit ? '' : ' (%)'));
     i.addEventListener('input', () => { const v = parseFloat(i.value); if (!isNaN(v)) { state.p[a.key] = a.from ? a.from(v) : v; render(); } });
@@ -498,8 +498,8 @@ function render() {
   let beLine = '', flip = '';
   if (canBuy) {
     const be = breakeven(inp, p);
-    if (be === -Infinity) beLine = L('집값이 떨어져도 매매가 유리해요.', 'Buying still wins even if prices fall.');
-    else if (be === Infinity) beLine = L('집값이 많이 올라도 매매가 불리해요.', 'Buying loses even if prices rise a lot.');
+    if (be === -Infinity) beLine = L('계산한 집값 상승률 범위에서는 매매가 유리해요.', 'Buying is better across the home price growth rates checked.');
+    else if (be === Infinity) beLine = L('계산한 집값 상승률 범위에서는 전세나 월세가 유리해요.', 'Jeonse or monthly rent is better across the home price growth rates checked.');
     else if (buyWins) beLine = be >= 0 ? L(`집값이 해마다 <b>${pct(be)}</b>보다 덜 오르면 ${rentNow}가 유리해요.`, `If prices rise less than <b>${pct(be)}</b> a year, ${rentNow} wins.`)
       : L(`집값이 해마다 <b>${pct(-be)}</b>보다 더 떨어지면 ${rentNow}가 유리해요.`, `If prices fall more than <b>${pct(-be)}</b> a year, ${rentNow} wins.`);
     else beLine = be >= 0 ? L(`집값이 해마다 <b>${pct(be)}</b>보다 더 오르면 매매가 유리해요.`, `If prices rise more than <b>${pct(be)}</b> a year, buying wins.`)
@@ -528,8 +528,8 @@ function render() {
 
   // 대출 경고는 해당 막대 아래에
   const warns = {};
-  if (!p.noLoan && res.ltv > 0.7) warns.buy = L(`대출이 집값의 ${Math.round(res.ltv * 100)}%라 이만큼 대출이 안 될 수 있어요`, `The loan is ${Math.round(res.ltv * 100)}% of the price; banks may not lend this much`);
-  if (!p.noLoan && res.jltv > 0.8) warns.jeonse = L(`대출이 전세금의 ${Math.round(res.jltv * 100)}%라 이만큼 대출이 안 될 수 있어요`, `The loan is ${Math.round(res.jltv * 100)}% of the deposit; banks may not lend this much`);
+  if (!p.noLoan && res.ltv > 0.7) warns.buy = L(`필요한 대출금이 집값의 ${Math.round(res.ltv * 100)}%예요. 실제 대출 한도를 넘을 수 있어요`, `The loan is ${Math.round(res.ltv * 100)}% of the price; the required loan may exceed your actual borrowing limit`);
+  if (!p.noLoan && res.jltv > 0.8) warns.jeonse = L(`필요한 대출금이 전세금의 ${Math.round(res.jltv * 100)}%예요. 실제 대출 한도를 넘을 수 있어요`, `The loan is ${Math.round(res.jltv * 100)}% of the deposit; the required loan may exceed your actual borrowing limit`);
   // 전세금이 집값에 가까우면(깡통전세) 보증금을 못 돌려받을 위험
   if (p.ratio >= 90) warns.jeonse = (warns.jeonse ? warns.jeonse + ' · ' : '') +
     L(`전세금이 집값의 ${Math.round(p.ratio)}%라 나중에 보증금을 다 못 돌려받을 위험이 커요`, `The deposit is ${Math.round(p.ratio)}% of the home’s price, so you risk not getting it all back`);
@@ -541,17 +541,17 @@ function render() {
     `The amounts under each bar (loan interest, savings interest, rent, taxes) are totals over ${Y} years. Add them to your cash today to get the bar.`);
   const f = res.flow;
   const flows = {
-    buy: [[res.gain >= 0 ? L('집값 상승', 'Price gain') : L('집값 하락', 'Price drop'), res.gain], [L('대출 이자', 'Loan interest'), -f.bInterest], [L('세금·수수료', 'Taxes & fees'), -f.bTax], f.bEarn > 1e6 ? [L('남는 돈 예금 이자', 'Savings interest'), f.bEarn] : null],
-    jeonse: [[L('대출 이자', 'Loan interest'), -f.jInterest], [L('남는 돈 예금 이자', 'Savings interest'), f.jEarn]],
-    wolse: [[L('월세', 'Rent'), -f.wRent], [L('남는 돈 예금 이자', 'Savings interest'), f.wEarn]],
+    buy: [[res.gain >= 0 ? L('집값 상승', 'Price gain') : L('집값 하락', 'Price drop'), res.gain], [L('대출 이자', 'Loan interest'), -f.bInterest], [L('세금·수수료', 'Taxes & fees'), -f.bTax], f.bEarn > 1e6 ? [L('남는 돈의 예금 이자', 'Interest on savings'), f.bEarn] : null],
+    jeonse: [[L('대출 이자', 'Loan interest'), -f.jInterest], [L('남는 돈의 예금 이자', 'Interest on savings'), f.jEarn]],
+    wolse: [[L('월세', 'Rent'), -f.wRent], [L('남는 돈의 예금 이자', 'Interest on savings'), f.wEarn]],
   };
   // 1등이 아닌 쪽마다: 남는 돈을 해마다 몇 % 벌어야 1등을 따라잡는지
   const need = {};
   for (const k of ['buy', 'jeonse', 'wolse']) {
     if (k === win || !able(res, k)) continue;
     const r = requiredReturn(inp, p, k, res[win]);
-    need[k] = r === Infinity ? L(`남는 돈이 거의 없어서 투자로는 ${OBJ[win]}를 못 따라가요`, `Too little spare cash to catch up with ${OBJ[win]} by investing`)
-      : L(`${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`, `To catch up with ${OBJ[win]}, your spare cash must earn <b>${pct(r)}</b> a year`);
+    need[k] = r === Infinity ? L(`계산 범위에서는 ${OBJ[win]}와 같은 결과가 되는 수익률을 찾지 못했어요`, `No return matching ${OBJ[win]} was found within the range checked`)
+      : L(`${OBJ[win]}와 같은 결과가 되려면 남는 돈에서 연 <b>${pct(r)}</b>의 수익이 필요해요`, `To match ${OBJ[win]}, your savings need an annual return of <b>${pct(r)}</b>`);
   }
   // 셋 다 똑같이 들어간 '매달 집에 쓴 돈'을 빼고 보여줌 → 가진 돈 + 막대 아래 항목 = 막대 금액 (차이·판정은 그대로)
   const spent = res.flow.spend;
@@ -578,11 +578,11 @@ function render() {
 
   $('note').textContent = L(
     '매달 주거비가 적게 드는 선택지는 절약한 돈을 예금에 넣는다고 계산해요.',
-    'Options with lower monthly housing costs put the savings into a bank deposit.');
+    'We assume any savings from lower monthly housing costs go into a savings account.');
   const help = {
     ratio: L(`전세금 ${won(res.D0)}`, `Jeonse deposit: ${won(res.D0)}`),
     wdep: L(`월세 보증금 ${won(res.W)}`, `Rent deposit: ${won(res.W)}`),
-    conv: L(`월세 월 ${won(res.rent0)}`, `Monthly rent: ${won(res.rent0)}`),
+    conv: L(`전세금과 월세 보증금의 차액 1억 원당 월세예요. 현재 월세는 ${won(res.rent0)}이에요.`, `The annual rate applies to the jeonse deposit minus the rent deposit. Monthly rent: ${won(res.rent0)}`),
     jgrow: L('전세는 2년마다, 월세는 해마다 오른다고 봐요.',
       p.noLoan ? 'Jeonse rises every 2 years, paid from savings; rent rises yearly.' : 'Jeonse rises every 2 years; monthly rent rises yearly.'),
   };
@@ -737,7 +737,7 @@ function drawChart() {
   let head;
   if (!able(okNow, 'buy')) head = L('대출 없이는 이 집을 살 수 없어서 빌리는 쪽만 보여줘요.', 'Without a loan you can’t buy here, so only renting is shown.');
   else if (first === 0 && stays) head = L('1년만 살아도 매매가 가장 이득이에요.', 'Buying wins even if you stay just 1 year.');
-  else if (stays) head = L(`<b>${first + 1}년</b> 넘게 살면 매매가 전세·월세보다 이득이에요.`, `Stay <b>${first + 1} years</b> or more and buying beats renting.`);
+  else if (stays) head = L(`<b>${first + 1}년</b> 이상 살면 매매가 전세·월세보다 이득이에요.`, `Stay <b>${first + 1} years</b> or more and buying beats renting.`);
   else if (first < 0) head = L('30년 안에는 전세나 월세가 매매보다 이득이에요.', 'Renting beats buying for any stay up to 30 years.');
   else head = L(`<b>${first + 1}년</b>부터 매매가 앞서다가 다시 뒤집혀요. 세로선 근처를 눌러 해마다 비교해보세요.`, `Buying pulls ahead from <b>year ${first + 1}</b>, then falls behind again. Tap the chart to compare each year.`);
   $('chart-head').innerHTML = head;

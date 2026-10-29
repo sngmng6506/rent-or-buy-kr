@@ -211,6 +211,8 @@ summary:hover::after { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { summary::after { transition: none; } }
 .assume { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 20px; margin-top: 16px; }
 .assume label { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: var(--fs-m); color: var(--ink-2); }
+.assume-field { min-width: 0; }
+.assume-help { margin: 4px 0 0; font-size: var(--fs-s); color: var(--ink-2); }
 .assume input {
   width: 5.5em; text-align: right; font: 500 var(--fs-m) var(--body); font-variant-numeric: tabular-nums; color: var(--ink);
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px;

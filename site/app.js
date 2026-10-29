@@ -300,14 +300,20 @@ function chips(el, items, cur, onPick, disabled = () => false) {
 function buildAssume() {
   const box = $('assume'); box.innerHTML = '';
   for (const a of ASSUME) {
-    const l = document.createElement('label');
+    const field = document.createElement('div'); field.className = 'assume-field';
+    const l = document.createElement('label'); l.htmlFor = 'a-' + a.key;
     const t = document.createElement('span'); t.textContent = a.label; l.appendChild(t);
     const i = document.createElement('input');
     // 대부분은 %, 월세는 '전세 1억당 월 만 원'으로 보여주고 내부에서는 연 %로 바꿈
     i.type = 'number'; i.step = '0.1'; i.id = 'a-' + a.key; i.value = a.to ? a.to(state.p[a.key]) : state.p[a.key];
     i.setAttribute('aria-label', a.label + (a.unit ? '' : ' (%)'));
     i.addEventListener('input', () => { const v = parseFloat(i.value); if (!isNaN(v)) { state.p[a.key] = a.from ? a.from(v) : v; render(); } });
-    l.appendChild(i); box.appendChild(l);
+    l.appendChild(i); field.appendChild(l);
+    if (a.key !== 'grow') {
+      const help = document.createElement('p'); help.className = 'assume-help'; help.id = 'a-help-' + a.key;
+      i.setAttribute('aria-describedby', help.id); field.appendChild(help);
+    }
+    box.appendChild(field);
   }
 }
 
@@ -570,20 +576,24 @@ function render() {
       + (warns[id] ? `<span class="rwarn">${warns[id]}</span>` : '');
   }
 
-  const topK = Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0];
-  const month = RATES_INFO?.rates.mort?.month;
-  $('note').textContent = EN
-    ? `Jeonse deposit: ${won(res.D0)}. Monthly rent: ${won(res.rent0)} a month with a ${won(res.W)} deposit. ` +
-      `All three options spend the same ${won(res.flow.spend / (Y * 12))} a month on housing (set by ${{ buy: 'mortgage payments', jeonse: 'jeonse loan interest', wolse: 'rent' }[topK]}); whatever an option doesn’t spend goes into savings. ` +
-      (month ? `Rates are Bank of Korea bank averages for new loans and deposits, ${month.slice(0, 4)}-${month.slice(4)}. ` : '') +
-      (state.type === 'offi' ? 'Officetels use 4.6% acquisition tax and a 0.5% agent fee, taxed like a home. ' : '') +
-      (p.noLoan ? 'No loans: jeonse increases at renewal come out of savings. ' : '') +
-      `Property and comprehensive real estate taxes use statutory one-home rates (assessed value 69% of market price; about ${holdingTax(state.price * EOK) < 1e4 ? 'under ₩10k' : won(holdingTax(state.price * EOK))} this year).`
-    : `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}으로 계산했어요. ` +
-      `셋 다 매달 집에 ${won(res.flow.spend / (Y * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[topK]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
-      (month ? `금리는 한국은행 ${month.slice(0, 4)}년 ${Number(month.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
-      (state.type === 'offi' ? '오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산했고, 주거용으로 써서 집처럼 재산세를 낸다고 봤어요. ' : '') +
-      `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${holdingTax(state.price * EOK) < 1e4 ? '1만 원 미만' : won(holdingTax(state.price * EOK))}).`;
+  $('note').textContent = L(
+    `매달 주거비로 쓸 수 있는 돈은 세 선택지 모두 ${won(res.flow.spend / (Y * 12))}으로 봤어요. 덜 쓰는 쪽은 차액을 예금에 넣어요.`,
+    `Each option has the same ${won(res.flow.spend / (Y * 12))} monthly housing budget. Any difference goes into savings.`);
+  const help = {
+    ratio: L(`전세금 ${won(res.D0)}`, `Jeonse deposit: ${won(res.D0)}`),
+    wdep: L(`월세 보증금 ${won(res.W)}`, `Rent deposit: ${won(res.W)}`),
+    conv: L(`월세 월 ${won(res.rent0)}`, `Monthly rent: ${won(res.rent0)}`),
+    jgrow: L('전세는 2년마다, 월세는 해마다 오른다고 봐요.',
+      p.noLoan ? 'Jeonse rises every 2 years, paid from savings; rent rises yearly.' : 'Jeonse rises every 2 years; monthly rent rises yearly.'),
+  };
+  for (const key of ['mort', 'jloan', 'deposit']) {
+    const month = RATES_INFO?.rates[key]?.month;
+    help[key] = month
+      ? L(`기본값: 한국은행 ${month.slice(0, 4)}년 ${Number(month.slice(4))}월 은행 평균`,
+        `Default: Bank of Korea bank average, ${month.slice(0, 4)}-${month.slice(4)}`)
+      : L('기본값은 참고용 임시 금리예요.', 'The default is a temporary reference rate.');
+  }
+  for (const [key, text] of Object.entries(help)) $('a-help-' + key).textContent = text;
 }
 
 // ── 입력 ───────────────────────────────────────────────

@@ -9,9 +9,9 @@ binding = "ASSETS"
 run_worker_first = ["/api/*"]
 html_handling = "auto-trailing-slash"
 
-# 코멘트 켤 때 아래 주석을 풀고 D1 ID를 넣기 (가짜 ID가 있으면 배포가 실패함)
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "buy-or-rent-kr"
-# database_id = "00000000-0000-0000-0000-000000000000"   # 배포 때 만든 D1의 ID로 바꾸기
-# migrations_dir = "migrations"
+# 코멘트 저장소 (D1)
+[[d1_databases]]
+binding = "DB"
+database_name = "buy-or-rent-kr"
+database_id = "0d6d32fd-8b22-4cbf-bfd1-0ee627b90515"
+migrations_dir = "migrations"

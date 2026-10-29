@@ -11,7 +11,7 @@
 
 ## 2. D1 데이터베이스 (한 번)
 - Workers & Pages → D1 → 만들기 → 이름 `buy-or-rent-kr`
-- `wrangler.toml`의 D1 부분 주석을 풀고, 만든 DB의 ID를 `database_id`에 넣고 커밋
+- 만든 DB의 ID를 `wrangler.toml`의 `database_id`에 넣고 커밋 (연결 완료: 2026-10)
 - DB 화면 → 콘솔에 `migrations/0001_comments.sql` 내용을 붙여 넣고 실행 (표 만들기)
 
 ## 3. 비밀값 (한 번)

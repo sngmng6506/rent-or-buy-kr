@@ -4,12 +4,12 @@
 Cloudflare D1(무료 SQLite)로 동작한다. 정적 파일만 올리면 버튼은 보이지만 "불러올 수 없어요"가 뜬다.
 
 ## 1. Pages 프로젝트 (한 번)
-- Cloudflare 대시보드 → Workers & Pages → 만들기 → Pages → GitHub 연결 → `rent-or-buy-kr`
+- Cloudflare 대시보드 → Workers & Pages → 만들기 → Pages → GitHub 연결 → 저장소 `rent-or-buy-kr` (Cloudflare 프로젝트 이름 `buy-or-rent-kr`)
 - 빌드 명령: 비움 / 빌드 출력 디렉터리: `site` / 루트 디렉터리: 비움(저장소 맨 위)
 - `functions/`는 저장소 맨 위에 있어야 함 (지금 구조 그대로)
 
 ## 2. D1 데이터베이스 (한 번)
-- Workers & Pages → D1 → 만들기 → 이름 `yeongkkeul-comments`
+- Workers & Pages → D1 → 만들기 → 이름 `buy-or-rent-kr`
 - 만든 DB의 ID를 `wrangler.toml`의 `database_id`에 넣고 커밋
 - DB 화면 → 콘솔에 `migrations/0001_comments.sql` 내용을 붙여 넣고 실행 (표 만들기)
 
@@ -26,7 +26,7 @@ Cloudflare D1(무료 SQLite)로 동작한다. 정적 파일만 올리면 버튼�
 
 ## 로컬 시험
 ```bash
-npx wrangler d1 migrations apply yeongkkeul-comments --local
+npx wrangler d1 migrations apply buy-or-rent-kr --local
 printf 'ADMIN_KEY=test\nHASH_SALT=local\n' > .dev.vars
 npx wrangler pages dev        # http://localhost:8788
 ```

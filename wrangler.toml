@@ -3,8 +3,9 @@ name = "buy-or-rent-kr"
 pages_build_output_dir = "site"
 compatibility_date = "2026-10-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "buy-or-rent-kr"
-database_id = "00000000-0000-0000-0000-000000000000"   # 배포 때 만든 D1의 ID로 바꾸기
-migrations_dir = "migrations"
+# 코멘트 켤 때 아래 주석을 풀고 D1 ID를 넣기 (가짜 ID가 있으면 배포가 실패함)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "buy-or-rent-kr"
+# database_id = "00000000-0000-0000-0000-000000000000"   # 배포 때 만든 D1의 ID로 바꾸기
+# migrations_dir = "migrations"

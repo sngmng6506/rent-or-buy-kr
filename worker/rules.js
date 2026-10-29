@@ -37,4 +37,10 @@ export async function ipHash(request, env) {
   return [...new Uint8Array(buf)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export const isAdmin = (request, env) => !!env.ADMIN_KEY && request.headers.get('x-admin-key') === env.ADMIN_KEY;
+export function isAdmin(request, env) {
+  const raw = request.headers.get('x-admin-key') || '';
+  if (!env.ADMIN_KEY || !raw) return false;
+  let key = raw;
+  try { key = decodeURIComponent(raw); } catch { /* 인코딩 안 된 옛 방식 */ }
+  return key === env.ADMIN_KEY || raw === env.ADMIN_KEY;
+}

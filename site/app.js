@@ -827,8 +827,10 @@ $('talk-list').addEventListener('click', async e => {
     fetch(`${TALK_API}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rep.dataset.id }) }).catch(() => {});
   }
   if (del && adminKey) {
-    const r = await fetch(`${TALK_API}/${del.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } }).catch(() => null);
-    if (r && r.ok) { talk.items = talk.items.filter(c => String(c.id) !== del.dataset.id); del.closest('li').remove(); }
+    // 헤더에는 영문·숫자만 들어가서 인코딩해 보냄 (한글·특수문자 키도 되게)
+    const r = await fetch(`${TALK_API}/${del.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-key': encodeURIComponent(adminKey) } }).catch(() => null);
+    if (r && r.ok) { talk.items = talk.items.filter(c => String(c.id) !== del.dataset.id); del.closest('li').remove(); setTalkCount(Math.max(0, (parseInt($('talk-count').textContent, 10) || 1) - 1)); }
+    else $('talk-msg').textContent = r && r.status === 403 ? '관리 키가 맞지 않아요. ?admin=키 로 다시 열어주세요.' : '삭제하지 못했어요. 잠시 뒤에 다시 해주세요.';
   }
 });
 // 지역 페이지: 시세 설명 아래에 최근 이야기 3개

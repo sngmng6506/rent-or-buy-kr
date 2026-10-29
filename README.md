@@ -19,4 +19,4 @@
 
 - [ ] 도메인 연결, Cloudflare Pages 배포, 코멘트용 D1 연결
 - [ ] Google Search Console·네이버 서치어드바이저 등록, AdSense 신청
-- [ ] **AI로 예측하기 (시험)** 탭: 부동산원 지수로 지역별 상승률을 미리 예측해 `site/data/forecast.json`에 저장(매달 Actions에서 갱신). 숫자 하나 대신 범위로 보여주고, 백테스트 오차를 같이 표시. 장기 평균보다 나을 때만 공개
+- [ ] **AI로 예측하기 (시험)** 탭: EBM으로 지역별 상승률을 범위로 예측해 `site/data/forecast.json`에 저장(매달 갱신), 범위로 매매·전세·월세 다시 계산. 백테스트에서 장기 평균보다 나을 때만 공개. 기획: [docs/ai-forecast.md](docs/ai-forecast.md)

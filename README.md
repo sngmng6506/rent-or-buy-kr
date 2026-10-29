@@ -19,4 +19,4 @@
 
 - [ ] 도메인 연결, Cloudflare Pages 배포, 코멘트용 D1 연결
 - [ ] Google Search Console·네이버 서치어드바이저 등록, AdSense 신청
-- [ ] **AI로 예측하기 (시험)** 탭: EBM으로 지역별 상승률을 범위로 예측해 `site/data/forecast.json`에 저장(매달 갱신), 범위로 매매·전세·월세 다시 계산. 백테스트에서 장기 평균보다 나을 때만 공개. 기획: [docs/ai-forecast.md](docs/ai-forecast.md)
+- 보류: **AI로 예측하기 (시험)**. 지수 데이터는 2003년 이후 큰 흐름이 4번 정도뿐이라 장기 평균을 이기기 어렵다고 봄. 실거래 원본(천만 건 이상)을 쌓으면 다시 검토. 기획: [docs/ai-forecast.md](docs/ai-forecast.md)

@@ -231,7 +231,7 @@ function applyRegion(key, keepSize) {
 // ── 표시 도우미 ─────────────────────────────────────────
 function won(v) {
   const neg = v < 0; v = Math.abs(v);
-  const eok = Math.floor(v / EOK), man = Math.round((v % EOK) / 1e4 / 100) * 100;
+  const eok = Math.floor(v / EOK), man = Math.round((v % EOK) / 1e5) * 10;   // 10만 원 단위 (막대끼리 빼면 판정 금액과 맞게)
   let s;
   if (eok > 0) s = man >= 10000 ? `${eok + 1}억` : man > 0 ? `${eok}억 ${man.toLocaleString('ko-KR')}만` : `${eok}억`;
   else s = `${(Math.round(v / 1e5) * 10).toLocaleString('ko-KR')}만`;
@@ -414,7 +414,9 @@ function render() {
   const rank = ranking(res);
   const win = rank[0][0];
   // 판정은 항상 '매매'와 비교: 매매가 이기면 가장 나은 빌리는 쪽과, 빌리는 쪽이 이기면 매매와
-  const vs = win === 'buy' ? rank[1][0] : 'buy', gap = res[win] - res[vs];
+  const vs = win === 'buy' ? rank[1][0] : 'buy';
+  const r10 = x => Math.round((x - res.flow.spend) / 1e5) * 1e5;   // 막대에 보이는 금액끼리의 차이
+  const gap = r10(res[win]) - r10(res[vs]);
   const buyWins = win === 'buy';
   const gr = growthOf(r0);
 
@@ -433,7 +435,8 @@ function render() {
   lastVerdict = win;
 
   // 결론 + 가정 + 다른 흐름
-  const lead = `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`;
+  const lead = gap < 1e5 ? `${state.years}년 살면 ${OBJ[win]}와 ${OBJ[vs]}가 거의 같아요.`
+    : `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`;
   const g = p.grow;
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
   const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
@@ -746,7 +749,7 @@ async function refreshTalkCount() {
   $('talk-btn-label').textContent = `${talkName()} 이야기`;
   setTalkCount(0);
   if (talk.open) { $('talk-title').textContent = `${talkName()} 이야기`; loadTalk(); return; }   // 열어둔 채 지역을 바꾸면 그 지역 이야기로
-  try { const d = await talkFetch(key, 0); if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 배포 전이거나 연결 실패: 숫자 없이 */ }
+  try { const d = await talkFetch(key, 0); $('talk-btn').hidden = false; if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 배포 전이거나 연결 실패: 버튼을 숨긴 채로 */ }
 }
 async function loadTalk(more = false) {
   const key = talkKey(), list = $('talk-list'), msg = $('talk-msg');

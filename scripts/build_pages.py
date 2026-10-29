@@ -28,6 +28,13 @@ SEO_RE = re.compile(r"<!-- seo -->.*?<!-- /seo -->", re.S)
 CONTACT_RE = re.compile(r"<!-- contact -->.*?<!-- /contact -->", re.S)
 MAIN_TITLE = "영끌각 | 집 살까 전세 살까? 매매·전세·월세 비교 계산기"
 MAIN_DESC = "지역, 가진 돈, 살 기간만 넣으면 매매·전세·월세 중 몇 년 뒤 돈이 가장 많이 남는 쪽을 바로 알려줘요. 국토교통부 실거래가와 한국은행 금리 기준."
+EN_NAME = "Rent or Buy Korea"
+EN_TITLE = "Buy, Jeonse or Monthly Rent? Korea Housing Calculator | Rent or Buy Korea"
+EN_DESC = ("Compare buying, jeonse and monthly rent for any district in Korea. Enter your cash and how long you’ll stay "
+           "to see which leaves you with more money, based on official transaction prices and Bank of Korea rates.")
+# 한국어 ↔ 영어 짝 페이지 (hreflang)
+PAIRS = {"": "en/", "faq/": "en/faq/"}
+PAIRS_BACK = {v: k for k, v in PAIRS.items()}
 
 PYEONG = {"39": 16, "49": 20, "59": 25, "74": 30, "84": 34, "101": 40, "114": 45}
 SIDO_ORDER = ["11", "28", "41", "26", "27", "30", "36", "12", "29", "31", "43", "44", "45", "52", "46", "47", "48", "51", "42", "50"]
@@ -55,8 +62,8 @@ def absu(path):
     return f"{URL}/{path}" if URL else None
 
 
-def seo(title, desc, path, jsonld=None):
-    """<head> 안 검색·공유용 태그 묶음. path는 사이트 기준 경로('', 'faq/', 'r/11350/')"""
+def seo(title, desc, path, jsonld=None, lang="ko"):
+    """<head> 안 검색·공유용 태그 묶음. path는 사이트 기준 경로('', 'faq/', 'r/11350/', 'en/')"""
     e = html.escape
     img = absu("og.png") or "/og.png"
     out = [
@@ -68,12 +75,17 @@ def seo(title, desc, path, jsonld=None):
     ]
     if URL:
         out.append(f'<link rel="canonical" href="{absu(path)}">')
+        ko = path if path in PAIRS else PAIRS_BACK.get(path)
+        if ko is not None:   # 언어별 짝: 검색엔진이 한국어·영어판을 같은 페이지로 묶음
+            out += [f'<link rel="alternate" hreflang="ko" href="{absu(ko)}">',
+                    f'<link rel="alternate" hreflang="en" href="{absu(PAIRS[ko])}">',
+                    f'<link rel="alternate" hreflang="x-default" href="{absu(ko)}">']
     for name, content in (CONFIG.get("verify") or {}).items():   # 네이버·구글 소유 확인
         out.append(f'<meta name="{e(name)}" content="{e(content)}">')
     out += [
         '<meta property="og:type" content="website">',
-        '<meta property="og:site_name" content="영끌각">',
-        '<meta property="og:locale" content="ko_KR">',
+        f'<meta property="og:site_name" content="{"영끌각" if lang == "ko" else EN_NAME}">',
+        f'<meta property="og:locale" content="{"ko_KR" if lang == "ko" else "en_US"}">',
         f'<meta property="og:title" content="{e(title)}">',
         f'<meta property="og:description" content="{e(desc)}">',
         f'<meta property="og:image" content="{img}">',
@@ -231,6 +243,74 @@ def page(tpl, code, r, siblings, window):
     return t
 
 
+# 영어판 계산기: site/index.html을 틀로 문구만 바꿔 site/en/index.html을 만듦 (지역 페이지·코멘트 없음)
+LOAN_FIELD = """      <div class="field">
+        <span class="label" id="loan-l">Can you get a bank loan in Korea?<span class="sub-l">Many foreigners can’t, depending on visa and income. Pick No if unsure.</span></span>
+        <div class="chips" role="group" aria-labelledby="loan-l" id="loan"></div>
+      </div>
+
+"""
+EN_HTML = [
+    ('<html lang="ko">', '<html lang="en">'),
+    ('<a class="skip" href="#result">결과로 건너뛰기</a>', '<a class="skip" href="#result">Skip to result</a>'),
+    ('<div class="brand">영끌각</div>', f'<div class="brand">{EN_NAME}</div>'),
+    ('<a class="lang" href="en/" hreflang="en" lang="en">EN</a>', '<a class="lang" href="./" hreflang="ko" lang="ko">한국어</a>'),
+    ('<h1>이 집, 영끌해서 사야 하나?</h1>', '<h1>Buy, jeonse, or rent in Korea?</h1>'),
+    ('aria-label="지역 선택"', 'aria-label="Choose an area"'),
+    ('aria-label="집 종류"', 'aria-label="Home type"'),
+    ('<h2>어디에 살고 싶어요?</h2>', '<h2>Where do you want to live?</h2>'),
+    ('id="tabs" role="group" aria-label="지도"', 'id="tabs" role="group" aria-label="Map"'),
+    ('aria-label="지도 고르기"', 'aria-label="Choose a map"'),
+    ('placeholder="이름으로 찾기 (예: 판교, 해운대, 평택)" aria-label="지역 검색"', 'placeholder="Search (e.g. Gangnam, Pangyo, Haeundae)" aria-label="Search areas"'),
+    ('aria-label="서울 구 지도"', 'aria-label="Seoul district map"'),
+    ('aria-label="경기·인천 지도"', 'aria-label="Gyeonggi and Incheon map"'),
+    ('aria-label="광역시 구 지도"', 'aria-label="City district map"'),
+    ('aria-label="전국 시군구 지도"', 'aria-label="Map of Korea"'),
+    ('<span class="legend">싸요 <i></i> 비싸요</span>', '<span class="legend">Cheaper <i></i> Pricier</span>'),
+    ('<h2 class="sr-only" id="h-input">조건</h2>', '<h2 class="sr-only" id="h-input">Your situation</h2>'),
+    ('<label for="price">사고 싶은 집</label>', '<label for="price">Home price</label>'),
+    ('min="0.5" max="40" step="0.1" aria-label="집 가격(억 원)"><span>억 원</span>', 'min="50" max="4000" step="10" aria-label="Home price (million won)"><span>M won</span>'),
+    ('aria-label="집 크기"', 'aria-label="Home size"'),
+    ('<label for="cash">지금 가진 돈<span class="sub-l">대출은 빼고 적어요</span></label>', '<label for="cash">Cash you have now<span class="sub-l">Not counting any loan</span></label>'),
+    ('min="0" max="40" step="0.1" aria-label="가진 돈(억 원)"><span>억 원</span>', 'min="0" max="4000" step="10" aria-label="Cash (million won)"><span>M won</span>'),
+    ('      <div class="field">\n        <span class="label" id="years-l">몇 년 살 거예요?</span>', LOAN_FIELD + '      <div class="field">\n        <span class="label" id="years-l">How many years will you stay?</span>'),
+    ('placeholder="15" aria-label="직접 입력(년)">년</label>', 'placeholder="15" aria-label="Other (years)">yrs</label>'),
+    ('<h2 class="sr-only" id="h-result">결과</h2>', '<h2 class="sr-only" id="h-result">Result</h2>'),
+    ('<span>공유하기</span>', '<span>Share</span>'),
+    ('<div class="s1" id="seal1">매매</div>', '<div class="s1" id="seal1">BUY</div>'),
+    ('aria-label="결과 보기 방식"', 'aria-label="Result view"'),
+    ('>결과 비교하기</button>', '>Compare results</button>'),
+    ('>그래프로 비교하기</button>', '>Compare over time</button>'),
+    ('<span><i class="k-buy"></i>매매</span><span><i class="k-jeonse"></i>전세</span><span><i class="k-wolse"></i>월세</span>',
+     '<span><i class="k-buy"></i>Buy</span><span><i class="k-jeonse"></i>Jeonse</span><span><i class="k-wolse"></i>Monthly rent</span>'),
+    ('<p class="chart-note">해마다 그만큼 살았을 때 내 자산이에요.</p>', '<p class="chart-note">Your assets if you stayed that many years.</p>'),
+    ('aria-label="금액이 어떻게 나왔는지 보기"', 'aria-label="How these amounts add up"'),
+    ('<span class="name">매매</span>', '<span class="name">Buy</span>'),
+    ('<span class="name">전세</span>', '<span class="name">Jeonse</span>'),
+    ('<span class="name">월세</span>', '<span class="name">Rent</span>'),
+    ('<summary>직접 조정</summary>', '<summary>Adjust assumptions</summary>'),
+    ('>기본값으로 되돌리기</button>', '>Reset to defaults</button>'),
+    ('<a class="faq-link" href="faq/index.html">계산 방법 자세히 보기 →</a>', '<a class="faq-link" href="en/faq/">How it’s calculated →</a>'),
+    ('<p class="kofi">도움이 됐다면 <a href="https://ko-fi.com/sngmng" target="_blank" rel="noopener">커피 한 잔으로 응원해주세요</a></p>',
+     '<p class="kofi">Found this useful? <a href="https://ko-fi.com/sngmng" target="_blank" rel="noopener">Buy me a coffee</a></p>'),
+    ('<p>참고용 시뮬레이션이에요 · <a href="faq/index.html">계산 방법 보기</a> · <a href="r/index.html">지역별 시세</a> · <a href="about/index.html">소개</a> · <a href="privacy/index.html">개인정보 처리방침</a></p>',
+     '<p>A simulation for reference only, not financial advice · <a href="en/faq/">How it works</a> · <a href="./" lang="ko">한국어</a> · <a href="privacy/index.html">Privacy (in Korean)</a></p>'),
+    ('<script src="app.js"></script>', '<script src="romanize.js"></script>\n<script src="app.js"></script>'),
+]
+
+
+def en_page(tpl):
+    t = tpl
+    for a, b in EN_HTML:
+        assert a in t, f"site/index.html에서 '{a[:40]}'를 못 찾음 — build_pages.py의 EN_HTML도 고쳐야 해요"
+        t = t.replace(a, b, 1)
+    app = {"@context": "https://schema.org", "@type": "WebApplication", "name": EN_NAME, "applicationCategory": "FinanceApplication",
+           "operatingSystem": "Web browser", "inLanguage": "en", "description": EN_DESC,
+           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"}, **({"url": absu("en/")} if URL else {})}
+    block = seo(EN_TITLE, EN_DESC, "en/", app, lang="en")
+    return SEO_RE.sub(lambda m: block + '\n<base href="../">', t, count=1)
+
+
 def llms(window):
     link = lambda p: absu(p) or "/" + p
     a, b = window
@@ -254,6 +334,11 @@ def llms(window):
 - [지역별 시세]({link("r/")}): 시군구별 아파트 매매·전세 중간값과 그 지역으로 열린 계산기
 - [소개]({link("about/")})
 - [개인정보 처리방침]({link("privacy/")})
+
+## English
+
+- [Calculator in English]({link("en/")}): buy vs jeonse vs monthly rent for foreigners living in Korea, with a no-loan option
+- [How it works]({link("en/faq/")}): what jeonse is, data sources, assumptions
 """
 
 
@@ -314,6 +399,8 @@ def main():
         d.mkdir(parents=True)
         (d / "index.html").write_text(page(tpl, c, r, groups[c[:2]], window))
     (OUT / "index.html").write_text(index_page(faq_css, groups, sido_names, window))
+    (SITE / "en").mkdir(exist_ok=True)
+    (SITE / "en" / "index.html").write_text(en_page(tpl))
     print(f"지역 페이지 {len(ok)}개 + 목록 → {OUT.relative_to(ROOT)}")
 
     # 손으로 쓰는 페이지들의 검색·공유 태그와 연락처
@@ -321,12 +408,13 @@ def main():
            "operatingSystem": "웹 브라우저", "inLanguage": "ko", "description": MAIN_DESC,
            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"}, **({"url": absu("")} if URL else {})}
     stamp(SITE / "faq" / "index.html", seo("영끌각 계산 방법 · 자주 묻는 질문", "영끌각이 매매·전세·월세를 어떻게 비교하는지, 시세·상승률·세금·대출을 어떤 기준으로 계산하는지 자세히 설명해요.", "faq/"))
+    stamp(SITE / "en" / "faq" / "index.html", seo("How it works · FAQ | Rent or Buy Korea", "What jeonse and monthly rent deposits are, where the prices and rates come from, and what the calculator assumes, including loans for foreigners.", "en/faq/", lang="en"))
     stamp(SITE / "about" / "index.html", seo("영끌각 소개", "영끌각은 매매·전세·월세 중 몇 년 뒤 돈이 더 남는 쪽을 공공 데이터로 계산해주는 무료 웹 계산기예요.", "about/"))
     stamp(SITE / "privacy" / "index.html", seo("개인정보 처리방침 | 영끌각", "영끌각은 회원가입이 없고 계산에 쓴 값을 서버로 보내지 않아요. 코멘트 저장, 광고 쿠키, 접속 기록 처리 방식을 설명해요.", "privacy/"))
     # 계산기 본문(index.html)이 틀이라 마지막에: 위 지역 페이지는 이미 만들어짐
     stamp(SITE / "index.html", seo(MAIN_TITLE, MAIN_DESC, "", app))
 
-    pages = ["", "faq/", "about/", "privacy/", "r/"] + [f"r/{c}/" for c in sorted(ok)]
+    pages = ["", "faq/", "about/", "privacy/", "r/", "en/", "en/faq/"] + [f"r/{c}/" for c in sorted(ok)]
     robots = "User-agent: *\nAllow: /\n"
     if URL:
         day = (data.get("updated") or "")[:10]

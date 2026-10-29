@@ -1,19 +1,24 @@
+// 언어: <html lang="en">이면 영어판 (site/en/). 문구는 L(한국어, 영어)로 같이 적음
+const EN = document.documentElement.lang === 'en';
+const L = (ko, en) => EN ? en : ko;
+const place = k => EN && typeof RR !== 'undefined' ? RR.place(k) : k;   // 지역 이름 로마자 (romanize.js, 영어판에서만 불러옴)
 // 지도 탭: [id, 이름]. 폰에서는 드롭다운
-const TABS = [['seoul', '서울'], ['cap', '경기 · 인천'], ['m26', '부산'], ['m27', '대구'], ['m30', '대전 · 세종'], ['m29', '광주'], ['m31', '울산'], ['nat', '전국']];
+const TABS = L([['seoul', '서울'], ['cap', '경기 · 인천'], ['m26', '부산'], ['m27', '대구'], ['m30', '대전 · 세종'], ['m29', '광주'], ['m31', '울산'], ['nat', '전국']],
+  [['seoul', 'Seoul'], ['cap', 'Gyeonggi'], ['m26', 'Busan'], ['m27', 'Daegu'], ['m30', 'Daejeon'], ['m29', 'Gwangju'], ['m31', 'Ulsan'], ['nat', 'All Korea']]);
 const METRO_OF = { '26': 'm26', '27': 'm27', '30': 'm30', '36': 'm30', '29': 'm29', '31': 'm31' };
 
 // ── 상수 ───────────────────────────────────────────────
 const SIDO = { '12':'전남광주', '11':'서울','26':'부산','27':'대구','28':'인천','29':'광주','30':'대전','31':'울산','36':'세종','41':'경기',
   '42':'강원','51':'강원','43':'충북','44':'충남','45':'전북','52':'전북','46':'전남','47':'경북','48':'경남','50':'제주' };
 // 주택 유형: [id, 이름, 시세 파일, 지수 파일]. 크기 구간·평 표기는 시세 파일에 들어 있음
-const TYPES = [['apt', '아파트', 'regions.json', 'index.json'], ['villa', '빌라', 'regions-villa.json', 'index-villa.json'], ['offi', '오피스텔', 'regions-offi.json', 'index-offi.json']];
+const TYPES = [['apt', L('아파트', 'Apartment'), 'regions.json', 'index.json'], ['villa', L('빌라', 'Villa'), 'regions-villa.json', 'index-villa.json'], ['offi', L('오피스텔', 'Officetel'), 'regions-offi.json', 'index-offi.json']];
 const TYPE_DATA = {};      // id → { data, idx } (받아둔 것)
 const TYPE_OK = { apt: true };   // 시세 파일이 있는 유형만 고를 수 있음
 // 아파트는 공급면적 '평형', 빌라·오피스텔은 전용면적 '평'
 let SIZE_KEYS = ['39', '49', '59', '74', '84', '101', '114'];
 let PYEONG = { '39': 16, '49': 20, '59': 25, '74': 30, '84': 34, '101': 40, '114': 45 };
 let PY_WORD = '평형', MAIN_SIZE = '84';
-const sizeText = k => `${k}㎡(${PYEONG[k]}${PY_WORD})`;
+const sizeText = k => L(`${k}㎡(${PYEONG[k]}${PY_WORD})`, `${k}㎡ (${PYEONG[k]} pyeong)`);
 const MIN_DEALS = 3;          // 이보다 거래가 적은 크기는 고를 수 없음
 const FALLBACK_GROW = 2.0;    // 상승률 데이터가 없을 때 (임시)
 const FALLBACK_RATIO = 60;    // 전세가율 데이터가 없을 때 (임시)
@@ -25,11 +30,21 @@ let whyOpen = false;   // 결론 옆 '?' 펼침 상태
 // 기본 상승률: 지수가 시작된 달(대부분 2003년 11월)부터 지금까지 연평균.
 // 오르고 내린 시기를 여러 번 포함해서, 몇 년 전과 비교하느냐에 덜 흔들림
 const GROW_BASIS = ['gall', 'g20', 'g15', 'g10', 'g5'];
-const BASIS_LABEL = { gall: '장기 평균', g20: '20년 평균', g15: '15년 평균', g10: '10년 평균', g5: '5년 평균' };
+const BASIS_LABEL = L({ gall: '장기 평균', g20: '20년 평균', g15: '15년 평균', g10: '10년 평균', g5: '5년 평균' },
+  { gall: 'long-run average', g20: '20-year average', g15: '15-year average', g10: '10-year average', g5: '5-year average' });
 const basisOf = g => { if (!g) return null; for (const k of GROW_BASIS) if (g[k] != null) return k; return null; };
 const RENT_FALLBACK = { conv: 4.5, wdep: 20, jgrow: 2.5 };   // 지역·시도 데이터가 없을 때만 (임시)
 const YEARS = [2, 4, 6, 10];
-const ASSUME = [
+const ASSUME = EN ? [
+  { key: 'grow',    label: 'Home prices rise per year' },
+  { key: 'ratio',   label: 'Jeonse deposit (% of price)' },
+  { key: 'jgrow',   label: 'Jeonse & rent rise per year' },
+  { key: 'mort',    label: 'Mortgage rate' },
+  { key: 'jloan',   label: 'Jeonse loan rate' },
+  { key: 'deposit', label: 'Savings rate' },
+  { key: 'wdep',    label: 'Rent deposit (% of jeonse)' },
+  { key: 'conv',    label: 'Jeonse → rent conversion rate (per year)' },
+] : [
   { key: 'grow',    label: '집값이 1년에 오르는 비율' },
   { key: 'ratio',   label: '전세금 (집값의 몇 %)' },
   { key: 'jgrow',   label: '전세금·월세가 1년에 오르는 비율' },
@@ -96,7 +111,9 @@ function combine(list) {
   }
   return out;
 }
-const norm = t => t.replace(/\s+/g, '').toLowerCase();
+const norm = t => t.replace(/[\s-]+/g, '').toLowerCase();
+const sidoName = sc => place(SIDO[sc] || '');
+const allOf = n => L(`${n} 전체`, `All of ${n}`);
 const shortName = full => full.replace(/^\S+\s/, '');   // "서울특별시 노원구" → "노원구"
 
 function buildRegions(data) {
@@ -111,7 +128,7 @@ function buildRegions(data) {
   }
   // 시도 전체
   for (const [sc, list] of Object.entries(bySido)) {
-    REG['sido:' + sc] = { key: 'sido:' + sc, sido: sc, name: `${SIDO[sc]} 전체`, short: SIDO[sc], whole: true, ...combine(list), idx: IDX?.regions?.['sido:' + sc] || null };
+    REG['sido:' + sc] = { key: 'sido:' + sc, sido: sc, name: allOf(sidoName(sc)), short: sidoName(sc), whole: true, ...combine(list), idx: IDX?.regions?.['sido:' + sc] || null };
   }
   // 서울 지도: 구 = 코드 하나
   for (const gu of Object.keys(MAPS.seoul.gu)) {
@@ -136,7 +153,7 @@ function buildRegions(data) {
     const list = [...new Set(Object.keys(MAPS.metro[sc === '30' ? '30' : sc].gu)
       .filter(k => k.split(':')[1] === sc).map(k => REG[k]).filter(Boolean))];
     if (!list.length) continue;
-    REG[key] = { key, sido: list[0].sido, name: `${SIDO[sc]} 전체`, short: SIDO[sc], mapKey: key, whole: true, metroTab: 'm' + sc, ...combine(list) };
+    REG[key] = { key, sido: list[0].sido, name: allOf(sidoName(sc)), short: sidoName(sc), mapKey: key, whole: true, metroTab: 'm' + sc, ...combine(list) };
   }
   // 경기 지도: 시 = 그 시의 구 전체
   for (const key of Object.keys(MAPS.cap.gu)) {
@@ -145,7 +162,7 @@ function buildRegions(data) {
     const list = (bySido['41'] || []).filter(x => x.short === city || x.short.startsWith(city + ' '));
     if (!list.length) continue;
     if (list.length === 1) { REG[key] = list[0]; list[0].mapKey = key; continue; }
-    REG[key] = { key, sido: '41', name: `경기 ${city} 전체`, short: city.replace(/(시|군)$/, ''), mapKey: key, whole: true, ...combine(list) };
+    REG[key] = { key, sido: '41', name: L(`경기 ${city} 전체`, `All of ${place(city)}`), short: EN ? place(city).replace(/-(si|gun)$/, '') : city.replace(/(시|군)$/, ''), mapKey: key, whole: true, ...combine(list) };
     list.forEach(x => { x.parentMap = key; });
   }
   // 인천 지도: 2018년 경계에 지금 구를 맞춤
@@ -157,10 +174,15 @@ function buildRegions(data) {
     if (!list.length) list = before.map(c => REG['c:' + c]).filter(Boolean);
     if (!list.length) list = (bySido['28'] || []).filter(x => x.short === old);
     if (!list.length) continue;
-    const label = list.map(x => x.short).join('·');
-    REG[key] = list.length === 1 ? list[0] : { key, sido: '28', name: `인천 ${label}`, short: label, whole: true, ...combine(list) };
+    const label = list.map(x => place(x.short)).join('·');
+    REG[key] = list.length === 1 ? list[0] : { key, sido: '28', name: L(`인천 ${label}`, `Incheon ${label}`), short: label, whole: true, ...combine(list) };
     REG[key].mapKey = key;
     list.forEach(x => { if (x !== REG[key]) x.parentMap ||= key; });
+  }
+  // 영어판: 이름 짝 맞추기가 끝난 뒤 보이는 이름만 로마자로 (검색은 한글 이름으로도 되게 ko에 남김)
+  if (EN) for (const e of new Set(Object.values(REG))) {
+    if (e.whole || e.ko) continue;
+    e.ko = e.name; e.name = place(e.name); e.short = place(e.short);
   }
 }
 
@@ -177,7 +199,9 @@ function growthOf(r) {
   const ix = r.idx?.sale ? r.idx : (REG['sido:' + r.sido]?.idx?.sale ? REG['sido:' + r.sido].idx : null);
   if (ix) {
     const k = basisOf(ix.sale);
-    const who = ix !== r.idx ? `${SIDO[r.sido]} 전체` : ix.level === 'own' ? r.short : (ix.label || `${SIDO[r.sido]} 전체`);
+    // 지수 이름표(ix.label)는 한글: '노원구', '전남 전체', '전국'
+    const lbl = ix.label ? (EN ? (/ 전체$/.test(ix.label) ? allOf(place(ix.label.replace(/ 전체$/, ''))) : ix.label === '전국' ? 'all of Korea' : place(ix.label)) : ix.label) : null;
+    const who = ix !== r.idx ? allOf(sidoName(r.sido)) : ix.level === 'own' ? r.short : (lbl || allOf(sidoName(r.sido)));
     return { g: ix.sale[k], g5: ix.sale.g5 ?? null, g10: ix.sale.g10 ?? null, basis: k, label: who, src: 'idx', from: ix.sale.from };
   }
   // 2순위: 실거래 중간값 비교 (지수가 없는 지역). 지역 표본이 적으면 시도 전체 값
@@ -185,7 +209,7 @@ function growthOf(r) {
   const own = !r.whole && r.n84 >= 10;
   const g10 = own && r.g10 != null ? r.g10 : (r.whole && r.g10 != null ? r.g10 : sido?.g10);
   const g5 = own && r.g5 != null ? r.g5 : (r.whole && r.g5 != null ? r.g5 : sido?.g5);
-  const label = (own || r.whole) && r.g10 != null ? r.short : `${SIDO[r.sido]} 전체`;
+  const label = (own || r.whole) && r.g10 != null ? r.short : allOf(sidoName(r.sido));
   return { g: g10 ?? null, g5: g5 ?? null, g10: g10 ?? null, basis: 'g10', label, src: 'deal' };
 }
 function jeonseGrowth(r) {
@@ -216,20 +240,28 @@ function ratioOf(r, k) {
 const priceAt = (r, k) => (k && r.sizes[k]?.p) ? r.sizes[k].p : null;   // 만원
 
 // ── 상태 ───────────────────────────────────────────────
-const state = { type: 'apt', region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, p: { ...RATES, ...RENT_FALLBACK, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
+const state = { type: 'apt', region: null, size: '84', price: 8, cash: 3, years: 6, manual: false, noLoan: false, p: { ...RATES, ...RENT_FALLBACK, grow: FALLBACK_GROW, ratio: FALLBACK_RATIO } };
 
 function applyRegion(key, keepSize) {
   const r = REG[key]; if (!r) return;
   state.region = key;
   state.size = defaultSize(r, keepSize ? state.size : MAIN_SIZE);
   const gr = growthOf(r);
-  state.p = { kind: state.type, ...RATES, ...rentTermsOf(r), grow: gr.g ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
+  state.p = { kind: state.type, noLoan: state.noLoan, ...RATES, ...rentTermsOf(r), grow: gr.g ?? FALLBACK_GROW, ratio: ratioOf(r, state.size) };
   const pr = priceAt(r, state.size);
   if (pr) { state.price = Math.round(pr / 1000) / 10; state.manual = false; } else state.manual = true;
 }
 
 // ── 표시 도우미 ─────────────────────────────────────────
+// 영어판 금액: ₩312.4M, ₩3.12B (10만 원 = 0.1M 단위)
+function wonEn(v, short) {
+  const a = Math.abs(v), s = v < 0 ? '−' : short ? '+' : '';
+  if (a >= 1e9) return `${s}₩${(Math.round(a / 1e7) / 100).toLocaleString('en-US')}B`;
+  if (a >= 1e6) return `${s}₩${(Math.round(a / 1e5) / 10).toLocaleString('en-US')}M`;
+  return `${s}₩${Math.round(a / 1e3).toLocaleString('en-US')}k`;
+}
 function won(v) {
+  if (EN) return wonEn(v);
   const neg = v < 0; v = Math.abs(v);
   const eok = Math.floor(v / EOK), man = Math.round((v % EOK) / 1e5) * 10;   // 10만 원 단위 (막대끼리 빼면 판정 금액과 맞게)
   let s;
@@ -238,6 +270,7 @@ function won(v) {
   return (neg ? '−' : '') + s + ' 원';
 }
 function wonShort(v) {                     // 돈 흐름 줄용: 2.1억, 4,300만
+  if (EN) return wonEn(v, true);
   const a = Math.abs(v), sign = v < 0 ? '−' : '+';
   const man = Math.round(a / 1e5) * 10;     // 10만 원 단위
   if (a >= EOK || man >= 10000) return `${sign}${(Math.round(a / EOK * 10) / 10).toLocaleString('ko-KR')}억`;
@@ -247,8 +280,9 @@ const pct = v => (Math.round(v * 10) / 10).toFixed(1) + '%';
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
 const SUBJ = { buy: '매매가', jeonse: '전세가', wolse: '월세가' };
-const OBJ = { buy: '매매', jeonse: '전세', wolse: '월세' };
-const SEAL = { buy: '매매', jeonse: '전세', wolse: '월세' };
+const OBJ = L({ buy: '매매', jeonse: '전세', wolse: '월세' }, { buy: 'buying', jeonse: 'jeonse', wolse: 'monthly rent' });
+const SEAL = L({ buy: '매매', jeonse: '전세', wolse: '월세' }, { buy: 'BUY', jeonse: 'JEONSE', wolse: 'RENT' });
+const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 function chips(el, items, cur, onPick, disabled = () => false) {
   el.innerHTML = '';
@@ -257,7 +291,7 @@ function chips(el, items, cur, onPick, disabled = () => false) {
     b.type = 'button'; b.className = 'chip'; b.textContent = label;
     if (title) b.title = title;
     b.setAttribute('aria-pressed', String(val === cur));
-    if (disabled(val)) { b.disabled = true; b.title = '최근 거래가 적어서 고를 수 없어요'; }
+    if (disabled(val)) { b.disabled = true; b.title = L('최근 거래가 적어서 고를 수 없어요', 'Too few recent deals for this size'); }
     b.addEventListener('click', () => onPick(val));
     el.appendChild(b);
   }
@@ -293,10 +327,10 @@ function buildMap(svgId, data) {
     const path = document.createElementNS(NS, 'path'); path.setAttribute('d', g.d);
     const tx = document.createElementNS(NS, 'text'); tx.setAttribute('x', g.cx); tx.setAttribute('y', g.cy + 3.5);
     if (key === 'seoul' || key === 'capital') {
-      grp.setAttribute('class', 'seoul-block'); tx.textContent = key === 'seoul' ? '서울' : '수도권';
+      grp.setAttribute('class', 'seoul-block'); tx.textContent = key === 'seoul' ? L('서울', 'Seoul') : L('수도권', 'Capital area');
       if (key === 'capital') {
         grp.style.cursor = 'pointer'; grp.setAttribute('role', 'button'); grp.setAttribute('tabindex', '0');
-        grp.setAttribute('aria-label', '수도권 지도로 가기');
+        grp.setAttribute('aria-label', L('수도권 지도로 가기', 'Go to the capital area map'));
         grp.addEventListener('click', () => showTab('seoul'));
       }
       grp.append(path, tx); svg.appendChild(grp); continue;
@@ -305,11 +339,12 @@ function buildMap(svgId, data) {
     grp.dataset.key = key;
     if (!r) {
       grp.setAttribute('class', 'rg off');
-      tx.textContent = key.split(':').pop().replace(/^.+시(?=.+구$)/, '').replace(/(시|군|구)$/, '');
+      const raw = key.split(':').pop().replace(/^.+시(?=.+구$)/, '');
+      tx.textContent = EN ? place(raw).replace(/-(si|gun|gu)$/, '') : raw.replace(/(시|군|구)$/, '');
       grp.append(path, tx); svg.appendChild(grp); continue;
     }
     grp.setAttribute('class', 'rg'); grp.setAttribute('tabindex', '0'); grp.setAttribute('role', 'button');
-    tx.textContent = r.short.length <= 2 ? r.short : r.short.replace(/(시|군|구)$/, '');
+    tx.textContent = EN ? r.short.replace(/-(si|gun|gu)$/, '').replace(/^.+-si /, '') : r.short.length <= 2 ? r.short : r.short.replace(/(시|군|구)$/, '');
     const title = document.createElementNS(NS, 'title'); grp.appendChild(title);
     grp.append(path, tx);
     const go = () => r.metroTab ? showTab(r.metroTab) : pickRegion(key);   // 광역시 덩어리는 그 도시 지도로
@@ -400,7 +435,7 @@ function pickSize(k) {
 }
 function drawSizes() {
   const r = REG[state.region];
-  chips($('sizes'), SIZE_KEYS.map(k => [k, PYEONG[k] + PY_WORD, `전용 ${k}㎡`]), state.size, pickSize, k => !r || !sizeOk(r, k));
+  chips($('sizes'), SIZE_KEYS.map(k => EN ? [k, `${k}㎡`, `${PYEONG[k]} pyeong`] : [k, PYEONG[k] + PY_WORD, `전용 ${k}㎡`]), state.size, pickSize, k => !r || !sizeOk(r, k));
 }
 
 // ── 결과 ───────────────────────────────────────────────
@@ -413,19 +448,24 @@ function render() {
   const res = simulate(inp, p);
   const rank = ranking(res);
   const win = rank[0][0];
-  // 판정은 항상 '매매'와 비교: 매매가 이기면 가장 나은 빌리는 쪽과, 빌리는 쪽이 이기면 매매와
-  const vs = win === 'buy' ? rank[1][0] : 'buy';
+  const canBuy = able(res, 'buy');
+  // 판정은 항상 '매매'와 비교: 매매가 이기면 가장 나은 빌리는 쪽과, 빌리는 쪽이 이기면 매매와.
+  // 대출 없이 계산해서 살 수 없으면 할 수 있는 것끼리 비교
+  const vs = !canBuy ? rank[1]?.[0] : win === 'buy' ? rank[1][0] : 'buy';
   const r10 = x => Math.round((x - res.flow.spend) / 1e5) * 1e5;   // 막대에 보이는 금액끼리의 차이
-  const gap = r10(res[win]) - r10(res[vs]);
+  const gap = vs ? r10(res[win]) - r10(res[vs]) : 0;
   const buyWins = win === 'buy';
   const gr = growthOf(r0);
+  const Y = state.years;
 
   // 선택한 지역
   const v = priceAt(r0, state.size), s = state.size && r0.sizes[state.size];
   $('picked').innerHTML = v
-    ? `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 중간 가격</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· 거래가 적어 참고만 하세요</span>` : ''}`
-    : `<b>${r0.name}</b> <span class="muted">· 최근 거래가 적어 시세가 없어요. 집 가격을 직접 넣어주세요.</span>`;
-  $('price-hint').textContent = state.manual && v ? '직접 입력한 가격이에요.' : '';
+    ? L(`<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 중간 가격</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· 거래가 적어 참고만 하세요</span>` : ''}`,
+        `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} median price</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· few deals, use as a rough guide</span>` : ''}`)
+    : L(`<b>${r0.name}</b> <span class="muted">· 최근 거래가 적어 시세가 없어요. 집 가격을 직접 넣어주세요.</span>`,
+        `<b>${r0.name}</b> <span class="muted">· Not enough recent deals for a price. Enter the price yourself.</span>`);
+  $('price-hint').textContent = state.manual && v ? L('직접 입력한 가격이에요.', 'You entered this price.') : '';
 
   // 도장
   const seal = $('seal');
@@ -435,34 +475,45 @@ function render() {
   lastVerdict = win;
 
   // 결론 + 가정 + 다른 흐름
-  const lead = gap < 1e5 ? `${state.years}년 살면 ${OBJ[win]}와 ${OBJ[vs]}가 거의 같아요.`
-    : `${state.years}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`;
+  const noBuy = canBuy ? '' : L('대출 없이는 가진 돈으로 이 집을 살 수 없어요. ', 'Without a loan, your cash isn’t enough to buy here. ');
+  let lead;
+  if (!vs) lead = L('대출 없이는 가진 돈으로 사거나 전세를 얻을 수 없어요. 월세만 할 수 있어요.', 'Without a loan, your cash isn’t enough to buy or pay a jeonse deposit here. Monthly rent is your only option.');
+  else if (gap < 1e5) lead = noBuy + L(`${Y}년 살면 ${OBJ[win]}와 ${OBJ[vs]}가 거의 같아요.`, `Over ${Y} years, ${OBJ[win]} and ${OBJ[vs]} come out about the same.`);
+  else lead = noBuy + L(`${Y}년 살면 ${SUBJ[win]} ${OBJ[vs]}보다 <b>${won(gap)}</b> 더 이득이에요.`,
+    `Over ${Y} years, ${OBJ[win]} leaves you <b>${won(gap)}</b> more than ${OBJ[vs]}.`);
   const g = p.grow;
   const edited = gr.g == null || Math.abs(g - gr.g) > 0.05;
-  const rentNow = res.jeonse >= res.wolse ? '전세' : '월세';
-  const basis = edited ? '' : ` (${gr.label} ${gr.basis === 'gall' && gr.from ? gr.from.slice(0, 4) + '년부터 평균' : BASIS_LABEL[gr.basis]}${gr.src === 'idx' ? ', 한국부동산원' : ''})`;
-  const assume = `집값이 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '오른다고' : '떨어진다고'} 봤어요${basis}.`;
-  const be = breakeven(inp, p);
-  let beLine = '';
-  if (be === -Infinity) beLine = '집값이 떨어져도 매매가 유리해요.';
-  else if (be === Infinity) beLine = '집값이 많이 올라도 매매가 불리해요.';
-  else if (buyWins) beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 덜 오르면 ${rentNow}가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 더 떨어지면 ${rentNow}가 유리해요.`;
-  else beLine = be >= 0 ? `집값이 해마다 <b>${pct(be)}</b>보다 더 오르면 매매가 유리해요.` : `집값이 해마다 <b>${pct(-be)}</b>보다 덜 떨어지면 매매가 유리해요.`;
-  // NYT식: 같은 크기 집을 이 금액 이하로 빌리면/사면 결과가 뒤집힘
-  const eq = equivalents(inp, p, res);
-  const down = (v, u) => Math.floor(v / u) * u;
-  let flip = '';
-  if (eq.side === 'rent') {
-    const j = eq.jeonse > 0 ? won(down(eq.jeonse, 1e6)) : null, m = eq.rent > 0 ? won(down(eq.rent, 1e4)) : null;
-    if (j && m) flip = `전세가 <b>${j}</b>보다 싸면 전세가, 월세가 <b>${m}</b>보다 싸면 월세가 매매보다 이득이에요.`;
-    else if (j) flip = `전세가 <b>${j}</b>보다 싸면 전세가 매매보다 이득이에요.`;
-    else if (m) flip = `월세가 <b>${m}</b>보다 싸면 월세가 매매보다 이득이에요.`;
-  } else if (eq.price != null && eq.price > 0) {
-    flip = `이 집을 <b>${won(down(eq.price, 1e6))}</b>보다 싸게 사면 매매가 이득이에요.`;
+  const rentNow = able(res, 'jeonse') && res.jeonse >= res.wolse ? OBJ.jeonse : OBJ.wolse;
+  const since = gr.basis === 'gall' && gr.from ? L(gr.from.slice(0, 4) + '년부터 평균', 'average since ' + gr.from.slice(0, 4)) : BASIS_LABEL[gr.basis];
+  const src = gr.src === 'idx' ? L(', 한국부동산원', ', Korea Real Estate Board') : '';
+  const basis = edited ? '' : L(` (${gr.label} ${since}${src})`, ` (${gr.label}, ${since}${src})`);
+  const assume = L(`집값이 해마다 <b>${pct(Math.abs(g))}</b> ${g >= 0 ? '오른다고' : '떨어진다고'} 봤어요${basis}.`,
+    `We assume home prices ${g >= 0 ? 'rise' : 'fall'} <b>${pct(Math.abs(g))}</b> a year${basis}.`);
+  let beLine = '', flip = '';
+  if (canBuy) {
+    const be = breakeven(inp, p);
+    if (be === -Infinity) beLine = L('집값이 떨어져도 매매가 유리해요.', 'Buying still wins even if prices fall.');
+    else if (be === Infinity) beLine = L('집값이 많이 올라도 매매가 불리해요.', 'Buying loses even if prices rise a lot.');
+    else if (buyWins) beLine = be >= 0 ? L(`집값이 해마다 <b>${pct(be)}</b>보다 덜 오르면 ${rentNow}가 유리해요.`, `If prices rise less than <b>${pct(be)}</b> a year, ${rentNow} wins.`)
+      : L(`집값이 해마다 <b>${pct(-be)}</b>보다 더 떨어지면 ${rentNow}가 유리해요.`, `If prices fall more than <b>${pct(-be)}</b> a year, ${rentNow} wins.`);
+    else beLine = be >= 0 ? L(`집값이 해마다 <b>${pct(be)}</b>보다 더 오르면 매매가 유리해요.`, `If prices rise more than <b>${pct(be)}</b> a year, buying wins.`)
+      : L(`집값이 해마다 <b>${pct(-be)}</b>보다 덜 떨어지면 매매가 유리해요.`, `If prices fall less than <b>${pct(-be)}</b> a year, buying wins.`);
+    // NYT식: 같은 크기 집을 이 금액 이하로 빌리면/사면 결과가 뒤집힘
+    const eq = equivalents(inp, p, res);
+    const down = (v, u) => Math.floor(v / u) * u;
+    if (eq.side === 'rent') {
+      const j = eq.jeonse > 0 && able(res, 'jeonse') ? won(down(eq.jeonse, 1e6)) : null, m = eq.rent > 0 ? won(down(eq.rent, 1e4)) : null;
+      if (j && m) flip = L(`전세가 <b>${j}</b>보다 싸면 전세가, 월세가 <b>${m}</b>보다 싸면 월세가 매매보다 이득이에요.`,
+        `Jeonse beats buying if the deposit is under <b>${j}</b>; monthly rent beats buying if it’s under <b>${m}</b> a month.`);
+      else if (j) flip = L(`전세가 <b>${j}</b>보다 싸면 전세가 매매보다 이득이에요.`, `Jeonse beats buying if the deposit is under <b>${j}</b>.`);
+      else if (m) flip = L(`월세가 <b>${m}</b>보다 싸면 월세가 매매보다 이득이에요.`, `Monthly rent beats buying if it’s under <b>${m}</b> a month.`);
+    } else if (eq.price != null && eq.price > 0) {
+      flip = L(`이 집을 <b>${won(down(eq.price, 1e6))}</b>보다 싸게 사면 매매가 이득이에요.`, `Buying wins if you can buy this home for under <b>${won(down(eq.price, 1e6))}</b>.`);
+    }
   }
   // 도장 옆에는 결론만, 가정·뒤집히는 조건은 '왜 그런지 보기'에
-  $('why').innerHTML = `${lead} <button class="help" id="why-help" type="button" aria-expanded="${whyOpen}" aria-controls="why-more" aria-label="왜 그런지 보기">?</button>`;
-  $('why-detail').innerHTML = `<p>${assume}</p><p>${beLine}</p>${flip ? `<p>${flip}</p>` : ''}`;
+  $('why').innerHTML = `${lead} <button class="help" id="why-help" type="button" aria-expanded="${whyOpen}" aria-controls="why-more" aria-label="${L('왜 그런지 보기', 'Why?')}">?</button>`;
+  $('why-detail').innerHTML = `<p>${assume}</p>${beLine ? `<p>${beLine}</p>` : ''}${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
   if (view === 'chart') drawChart();
   refreshTalkCount();
@@ -471,75 +522,88 @@ function render() {
 
   // 대출 경고는 해당 막대 아래에
   const warns = {};
-  if (res.ltv > 0.7) warns.buy = `대출이 집값의 ${Math.round(res.ltv * 100)}%라 이만큼 대출이 안 될 수 있어요`;
-  if (res.jltv > 0.8) warns.jeonse = `대출이 전세금의 ${Math.round(res.jltv * 100)}%라 이만큼 대출이 안 될 수 있어요`;
+  if (!p.noLoan && res.ltv > 0.7) warns.buy = L(`대출이 집값의 ${Math.round(res.ltv * 100)}%라 이만큼 대출이 안 될 수 있어요`, `The loan is ${Math.round(res.ltv * 100)}% of the price; banks may not lend this much`);
+  if (!p.noLoan && res.jltv > 0.8) warns.jeonse = L(`대출이 전세금의 ${Math.round(res.jltv * 100)}%라 이만큼 대출이 안 될 수 있어요`, `The loan is ${Math.round(res.jltv * 100)}% of the deposit; banks may not lend this much`);
   // 전세금이 집값에 가까우면(깡통전세) 보증금을 못 돌려받을 위험
   if (p.ratio >= 90) warns.jeonse = (warns.jeonse ? warns.jeonse + ' · ' : '') +
-    `전세금이 집값의 ${Math.round(p.ratio)}%라 나중에 보증금을 다 못 돌려받을 위험이 커요`;
+    L(`전세금이 집값의 ${Math.round(p.ratio)}%라 나중에 보증금을 다 못 돌려받을 위험이 커요`, `The deposit is ${Math.round(p.ratio)}% of the home’s price, so you risk not getting it all back`);
   $('warn').textContent = '';
 
   // 막대 + 돈 흐름
-  $('bars-title').textContent = `${state.years}년 뒤 내 자산`;
-  $('bars-note').textContent = `막대 아래 대출 이자·예금 이자·월세·세금은 ${state.years}년 동안 합친 금액이에요. 지금 가진 돈에 더하고 빼면 막대 금액이 돼요.`;
+  $('bars-title').textContent = L(`${Y}년 뒤 내 자산`, `Your assets after ${Y} years`);
+  $('bars-note').textContent = L(`막대 아래 대출 이자·예금 이자·월세·세금은 ${Y}년 동안 합친 금액이에요. 지금 가진 돈에 더하고 빼면 막대 금액이 돼요.`,
+    `The amounts under each bar (loan interest, savings interest, rent, taxes) are totals over ${Y} years. Add them to your cash today to get the bar.`);
   const f = res.flow;
   const flows = {
-    buy: [[res.gain >= 0 ? '집값 상승' : '집값 하락', res.gain], ['대출 이자', -f.bInterest], ['세금·수수료', -f.bTax], f.bEarn > 1e6 ? ['남는 돈 예금 이자', f.bEarn] : null],
-    jeonse: [['대출 이자', -f.jInterest], ['남는 돈 예금 이자', f.jEarn]],
-    wolse: [['월세', -f.wRent], ['남는 돈 예금 이자', f.wEarn]],
+    buy: [[res.gain >= 0 ? L('집값 상승', 'Price gain') : L('집값 하락', 'Price drop'), res.gain], [L('대출 이자', 'Loan interest'), -f.bInterest], [L('세금·수수료', 'Taxes & fees'), -f.bTax], f.bEarn > 1e6 ? [L('남는 돈 예금 이자', 'Savings interest'), f.bEarn] : null],
+    jeonse: [[L('대출 이자', 'Loan interest'), -f.jInterest], [L('남는 돈 예금 이자', 'Savings interest'), f.jEarn]],
+    wolse: [[L('월세', 'Rent'), -f.wRent], [L('남는 돈 예금 이자', 'Savings interest'), f.wEarn]],
   };
-  // 매매보다 적게 남으면: 남는 돈을 연 몇 % 굴려야 매매만큼 되는지
-  const need = {};
   // 1등이 아닌 쪽마다: 남는 돈을 해마다 몇 % 벌어야 1등을 따라잡는지
+  const need = {};
   for (const k of ['buy', 'jeonse', 'wolse']) {
-    if (k === win) continue;
+    if (k === win || !able(res, k)) continue;
     const r = requiredReturn(inp, p, k, res[win]);
-    need[k] = r === Infinity ? `남는 돈이 거의 없어서 투자로는 ${OBJ[win]}를 못 따라가요` : `${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`;
+    need[k] = r === Infinity ? L(`남는 돈이 거의 없어서 투자로는 ${OBJ[win]}를 못 따라가요`, `Too little spare cash to catch up with ${OBJ[win]} by investing`)
+      : L(`${OBJ[win]}를 따라잡으려면 남는 돈으로 해마다 <b>${pct(r)}</b> 벌어야 해요`, `To catch up with ${OBJ[win]}, your spare cash must earn <b>${pct(r)}</b> a year`);
   }
   // 셋 다 똑같이 들어간 '매달 집에 쓴 돈'을 빼고 보여줌 → 가진 돈 + 막대 아래 항목 = 막대 금액 (차이·판정은 그대로)
   const spent = res.flow.spend;
   const rows = [['buy', res.buy - spent], ['jeonse', res.jeonse - spent], ['wolse', res.wolse - spent]];
-  const max = Math.max(...rows.map(x => x[1]), 1);
+  const max = Math.max(...rows.filter(([k]) => able(res, k)).map(x => x[1]), 1);
   for (const [id, val] of rows) {
     const row = $('row-' + id);
-    const isWin = id === win;
+    const isWin = id === win, can = able(res, id);
     row.classList.toggle('win', isWin);
     row.classList.toggle('no-buy', isWin && !buyWins);
-    const width = Math.max(0, val / max) * 100;
+    row.classList.toggle('cant', !can);
+    const width = can ? Math.max(0, val / max) * 100 : 0;
     row.querySelector('.fill').style.setProperty('--w', width + '%');   // 길이는 clip-path로 (레이아웃 안 건드림)
     const vEl = row.querySelector('.val');
-    vEl.textContent = won(val);
+    vEl.textContent = can ? won(val) : L('대출 없이는 못 해요', 'Not possible without a loan');
     const outside = width < 45;
     vEl.style.left = outside ? `calc(${width}% + 10px)` : '10px';
-    vEl.style.color = outside ? 'var(--ink)' : '';
-    row.querySelector('.flow').innerHTML = flows[id].filter(Boolean).filter(([, x]) => Math.abs(x) >= 1e5)
+    vEl.style.color = outside ? (can ? 'var(--ink)' : 'var(--ink-2)') : '';
+    row.querySelector('.flow').innerHTML = !can ? '' : flows[id].filter(Boolean).filter(([, x]) => Math.abs(x) >= 1e5)
       .map(([k, x]) => `<span class="detail">${k} <b class="${x < 0 ? 'minus' : 'plus'}">${wonShort(x)}</b></span>`).join('')
       + (need[id] ? `<span class="need detail">→ ${need[id]}</span>` : '')
       + (warns[id] ? `<span class="rwarn">${warns[id]}</span>` : '');
   }
 
-  $('note').textContent =
-    `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}으로 계산했어요. ` +
-    `셋 다 매달 집에 ${won(res.flow.spend / (state.years * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0]]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
-    (RATES_INFO ? `금리는 한국은행 ${RATES_INFO.rates.mort?.month?.slice(0, 4)}년 ${Number(RATES_INFO.rates.mort?.month?.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
-    (state.type === 'offi' ? '오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산했고, 주거용으로 써서 집처럼 재산세를 낸다고 봤어요. ' : '') +
-    `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${holdingTax(state.price * EOK) < 1e4 ? '1만 원 미만' : won(holdingTax(state.price * EOK))}).`;
+  const topK = Object.entries(res.flow.top).sort((a, b) => b[1] - a[1])[0][0];
+  const month = RATES_INFO?.rates.mort?.month;
+  $('note').textContent = EN
+    ? `Jeonse deposit: ${won(res.D0)}. Monthly rent: ${won(res.rent0)} a month with a ${won(res.W)} deposit. ` +
+      `All three options spend the same ${won(res.flow.spend / (Y * 12))} a month on housing (set by ${{ buy: 'mortgage payments', jeonse: 'jeonse loan interest', wolse: 'rent' }[topK]}); whatever an option doesn’t spend goes into savings. ` +
+      (month ? `Rates are Bank of Korea bank averages for new loans and deposits, ${month.slice(0, 4)}-${month.slice(4)}. ` : '') +
+      (state.type === 'offi' ? 'Officetels use 4.6% acquisition tax and a 0.5% agent fee, taxed like a home. ' : '') +
+      (p.noLoan ? 'No loans: jeonse increases at renewal come out of savings. ' : '') +
+      `Property and comprehensive real estate taxes use statutory one-home rates (assessed value 69% of market price; about ${holdingTax(state.price * EOK) < 1e4 ? 'under ₩10k' : won(holdingTax(state.price * EOK))} this year).`
+    : `전세금은 ${won(res.D0)}, 월세는 보증금 ${won(res.W)}에 월 ${won(res.rent0)}으로 계산했어요. ` +
+      `셋 다 매달 집에 ${won(res.flow.spend / (Y * 12))}까지 쓸 수 있다고 보고 계산했어요 (${{ buy: '매매 대출 상환', jeonse: '전세 대출 이자', wolse: '월세' }[topK]} 기준). 덜 나가는 쪽은 남는 돈을 매달 예금에 넣어요. ` +
+      (month ? `금리는 한국은행 ${month.slice(0, 4)}년 ${Number(month.slice(4))}월 은행 평균(새로 받은 대출·예금 기준)이에요. ` : '') +
+      (state.type === 'offi' ? '오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산했고, 주거용으로 써서 집처럼 재산세를 낸다고 봤어요. ' : '') +
+      `재산세와 종부세는 1주택 기준 법정 세율로 계산했어요 (공시가격은 시세의 69%로 가정, 올해 약 ${holdingTax(state.price * EOK) < 1e4 ? '1만 원 미만' : won(holdingTax(state.price * EOK))}).`;
 }
 
 // ── 입력 ───────────────────────────────────────────────
+// 숫자 칸 단위: 한국어는 억 원, 영어는 백만 원(M). 내부 값과 막대(range)는 억 단위 그대로
+const U = EN ? 100 : 1;
+const shown = v => Math.round(v * U * 10) / 10;
 function syncInputs() {
-  $('price').value = state.price; $('price-n').value = state.price;
+  $('price').value = state.price; $('price-n').value = shown(state.price);
   $('cash').max = Math.max(15, Math.ceil(state.price));
-  $('cash').value = state.cash; $('cash-n').value = state.cash;
+  $('cash').value = state.cash; $('cash-n').value = shown(state.cash);
 }
 function bindAmount(rangeId, numId, key) {
   const mark = () => { if (key === 'price') state.manual = true; };
   const set = v => { if (isNaN(v) || v < 0) return; state[key] = Math.round(v * 10) / 10; mark(); syncInputs(); render(); };
   $(rangeId).addEventListener('input', e => set(parseFloat(e.target.value)));
-  $(numId).addEventListener('change', e => set(parseFloat(e.target.value)));
-  $(numId).addEventListener('input', e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v > 0) { state[key] = v; mark(); $(rangeId).value = v; render(); } });
+  $(numId).addEventListener('change', e => set(parseFloat(e.target.value) / U));
+  $(numId).addEventListener('input', e => { const v = parseFloat(e.target.value) / U; if (!isNaN(v) && v > 0) { state[key] = v; mark(); $(rangeId).value = v; render(); } });
 }
 function drawYears() {
-  chips($('years'), YEARS.map(y => [y, y + '년']), state.years, v => { state.years = v; drawYears(); render(); });
+  chips($('years'), YEARS.map(y => [y, y + L('년', ' yrs')]), state.years, v => { state.years = v; drawYears(); render(); });
   const n = $('years-n');
   if (document.activeElement !== n) n.value = YEARS.includes(state.years) ? '' : state.years;
   n.parentElement.classList.toggle('on', !YEARS.includes(state.years));
@@ -582,7 +646,7 @@ $('bars-help').addEventListener('click', () => {
 // ── 그래프로 비교하기 ───────────────────────────────────
 // 1~30년 각각 그만큼 살았을 때 내 자산(막대와 같은 값: 결과 − 매달 집에 쓴 돈 합계)
 const CHART_YEARS = 30;
-const SERIES = [['buy', '매매'], ['jeonse', '전세'], ['wolse', '월세']];
+const SERIES = L([['buy', '매매'], ['jeonse', '전세'], ['wolse', '월세']], [['buy', 'Buy'], ['jeonse', 'Jeonse'], ['wolse', 'Monthly rent']]);
 let view = 'bars', chartData = null;
 function yearly(inp, p) {
   const rows = [];
@@ -613,6 +677,7 @@ function niceStep(range, n) {
 }
 function axisWon(v) {                       // 축 눈금: 3억, 1.5억, 5,000만, 0
   if (v === 0) return '0';
+  if (EN) { const a = Math.abs(v), s = v < 0 ? '−' : ''; return a >= 1e9 ? `${s}₩${Math.round(a / 1e8) / 10}B` : `${s}₩${Math.round(a / 1e6)}M`; }
   const a = Math.abs(v), s = v < 0 ? '−' : '';
   if (a >= EOK) return s + (Math.round(a / EOK * 10) / 10).toLocaleString('ko-KR') + '억';
   return s + Math.round(a / 1e4).toLocaleString('ko-KR') + '만';
@@ -621,9 +686,11 @@ function drawChart() {
   if (view !== 'chart' || !REG[state.region]) return;
   const inp = { price: state.price, cash: state.cash, years: state.years };
   const rows = chartData = yearly(inp, state.p);
+  const okNow = simulate(inp, state.p);   // 대출 없이 할 수 없는 쪽은 선을 그리지 않음 (기간과 상관없음)
+  const series = SERIES.filter(([k]) => able(okNow, k));
   const svg = $('chart-svg'), W = Math.max(280, $('chart-box').clientWidth), H = W < 480 ? 230 : 270;
   const m = { l: 46, r: W < 480 ? 12 : 44, t: 12, b: 26 };
-  const vals = rows.flatMap(r => SERIES.map(([k]) => r[k]));
+  const vals = rows.flatMap(r => series.map(([k]) => r[k]));
   let lo = Math.min(0, ...vals), hi = Math.max(...vals);
   const step = niceStep(hi - lo || EOK, 4);
   lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
@@ -635,17 +702,17 @@ function drawChart() {
     s += `<line class="grid${v === 0 ? ' zero' : ''}" x1="${m.l}" x2="${W - m.r}" y1="${yv(v)}" y2="${yv(v)}"/>`;
     s += `<text class="tick" x="${m.l - 6}" y="${yv(v) + 4}" text-anchor="end">${axisWon(v)}</text>`;
   }
-  for (const y of [1, 5, 10, 15, 20, 25, 30]) s += `<text class="tick" x="${x(y)}" y="${H - 6}" text-anchor="middle">${y}년</text>`;
+  for (const y of [1, 5, 10, 15, 20, 25, 30]) s += `<text class="tick" x="${x(y)}" y="${H - 6}" text-anchor="middle">${y}${L('년', 'y')}</text>`;
   const cy = state.years;
   s += `<line class="now" x1="${x(cy)}" x2="${x(cy)}" y1="${m.t}" y2="${H - m.b}"/>`;
   const nearRight = x(cy) > W - m.r - 60;   // 오른쪽 끝이면 이름표를 선 왼쪽에
-  s += `<text class="now-l" x="${x(cy) + (nearRight ? -5 : 5)}" y="${m.t + 10}" text-anchor="${nearRight ? 'end' : 'start'}">${cy}년</text>`;
-  for (const [k] of SERIES) s += `<polyline class="ln ln-${k}" points="${rows.map(r => `${x(r.y).toFixed(1)},${yv(r[k]).toFixed(1)}`).join(' ')}"/>`;
+  s += `<text class="now-l" x="${x(cy) + (nearRight ? -5 : 5)}" y="${m.t + 10}" text-anchor="${nearRight ? 'end' : 'start'}">${cy}${L('년', 'y')}</text>`;
+  for (const [k] of series) s += `<polyline class="ln ln-${k}" points="${rows.map(r => `${x(r.y).toFixed(1)},${yv(r[k]).toFixed(1)}`).join(' ')}"/>`;
   const at = rows[cy - 1];
-  for (const [k] of SERIES) s += `<circle class="dot dot-${k}" cx="${x(cy)}" cy="${yv(at[k])}" r="4.5"/>`;
+  for (const [k] of series) s += `<circle class="dot dot-${k}" cx="${x(cy)}" cy="${yv(at[k])}" r="4.5"/>`;
   // 오른쪽 끝 이름표: 서로 14px 넘게 떨어질 때만 (겹치면 범례로 충분)
   if (m.r > 20) {
-    const last = rows[CHART_YEARS - 1], ys = SERIES.map(([k, n]) => [yv(last[k]), n]).sort((a, b) => a[0] - b[0]);
+    const last = rows[CHART_YEARS - 1], ys = series.map(([k, n]) => [yv(last[k]), n]).sort((a, b) => a[0] - b[0]);
     const apart = ys.every((v, i) => i === 0 || v[0] - ys[i - 1][0] >= 14);
     if (apart) for (const [py, n] of ys) s += `<text class="end" x="${W - m.r + 6}" y="${py + 4}">${n}</text>`;
   }
@@ -655,19 +722,21 @@ function drawChart() {
   chartGeom = { x, m, W };
 
   // 머리글: 매매가 언제부터 앞서는지
-  const lead = rows.map(r => r.buy >= Math.max(r.jeonse, r.wolse));
+  const lead = rows.map(r => r.buy >= Math.max(able(okNow, 'jeonse') ? r.jeonse : -Infinity, r.wolse));
   const first = lead.indexOf(true), stays = first >= 0 && lead.slice(first).every(Boolean);
   let head;
-  if (first === 0 && stays) head = '1년만 살아도 매매가 가장 이득이에요.';
-  else if (stays) head = `<b>${first + 1}년</b> 넘게 살면 매매가 전세·월세보다 이득이에요.`;
-  else if (first < 0) head = '30년 안에는 전세나 월세가 매매보다 이득이에요.';
-  else head = `<b>${first + 1}년</b>부터 매매가 앞서다가 다시 뒤집혀요. 세로선 근처를 눌러 해마다 비교해보세요.`;
+  if (!able(okNow, 'buy')) head = L('대출 없이는 이 집을 살 수 없어서 빌리는 쪽만 보여줘요.', 'Without a loan you can’t buy here, so only renting is shown.');
+  else if (first === 0 && stays) head = L('1년만 살아도 매매가 가장 이득이에요.', 'Buying wins even if you stay just 1 year.');
+  else if (stays) head = L(`<b>${first + 1}년</b> 넘게 살면 매매가 전세·월세보다 이득이에요.`, `Stay <b>${first + 1} years</b> or more and buying beats renting.`);
+  else if (first < 0) head = L('30년 안에는 전세나 월세가 매매보다 이득이에요.', 'Renting beats buying for any stay up to 30 years.');
+  else head = L(`<b>${first + 1}년</b>부터 매매가 앞서다가 다시 뒤집혀요. 세로선 근처를 눌러 해마다 비교해보세요.`, `Buying pulls ahead from <b>year ${first + 1}</b>, then falls behind again. Tap the chart to compare each year.`);
   $('chart-head').innerHTML = head;
   // 화면 읽기용 표
-  $('chart-table').innerHTML = `<caption>해마다 내 자산</caption><tr><th>기간</th>${SERIES.map(([, n]) => `<th>${n}</th>`).join('')}</tr>` +
-    rows.map(r => `<tr><td>${r.y}년</td>${SERIES.map(([k]) => `<td>${won(r[k])}</td>`).join('')}</tr>`).join('');
+  $('chart-table').innerHTML = `<caption>${L('해마다 내 자산', 'Your assets by year')}</caption><tr><th>${L('기간', 'Years')}</th>${series.map(([, n]) => `<th>${n}</th>`).join('')}</tr>` +
+    rows.map(r => `<tr><td>${r.y}${L('년', '')}</td>${series.map(([k]) => `<td>${won(r[k])}</td>`).join('')}</tr>`).join('');
+  chartSeries = series;
 }
-let chartGeom = null;
+let chartGeom = null, chartSeries = SERIES;
 function chartHover(e) {
   if (!chartData || !chartGeom) return;
   const svg = $('chart-svg'), box = svg.getBoundingClientRect(), { x, m, W } = chartGeom;
@@ -676,7 +745,7 @@ function chartHover(e) {
   const r = chartData[y - 1];
   const cross = $('chart-cross'); cross.setAttribute('x1', x(y)); cross.setAttribute('x2', x(y)); cross.setAttribute('visibility', 'visible');
   const tip = $('chart-tip');
-  tip.innerHTML = `<b>${y}년 살면</b>` + SERIES.map(([k, n]) => `<span><i class="k-${k}"></i>${n} <b>${won(r[k])}</b></span>`).join('');
+  tip.innerHTML = `<b>${L(`${y}년 살면`, `After ${y} years`)}</b>` + chartSeries.map(([k, n]) => `<span><i class="k-${k}"></i>${n} <b>${won(r[k])}</b></span>`).join('');
   tip.hidden = false;
   const left = x(y) / W * box.width;
   tip.style.left = Math.min(Math.max(left - tip.offsetWidth / 2, 0), box.width - tip.offsetWidth) + 'px';
@@ -693,7 +762,7 @@ window.addEventListener('resize', () => { clearTimeout(chartResize); chartResize
 const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
 function syncThemeBtn() {
   const dark = isDark();
-  $('theme-btn').setAttribute('aria-label', dark ? '밝게 보기' : '어둡게 보기');
+  $('theme-btn').setAttribute('aria-label', dark ? L('밝게 보기', 'Light mode') : L('어둡게 보기', 'Dark mode'));
   for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = dark ? '#111318' : '#f3f5f8';
 }
 $('theme-btn').addEventListener('click', () => {
@@ -744,7 +813,7 @@ function talkItem(c) {
 }
 function setTalkCount(n) { $('talk-count').textContent = n ? String(n) : ''; }
 async function refreshTalkCount() {
-  const key = talkKey(); if (!key || key === talk.countFor) return;
+  const key = talkKey(); if (EN || !key || key === talk.countFor) return;   // 영어판은 코멘트 없음
   talk.countFor = key;
   $('talk-btn-label').textContent = `${talkName()} 이야기`;
   setTalkCount(0);
@@ -835,7 +904,7 @@ $('talk-list').addEventListener('click', async e => {
 });
 // 지역 페이지: 시세 설명 아래에 최근 이야기 3개
 async function talkLatest() {
-  const box = document.getElementById('talk-latest'); if (!box) return;
+  const box = document.getElementById('talk-latest'); if (!box || EN) return;
   try {
     const d = await talkFetch(talkKey(), 3);
     box.innerHTML = `<h3>${esc(talkName())} 이야기 <span>${d.count}</span></h3>` +
@@ -856,6 +925,7 @@ function shareUrl() {
   if (view === 'chart') q.set('v', 'chart');
   if (state.size) q.set('s', state.size);
   if (state.manual) q.set('p', state.price);
+  if (state.noLoan) q.set('l', '0');
   q.set('c', state.cash); q.set('y', state.years);
   return location.origin + location.pathname + '?' + q.toString();
 }
@@ -868,19 +938,20 @@ function saveUrl() {
 function readUrl() {
   const q = new URLSearchParams(location.search), num = k => { const v = parseFloat(q.get(k)); return isNaN(v) ? null : v; };
   const r = q.get('r') || window.PRESET_REGION;
-  return { region: r ? (REG['c:' + r] ? 'c:' + r : (REG[r] ? r : null)) : null, size: q.get('s'), price: num('p'), cash: num('c'), years: num('y'), view: q.get('v') };
+  return { region: r ? (REG['c:' + r] ? 'c:' + r : (REG[r] ? r : null)) : null, size: q.get('s'), price: num('p'), cash: num('c'), years: num('y'), view: q.get('v'), noLoan: q.get('l') === '0' };
 }
 $('share').addEventListener('click', async () => {
   const url = shareUrl(), btn = $('share'), r = REG[state.region];
-  const text = `${r ? r.short || r.name : ''} ${state.years}년 살면 어디가 더 남을까? 영끌각에서 계산해봤어요.`;
+  const text = L(`${r ? r.short || r.name : ''} ${state.years}년 살면 어디가 더 남을까? 영끌각에서 계산해봤어요.`,
+    `${r ? r.short || r.name : ''}: buy, jeonse or monthly rent over ${state.years} years? I ran the numbers.`);
   try {
-    if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: '영끌각', text, url }); return; }
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: L('영끌각', 'Rent or Buy Korea'), text, url }); return; }
     await navigator.clipboard.writeText(url);
-    btn.querySelector('span').textContent = '링크를 복사했어요'; btn.classList.add('done');
-    setTimeout(() => { btn.querySelector('span').textContent = '공유하기'; btn.classList.remove('done'); }, 2000);
+    btn.querySelector('span').textContent = L('링크를 복사했어요', 'Link copied'); btn.classList.add('done');
+    setTimeout(() => { btn.querySelector('span').textContent = L('공유하기', 'Share'); btn.classList.remove('done'); }, 2000);
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    window.prompt('이 링크를 복사하세요', url);
+    window.prompt(L('이 링크를 복사하세요', 'Copy this link'), url);
   }
 });
 
@@ -889,7 +960,7 @@ let INDEX = [], hits = [], cursor = -1;
 function buildIndex() {
   const seen = new Set();
   INDEX = Object.values(REG).filter(r => { if (seen.has(r)) return false; seen.add(r); return true; })
-    .filter(r => !r.metroTab).map(r => ({ key: r.key, r, text: norm(r.name + ' ' + (r.alias || '') + ' ' + (r.whole ? '' : SIDO[r.sido] || '')) }));
+    .filter(r => !r.metroTab).map(r => ({ key: r.key, r, text: norm(r.name + ' ' + (r.ko || '') + ' ' + (r.alias || '') + ' ' + (EN && r.alias ? place(r.alias) : '') + ' ' + (r.whole ? '' : (SIDO[r.sido] || '') + ' ' + (EN ? sidoName(r.sido) : ''))) }));
 }
 function renderHits() {
   const ul = $('q-list'), q = norm($('q').value);
@@ -899,14 +970,14 @@ function renderHits() {
     .sort((a, b) => (b.r.whole ? 1 : 0) - (a.r.whole ? 1 : 0) || a.r.name.length - b.r.name.length).slice(0, 8);
   if (!hits.length) {
     const li = document.createElement('li'); li.className = 'empty';
-    li.textContent = '찾는 곳이 없어요. 시·군·구나 동네 이름으로 찾아보세요.'; ul.appendChild(li);
+    li.textContent = L('찾는 곳이 없어요. 시·군·구나 동네 이름으로 찾아보세요.', 'No match. Try a city or district name, like Gangnam or Bundang.'); ul.appendChild(li);
   }
   hits.forEach((h, i) => {
     const li = document.createElement('li'); li.id = 'q-' + i; li.setAttribute('role', 'option');
     li.setAttribute('aria-selected', String(i === cursor));
     li.append(document.createTextNode(h.r.name));
     const v = priceAt(h.r, defaultSize(h.r, state.size));
-    const sp = document.createElement('span'); sp.textContent = v ? won(v * 1e4) : '시세 없음'; li.appendChild(sp);
+    const sp = document.createElement('span'); sp.textContent = v ? won(v * 1e4) : L('시세 없음', 'no price'); li.appendChild(sp);
     li.addEventListener('mousedown', e => { e.preventDefault(); choose(i); });
     ul.appendChild(li);
   });
@@ -925,6 +996,12 @@ $('q').addEventListener('keydown', e => {
   else if (e.key === 'Escape') { $('q').value = ''; renderHits(); }
 });
 $('q').addEventListener('blur', () => { $('q-list').hidden = true; $('q').setAttribute('aria-expanded', 'false'); });
+
+// 영어판: 대출을 받을 수 있는지 (외국인은 비자·소득에 따라 막히는 경우가 많음)
+function drawLoan() {
+  const box = $('loan'); if (!box) return;
+  chips(box, [[false, 'Yes'], [true, 'No']], state.noLoan, v => { state.noLoan = v; state.p.noLoan = v; drawLoan(); render(); });
+}
 
 // ── 시작 ───────────────────────────────────────────────
 bindAmount('price', 'price-n', 'price');
@@ -960,7 +1037,7 @@ function useType(id, td) {
 }
 function drawTypes() {
   chips($('types'), TYPES.map(([id, name]) => [id, name]), state.type, pickType, id => !TYPE_OK[id]);
-  for (const b of $('types').children) if (b.disabled) b.title = '시세를 준비하고 있어요';
+  for (const b of $('types').children) if (b.disabled) b.title = L('시세를 준비하고 있어요', 'Prices coming soon');
 }
 function pickType(id) {
   if (id === state.type) return;
@@ -1002,13 +1079,15 @@ Promise.all([loadType(firstType).catch(() => firstType === 'apt' ? Promise.rejec
     if (u.cash != null && u.cash >= 0 && u.cash <= 100) state.cash = u.cash;
     if (u.years >= 1 && u.years <= 30) state.years = Math.round(u.years);
     if (u.view === 'chart') setView('chart', false);
+    if (u.noLoan && $('loan')) { state.noLoan = true; state.p.noLoan = true; }
+    drawLoan();
     syncInputs(); buildAssume(); drawSizes(); drawYears(); showTab(tabOf(start) || 'seoul'); paintMaps(); render();
     urlLive = true;
     talkLatest();
   })
   .catch(() => {
-    REG.manual = { key: 'manual', name: '직접 입력', short: '직접 입력', sido: '', sizes: {}, cnt: 0, n84: 0, whole: true };
+    REG.manual = { key: 'manual', name: L('직접 입력', 'Custom'), short: L('직접 입력', 'Custom'), sido: '', sizes: {}, cnt: 0, n84: 0, whole: true };
     state.region = 'manual'; state.manual = true; state.size = null;
-    $('picked').textContent = '시세를 불러오지 못했어요. 집 가격을 직접 넣어주세요.';
+    $('picked').textContent = L('시세를 불러오지 못했어요. 집 가격을 직접 넣어주세요.', 'Couldn’t load prices. Enter the price yourself.');
     render();
   });

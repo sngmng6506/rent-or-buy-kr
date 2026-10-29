@@ -17,6 +17,6 @@ jobs:
       - name: Engine tests
         run: node --test tests/*.test.mjs
       - name: JS syntax
-        run: for f in site/maps.js site/engine.js site/app.js worker/*.js; do node --check "$f"; done
+        run: for f in site/maps.js site/engine.js site/app.js site/romanize.js worker/*.js; do node --check "$f"; done
       - name: Python syntax
         run: python3 -m py_compile scripts/*.py

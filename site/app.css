@@ -194,6 +194,12 @@ input[type="range"] { width: 100%; accent-color: var(--seal); margin: 0; }
 .bar-row.win.no-buy .fill { background: var(--cool); }
 .val { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
 .bar-row.win .val { color: #fff; }
+.bar-row.cant .name, .bar-row.cant .val { color: var(--ink-2); font-weight: 500; }
+/* 영어판: 도장 글자가 길고(JEONSE) 막대 이름이 넓음 */
+html[lang="en"] .seal .s1 { font-size: 23px; letter-spacing: 0.04em; }
+@media (max-width: 520px) { html[lang="en"] .seal .s1 { font-size: 18px; } }
+html[lang="en"] .bar-row { grid-template-columns: 56px 1fr; }
+@media (min-width: 521px) { html[lang="en"] .chips.tabs { flex-wrap: wrap; justify-content: flex-start; } }
 
 details { border-top: 1px solid var(--line); padding-top: 16px; }
 summary { cursor: pointer; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
@@ -351,6 +357,10 @@ a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid 
 
 /* 밝게/어둡게 버튼 (머리 오른쪽). 지금 어두우면 해, 밝으면 달 아이콘 */
 .top-row { display: flex; justify-content: space-between; align-items: center; }
+.top-tools { display: flex; align-items: center; gap: 8px; }
+.lang { font-size: var(--fs-s); font-weight: 500; color: var(--ink-2); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; line-height: 1; }
+.lang:hover { color: var(--ink); border-color: var(--ink-2); }
+@media (pointer: coarse) { .lang { padding: 14px 14px; } }
 .theme-btn {
   width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: 50%; padding: 0; cursor: pointer;
   color: var(--ink-2); background: var(--surface); border: 1.5px solid var(--line);

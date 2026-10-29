@@ -3,6 +3,8 @@
 같은 돈, 같은 기간이면 몇 년 뒤 내 자산이 가장 많이 남는 건 매매·전세·월세 중 어디일까?
 집 종류(아파트·빌라·오피스텔)와 지역을 고르고 가진 돈과 거주 기간만 넣으면 바로 알려주는 웹 계산기.
 
+- 사이트: https://rent-or-buy-kr.app (영어판: https://rent-or-buy-kr.app/en/, 한국에 사는 외국인용, 대출 없이 계산 선택 가능)
+
 ## 데이터 갱신
 
 1. 저장소 Settings → Secrets and variables → Actions에 `MOLIT_API_KEY`(공공데이터포털), `ECOS_API_KEY`(한국은행), `REB_API_KEY`(한국부동산원 R-ONE) 등록

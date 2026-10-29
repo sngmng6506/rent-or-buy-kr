@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo -->
+<script>try{var t=localStorage.getItem('yk-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>How it works · FAQ | Rent or Buy Korea</title>
+<meta name="description" content="What jeonse and monthly rent deposits are, where the prices and rates come from, and what the calculator assumes, including loans for foreigners.">
+<link rel="canonical" href="https://rent-or-buy-kr.app/en/faq/">
+<link rel="alternate" hreflang="ko" href="https://rent-or-buy-kr.app/faq/">
+<link rel="alternate" hreflang="en" href="https://rent-or-buy-kr.app/en/faq/">
+<link rel="alternate" hreflang="x-default" href="https://rent-or-buy-kr.app/faq/">
+<meta name="naver-site-verification" content="7db3401da6b129f4369449de6692e2c55d994526">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rent or Buy Korea">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="How it works · FAQ | Rent or Buy Korea">
+<meta property="og:description" content="What jeonse and monthly rent deposits are, where the prices and rates come from, and what the calculator assumes, including loans for foreigners.">
+<meta property="og:image" content="https://rent-or-buy-kr.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://rent-or-buy-kr.app/en/faq/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- /seo -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* same layout as the Korean FAQ */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #15181e; --ink-2: #5a6170; --line: #dde1e8; --seal: #cf2f25;
+  --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111318; --surface: #191c23; --ink: #eceff4; --ink-2: #9aa2b1; --line: #2b303a; --seal: #ff5a4c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.75 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  overflow-wrap: break-word;
+}
+.doc { max-width: 720px; margin: 0 auto; display: grid; gap: 28px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--seal); text-decoration: none; letter-spacing: 0.02em; }
+.back { color: var(--ink); font-weight: 500; text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+.back:hover, .back:focus-visible { border-color: var(--ink); outline: none; }
+h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.25; text-wrap: balance; }
+.lead { margin: 8px 0 0; color: var(--ink-2); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a { color: var(--ink); text-decoration: none; font-size: 14px; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+nav.toc a:hover { border-color: var(--ink); }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 22px; }
+section > h2 { font-size: 13px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 500; margin: 14px 0 0; }
+.q { padding: 16px 0; border-top: 1px solid var(--line); }
+section > h2 + .q { border-top: 0; }
+.q h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.45; text-wrap: balance; }
+.q p { margin: 0 0 8px; }
+.q p:last-child, .q ul:last-child, .q .table:last-child { margin-bottom: 0; }
+.q ul { margin: 0 0 8px; padding-left: 20px; }
+.q li { margin: 2px 0; }
+.table { overflow-x: auto; margin: 6px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink-2); font-weight: 500; }
+.muted { color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 13px; }
+a { color: inherit; }
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What are jeonse and monthly rent?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Jeonse is a Korean lease where you pay a large lump-sum deposit, often 50–70% of the home’s price, and no monthly rent; the deposit comes back when you move out. Monthly rent uses a smaller deposit plus rent each month."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What does the result show?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "How much money you’d have after the years you choose for buying, jeonse and monthly rent, with all three spending the same on housing each month and the rest saved."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Where do the prices and rates come from?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Prices are medians of recent real transactions reported to the Ministry of Land, Infrastructure and Transport; growth comes from the Korea Real Estate Board price index; rates are Bank of Korea averages. Data updates monthly."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "I’m a foreigner. Can I get a loan?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "It depends on your visa, income and bank. If you can’t borrow, choose No under the loan question and the calculator only uses your own cash."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is my deposit safe?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Be careful when the jeonse deposit is close to the home’s price. Check the property register, register your address, get a fixed date on your contract and ask about deposit insurance."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What about taxes?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Buying includes acquisition tax, agent fees and yearly property taxes at statutory one-home rates. Rules for foreign buyers can differ by area."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What isn’t included?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Moving costs, maintenance, income tax on interest and capital gains tax aren’t included. It’s a simulation for reference, not financial advice."
+   }
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<main class="doc">
+  <div class="top">
+    <a class="brand" href="../">Rent or Buy Korea</a>
+    <a class="back" href="../">← Calculator</a>
+  </div>
+
+  <header>
+    <h1>How the calculator works</h1>
+    <p class="lead">For foreigners living in Korea who are deciding whether to buy, rent on jeonse, or pay monthly rent. You can change the rates, deposit ratio and growth under “Adjust assumptions”.</p>
+  </header>
+
+  <section>
+    <h2>QUESTIONS</h2>
+    <div class="q">
+      <h3>What are jeonse and monthly rent?</h3>
+      <p><b>Jeonse</b> is a Korean lease where you hand the landlord a large lump-sum deposit, often 50–70% of the home’s price, and pay no monthly rent. You get the full deposit back when you move out. The landlord earns by using or investing the money.</p><p><b>Monthly rent (wolse)</b> uses a smaller deposit plus rent each month. The bigger the deposit, the lower the rent.</p>
+    </div>
+    <div class="q">
+      <h3>What does the result show?</h3>
+      <p>How much money you’d have after the years you choose, for each option: your home’s value minus any loan (buying), the deposit you get back (jeonse and rent), plus savings. All three spend the same amount on housing each month; whatever an option doesn’t spend goes into a savings account. The headline compares the winner with buying.</p>
+    </div>
+    <div class="q">
+      <h3>Where do the prices and rates come from?</h3>
+      <ul><li>Prices: median prices from the last three months of deals in the Ministry of Land, Infrastructure and Transport’s real transaction data, by district and size.</li><li>Price growth: the Korea Real Estate Board’s monthly price index, averaged since the index began (November 2003 for most apartments).</li><li>Rates: Bank of Korea averages for new mortgages, jeonse loans and deposits.</li></ul><p>Data updates automatically every month.</p>
+    </div>
+    <div class="q">
+      <h3>I’m a foreigner. Can I get a loan?</h3>
+      <p>It depends on your visa, income and bank. Long-term residents with Korean income can sometimes get a mortgage or jeonse loan, while many people on short-term visas can’t. Check with banks before you plan around a loan.</p><p>If you can’t borrow, choose <b>No</b> under “Can you get a bank loan in Korea?”. The calculator then only uses your own cash: if it isn’t enough to buy or to pay a jeonse deposit, that option is marked as not possible, and jeonse increases at renewal come out of your savings.</p>
+    </div>
+    <div class="q">
+      <h3>Is my deposit safe?</h3>
+      <p>A deposit is only as safe as the landlord’s ability to return it. Be careful when the jeonse deposit is close to the home’s price; the calculator warns you when it reaches 90%. Before signing, check the property register for existing loans, register your address after moving in, and get a fixed date (확정일자) on your contract. For foreign residents, reporting your address to immigration generally counts as registering. Deposit insurance may also be available; ask about eligibility.</p>
+    </div>
+    <div class="q">
+      <h3>What about taxes?</h3>
+      <p>Buying includes acquisition tax, agent fees when buying and selling, and yearly property tax (plus comprehensive real estate tax for expensive homes), using statutory rates for a one-home household. Officetels use 4.6% acquisition tax. Rules for foreign buyers can differ by area (some areas require permission to buy), so check current rules before buying.</p>
+    </div>
+    <div class="q">
+      <h3>What isn’t included?</h3>
+      <ul><li>Moving, repairs and maintenance fees</li><li>Income tax on savings interest and capital gains tax when selling</li><li>Changes in rates or prices beyond the steady yearly rates you set</li></ul><p>This is a simulation for reference, not financial or legal advice. Talk to a bank, tax adviser or licensed agent before a big decision.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Sources: Ministry of Land, Infrastructure and Transport real transaction data (data.go.kr), Korea Real Estate Board R-ONE price indices, Bank of Korea ECOS. <a href="../../faq/" lang="ko">한국어 설명</a></p>
+  </footer>
+</main>
+</body>
+</html>

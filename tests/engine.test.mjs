@@ -92,3 +92,23 @@ test('매달 쓰는 돈은 셋이 같고, 기간이 길수록 늘어남', () => 
   const a = e.simulate({ ...INP, years: 4 }, P), b = e.simulate({ ...INP, years: 8 }, P);
   assert.ok(b.flow.spend > a.flow.spend);
 });
+
+test('대출 없이(noLoan): 가진 돈이 모자라면 매매·전세는 할 수 없고, 판정에서 빠짐', () => {
+  const p = { ...P, noLoan: true };
+  const r = e.simulate(INP, p);   // 가진 돈 3억 < 집값 8.3억, 전세금 5.3억
+  assert.equal(r.ok.buy, false); assert.equal(r.ok.jeonse, false); assert.equal(r.ok.wolse, true);
+  assert.deepEqual(e.ranking(r).map(x => x[0]), ['wolse']);
+  const rich = e.simulate({ ...INP, cash: 10 }, p);
+  assert.ok(rich.ok.buy && rich.ok.jeonse);
+  assert.equal(rich.flow.bInterest, 0);
+  // 대출을 받을 수 있으면 결과가 그대로
+  const same = e.simulate(INP, { ...P, noLoan: false });
+  near(same.buy / 1e4, 52362, 50, '매매');
+});
+
+test('지역 이름 로마자: 소리 바뀜과 시·군·구', () => {
+  const R = require('../site/romanize.js');
+  const want = { '종로구': 'Jongno-gu', '중랑구': 'Jungnang-gu', '신림': 'Sillim', '왕십리': 'Wangsimni', '강릉시': 'Gangneung-si',
+    '덕양구': 'Deogyang-gu', '광양시': 'Gwangyang-si', '수원시 장안구': 'Suwon-si Jangan-gu', '대구': 'Daegu', '울릉군': 'Ulleung-gun' };
+  for (const [ko, en] of Object.entries(want)) assert.equal(R.place(ko), en, ko);
+});

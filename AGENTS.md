@@ -9,6 +9,9 @@ site/index.html            계산기 페이지 뼈대 (지역 페이지도 이�
 site/app.js, site/app.css  화면·지도 그리기·검색·입력 (모든 페이지 공용)
 site/engine.js             계산 엔진: 세금·대출·전세 재계약·월세·예금, 뒤집히는 값 (순수 함수, tests/에서 검사)
 site/maps.js               지도 모양 데이터(SVG 경로)만
+site/romanize.js           지역 이름 로마자 표기 (영어판에서만 불러옴)
+site/en/index.html         영어판 계산기 (build_pages.py가 site/index.html + EN_HTML 문구 표로 생성, 직접 수정 금지)
+site/en/faq/index.html     영어 FAQ (손으로 씀, 머리 태그는 build_pages가 찍음)
 tests/                     엔진·코멘트 규칙 테스트. `node --test tests/*.test.mjs`
 worker/index.js            Cloudflare Worker 입구: site/는 정적 파일(assets)로 바로, /api/*만 처리 (wrangler.toml run_worker_first)
 worker/comments.js         지역 코멘트 API (D1 바인딩 DB)
@@ -61,4 +64,5 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 - UI: 글씨 크기는 `--fs-*` 6단계만, 펼치기는 꺾쇠(›) 또는 "?" 두 가지만. 폰 입력칸 16px 이상, 누르는 영역 44px
 - 공유하기는 결과 칸 오른쪽 위. 밝게/어둡게 버튼은 머리 오른쪽, 고른 값은 localStorage `yk-theme`(모든 페이지 머리의 짧은 스크립트가 적용)
 - 후원 링크: Ko-fi https://ko-fi.com/sngmng (첫 화면 맨 아래, 소개 페이지). 광고처럼 튀지 않게 한 줄로만
+- 영어판(/en/, 한국에 사는 외국인용): app.js 문구는 `L(한국어, 영어)`로 같이 적고, site/index.html 문구를 바꾸면 build_pages.py의 `EN_HTML` 짝도 고치기(못 찾으면 빌드가 멈춤). 금액은 ₩312.4M·₩3.12B, 입력칸은 백만 원(M) 단위, 면적은 ㎡(평은 괄호). 영어판만 '대출 받을 수 있나요' 선택(`noLoan`, 주소 `l=0`): 가진 돈이 모자란 쪽은 '할 수 없음'으로 빼고 비교. 지역 페이지·코멘트 없음. 한국어 화면 결과는 영어판 작업으로 바뀌면 안 됨
 - 지역 코멘트("○○ 이야기"): 지도 아래 버튼 → PC 오른쪽 패널, 폰 아래 시트. 자동으로 열지 않음. 지역 페이지는 시세 설명 아래 최근 3개. 규칙 바꾸면 tests/comments.test.mjs·개인정보 처리방침·FAQ 같이

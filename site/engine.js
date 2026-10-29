@@ -52,6 +52,8 @@ function simulate(inp, p, growOverride) {
   let invB = Math.max(0, C - P - upfront);
 
   let D = p.Dfix ?? P * p.ratio / 100;      // Dfix·Wfix·rentFix: '이 금액이면 뒤집혀요' 계산용 고정값
+  // noLoan: 대출을 못 받는 경우 (영어판 외국인용). 가진 돈이 모자라면 그 방법은 '할 수 없음'(ok=false)
+  const ok = { buy: !p.noLoan || C >= P + upfront, jeonse: !p.noLoan || C >= D, wolse: true };
   let jl = Math.max(0, D - C);
   const jl0 = jl, D0 = D;
   let invJ = Math.max(0, C - D);
@@ -67,7 +69,9 @@ function simulate(inp, p, growOverride) {
     const yr = Math.floor((m - 1) / 12);
     if (m > 1 && (m - 1) % 24 === 0) {     // 2년마다 전세금 인상분은 대출로
       const nd = D * Math.pow(1 + p.jgrow / 100, 2);
-      jl += nd - D; D = nd;
+      if (p.noLoan) invJ -= nd - D;           // 대출 없이: 인상분은 모아둔 돈에서
+      else jl += nd - D;
+      D = nd;
       if (jl < 0) { invJ += -jl; jl = 0; }   // 전세금이 내리면 돌려받은 돈은 대출부터 갚고 남으면 예금
     }
     const tax = holdingTax(P * Math.pow(1 + g, yr)) / 12;   // 그해 집값 기준
@@ -75,9 +79,9 @@ function simulate(inp, p, growOverride) {
     if (bal > 0) { const it = bal * rm; f.bInterest += it; outB += pay; bal = bal + it - pay; }
     const outJ = jl * rj; f.jInterest += outJ;
     const outW = rent0 * Math.pow(1 + p.jgrow / 100, yr); f.wRent += outW;
-    const M = Math.max(outB, outJ, outW);  // 같은 돈을 쓰고, 덜 쓴 쪽은 차액을 예금
+    const M = Math.max(ok.buy ? outB : 0, ok.jeonse ? outJ : 0, outW);  // 같은 돈을 쓰고, 덜 쓴 쪽은 차액을 예금 (할 수 없는 쪽은 기준에서 뺌)
     f.spend += M;
-    f.top[M === outB ? 'buy' : M === outJ ? 'jeonse' : 'wolse']++;   // 어느 쪽이 기준이었는지
+    f.top[ok.buy && M === outB ? 'buy' : ok.jeonse && M === outJ ? 'jeonse' : 'wolse']++;   // 어느 쪽이 기준이었는지
     f.bEarn += invB * rd; f.jEarn += invJ * rd; f.wEarn += invW * rd;
     invB = invB * (1 + rd) + (M - outB);
     invJ = invJ * (1 + rd) + (M - outJ);
@@ -90,7 +94,7 @@ function simulate(inp, p, growOverride) {
     buy: Pn - sale - Math.max(0, bal) + invB,
     jeonse: D - jl + invJ,
     wolse: W + invW,
-    gain: Pn - P, flow: f,
+    gain: Pn - P, flow: f, ok,
     ltv: P > 0 ? loan0 / P : 0, jltv: D0 > 0 ? jl0 / D0 : 0, rent0, W, D0,
   };
 }
@@ -103,7 +107,7 @@ function solveDown(f, lo, hi) {
 }
 function equivalents(inp, p, res) {
   const fixed = { Dfix: res.D0, Wfix: res.W, rentFix: res.rent0 };
-  if (res.buy >= Math.max(res.jeonse, res.wolse)) {
+  if (res.buy >= bestRent(res)) {
     // 매매가 이길 때: 전세금 / 월세(보증금은 그대로)를 얼마까지 낮춰야 매매만큼 남나
     const P = inp.price * EOK;
     const jeonse = solveDown(D => { const r = simulate(inp, { ...p, ...fixed, Dfix: D }); return r.jeonse - r.buy; }, 0, P * 1.5);
@@ -112,12 +116,12 @@ function equivalents(inp, p, res) {
   }
   // 빌리는 쪽이 이길 때: 집값이 얼마 이하면 매매가 따라잡나 (전세·월세 조건은 지금 그대로)
   // 같은 계산 안에서 비교해야 '매달 같은 돈' 기준이 맞음 (집값이 바뀌면 그 기준 금액도 바뀜)
-  const price = solveDown(x => { const r = simulate({ ...inp, price: x }, { ...p, ...fixed }); return Math.max(r.jeonse, r.wolse) - r.buy; }, inp.price * 3, 0.1);
+  const price = solveDown(x => { const r = simulate({ ...inp, price: x }, { ...p, ...fixed }); return bestRent(r) - r.buy; }, inp.price * 3, 0.1);
   return { side: 'buy', price: price != null ? price * EOK : null };
 }
 
 function breakeven(inp, p) {
-  const f = g => { const r = simulate(inp, p, g); return r.buy - Math.max(r.jeonse, r.wolse); };
+  const f = g => { const r = simulate(inp, p, g); return r.buy - bestRent(r); };
   let lo = -10, hi = 20;
   if (f(lo) > 0) return -Infinity;
   if (f(hi) < 0) return Infinity;
@@ -134,10 +138,13 @@ function requiredReturn(inp, p, kind, target) {
   for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
   return (lo + hi) / 2;
 }
+// 할 수 있는 방법만 (대출 없이 계산할 때 돈이 모자란 쪽은 뺌)
+const able = (r, k) => !r.ok || r.ok[k] !== false;
+const bestRent = r => Math.max(able(r, 'jeonse') ? r.jeonse : -Infinity, r.wolse);
 function ranking(r) {
-  return [['buy', r.buy], ['jeonse', r.jeonse], ['wolse', r.wolse]].sort((a, b) => b[1] - a[1]);
+  return [['buy', r.buy], ['jeonse', r.jeonse], ['wolse', r.wolse]].filter(([k]) => able(r, k)).sort((a, b) => b[1] - a[1]);
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { EOK, acqTax, brokerFee, PUBLIC_RATIO, bracket, holdingTax, simulate, solveDown, equivalents, breakeven, requiredReturn, ranking };
+  module.exports = { EOK, able, bestRent, acqTax, brokerFee, PUBLIC_RATIO, bracket, holdingTax, simulate, solveDown, equivalents, breakeven, requiredReturn, ranking };
 }

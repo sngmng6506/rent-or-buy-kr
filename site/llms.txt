@@ -18,3 +18,8 @@
 - [지역별 시세](https://rent-or-buy-kr.app/r/): 시군구별 아파트 매매·전세 중간값과 그 지역으로 열린 계산기
 - [소개](https://rent-or-buy-kr.app/about/)
 - [개인정보 처리방침](https://rent-or-buy-kr.app/privacy/)
+
+## English
+
+- [Calculator in English](https://rent-or-buy-kr.app/en/): buy vs jeonse vs monthly rent for foreigners living in Korea, with a no-loan option
+- [How it works](https://rent-or-buy-kr.app/en/faq/): what jeonse is, data sources, assumptions

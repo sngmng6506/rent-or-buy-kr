@@ -13,8 +13,8 @@
 
 ## 페이지
 
-- [계산기](/): 지역을 고르고 바로 계산
-- [계산 방법·자주 묻는 질문](/faq/)
-- [지역별 시세](/r/): 시군구별 아파트 매매·전세 중간값과 그 지역으로 열린 계산기
-- [소개](/about/)
-- [개인정보 처리방침](/privacy/)
+- [계산기](https://rent-or-buy-kr.app/): 지역을 고르고 바로 계산
+- [계산 방법·자주 묻는 질문](https://rent-or-buy-kr.app/faq/)
+- [지역별 시세](https://rent-or-buy-kr.app/r/): 시군구별 아파트 매매·전세 중간값과 그 지역으로 열린 계산기
+- [소개](https://rent-or-buy-kr.app/about/)
+- [개인정보 처리방침](https://rent-or-buy-kr.app/privacy/)

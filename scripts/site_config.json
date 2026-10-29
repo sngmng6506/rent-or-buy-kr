@@ -1,5 +1,5 @@
 {
- "_note": "url: 배포 주소(끝에 / 없이). 비어 있으면 canonical·sitemap·공유 이미지 절대주소를 못 넣어요. contact: 소개·개인정보 페이지에 보일 연락처",
- "url": "",
- "contact": "sngmng6506@gmail.com"
+  "_note": "url: 배포 주소(끝에 / 없이). 비어 있으면 canonical·sitemap·공유 이미지 절대주소를 못 넣어요. contact: 소개·개인정보 페이지에 보일 연락처",
+  "url": "https://rent-or-buy-kr.app",
+  "contact": "sngmng6506@gmail.com"
 }

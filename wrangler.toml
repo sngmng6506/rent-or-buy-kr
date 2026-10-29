@@ -1,7 +1,13 @@
-# Cloudflare Pages 설정 (코멘트 저장용 D1). 배포 방법은 docs/comments.md
+# Cloudflare Workers 설정: site/는 정적 파일(assets), /api/*만 worker/index.js가 처리. 배포·D1은 docs/comments.md
 name = "buy-or-rent-kr"
-pages_build_output_dir = "site"
+main = "worker/index.js"
 compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./site"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+html_handling = "auto-trailing-slash"
 
 # 코멘트 켤 때 아래 주석을 풀고 D1 ID를 넣기 (가짜 ID가 있으면 배포가 실패함)
 # [[d1_databases]]

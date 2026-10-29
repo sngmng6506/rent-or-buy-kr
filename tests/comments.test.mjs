@@ -1,7 +1,7 @@
-// 코멘트 검사 규칙 (lib/comments-lib.js) 테스트
+// 코멘트 검사 규칙 (worker/rules.js) 테스트
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkText, checkTag, REGION_RE } from '../lib/comments-lib.js';
+import { checkText, checkTag, REGION_RE } from '../worker/rules.js';
 
 test('정상 글은 통과, 공백 정리', () => {
   assert.equal(checkText('  작년에 34평   전세 5억에 들어왔어요 ').text, '작년에 34평 전세 5억에 들어왔어요');

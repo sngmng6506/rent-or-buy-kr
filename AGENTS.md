@@ -10,8 +10,9 @@ site/app.js, site/app.css  화면·지도 그리기·검색·입력 (모든 페�
 site/engine.js             계산 엔진: 세금·대출·전세 재계약·월세·예금, 뒤집히는 값 (순수 함수, tests/에서 검사)
 site/maps.js               지도 모양 데이터(SVG 경로)만
 tests/                     엔진·코멘트 규칙 테스트. `node --test tests/*.test.mjs`
-functions/api/comments*    지역 코멘트 API (Cloudflare Pages Functions + D1 바인딩 DB)
-lib/comments-lib.js        코멘트 검사 규칙(100자·링크·전화·금칙어)·IP 해시. functions/ 밖이라 주소로 안 열림
+worker/index.js            Cloudflare Worker 입구: site/는 정적 파일(assets)로 바로, /api/*만 처리 (wrangler.toml run_worker_first)
+worker/comments.js         지역 코멘트 API (D1 바인딩 DB)
+worker/rules.js            코멘트 검사 규칙(100자·링크·전화·금칙어)·IP 해시
 migrations/                D1 표 만들기 SQL. wrangler.toml에 D1 ID
 docs/comments.md           코멘트 켜는 법(배포·D1·비밀값·관리)
 site/r/<시군구코드>/       지역별 페이지 (scripts/build_pages.py가 생성, 직접 수정 금지)

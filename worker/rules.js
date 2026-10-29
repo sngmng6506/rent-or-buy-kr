@@ -1,4 +1,4 @@
-// 코멘트 API 공용 (functions/api/*에서 import): 응답, 검사, IP 해시. functions/ 밖에 둬서 주소로 안 열림
+// 코멘트 API 공용 (worker/comments.js에서 import): 응답, 검사, IP 해시
 export const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 

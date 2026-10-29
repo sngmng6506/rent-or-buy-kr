@@ -1,13 +1,14 @@
-// GET  /api/comments?region=11350&limit=10&before=123  → { count, items: [{ id, text, tag, created }] }
-// POST /api/comments  { region, text, tag }            → { item }
-// 저장소: D1 (바인딩 이름 DB). 1분에 1개, 신고 3번이면 숨김
-import { json, fail, REGION_RE, checkText, checkTag, ipHash } from '../../lib/comments-lib.js';
+// 지역 코멘트 API. 저장소: D1 (바인딩 이름 DB). 1분에 1개, 신고 3번이면 숨김
+// GET    /api/comments?region=11350&limit=10&before=123  → { count, items: [{ id, text, tag, created }] }
+// POST   /api/comments  { region, text, tag }            → { item }
+// POST   /api/comments/report  { id }                    → 같은 사람은 한 번만
+// DELETE /api/comments/123  (헤더 x-admin-key)            → 운영자 삭제
+import { json, fail, REGION_RE, checkText, checkTag, ipHash, isAdmin } from './rules.js';
 
 const RATE_SECONDS = 60;
-const HIDE_AT = 3;
+export const HIDE_AT = 3;
 
-export async function onRequestGet({ request, env }) {
-  if (!env.DB) return fail('NO_DB', '코멘트 저장소가 아직 연결되지 않았어요.', 503);
+export async function list(request, env) {
   const url = new URL(request.url);
   const region = url.searchParams.get('region') || '';
   if (!REGION_RE.test(region)) return fail('REGION', '지역이 올바르지 않아요.');
@@ -24,8 +25,7 @@ export async function onRequestGet({ request, env }) {
   return json({ count, items });
 }
 
-export async function onRequestPost({ request, env }) {
-  if (!env.DB) return fail('NO_DB', '코멘트 저장소가 아직 연결되지 않았어요.', 503);
+export async function create(request, env) {
   let body;
   try { body = await request.json(); } catch { return fail('BODY', '보낸 내용을 읽지 못했어요.'); }
   const region = String(body.region || '');
@@ -42,4 +42,26 @@ export async function onRequestPost({ request, env }) {
   return json({ item: { id: r.meta.last_row_id, text: c.text, tag, created: now } }, 201);
 }
 
-export { HIDE_AT };
+export async function report(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return fail('BODY', '보낸 내용을 읽지 못했어요.'); }
+  const id = parseInt(body.id, 10);
+  if (!id) return fail('ID', '어떤 코멘트인지 알 수 없어요.');
+  const ip = await ipHash(request, env);
+  const ins = await env.DB.prepare('INSERT OR IGNORE INTO comment_reports (comment_id, ip_hash) VALUES (?, ?)').bind(id, ip).run();
+  if (ins.meta.changes) {
+    await env.DB.prepare('UPDATE comments SET reports = reports + 1, hidden = CASE WHEN reports + 1 >= ? THEN 1 ELSE hidden END WHERE id = ?').bind(HIDE_AT, id).run();
+  }
+  return json({ ok: true });
+}
+
+export async function remove(request, env, rawId) {
+  if (!isAdmin(request, env)) return fail('ADMIN', '삭제 권한이 없어요.', 403);
+  const id = parseInt(rawId, 10);
+  if (!id) return fail('ID', '어떤 코멘트인지 알 수 없어요.');
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM comment_reports WHERE comment_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(id),
+  ]);
+  return json({ ok: true });
+}

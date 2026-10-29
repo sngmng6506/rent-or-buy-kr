@@ -171,8 +171,8 @@ def describe(code, r, window):
             s += f". 5년 전과 비교하면 해마다 {pct(g5)} {'올랐' if g5 >= 0 else '떨어졌'}어요"
         lines.append(s + ".")
     if r.get("conv") and r.get("nconv", 0) >= 10 and 2 <= r["conv"] <= 10:   # 계산기와 같은 기준
-        per1 = r["conv"] / 12 * 100   # 전세 1억당 월 (만 원)
-        s = f"월세는 전세 1억당 월 {per1:.0f}만 원 꼴이에요"
+        per1 = r["conv"] / 12 * 100   # 전세금−월세 보증금 1억 원당 월 (만 원)
+        s = f"전세금과 월세 보증금의 차액 1억 원당 월세는 약 {per1:.0f}만 원이에요"
         if r.get("wdep"):
             s += f" (보증금은 전세금의 {round(r['wdep'] * 100)}% 정도)"   # wdep는 비율(0.14)
         lines.append(s + ".")
@@ -283,7 +283,7 @@ EN_HTML = [
     ('>그래프로 비교하기</button>', '>Compare over time</button>'),
     ('<span><i class="k-buy"></i>매매</span><span><i class="k-jeonse"></i>전세</span><span><i class="k-wolse"></i>월세</span>',
      '<span><i class="k-buy"></i>Buy</span><span><i class="k-jeonse"></i>Jeonse</span><span><i class="k-wolse"></i>Monthly rent</span>'),
-    ('<p class="chart-note">해마다 그만큼 살았을 때 내 자산이에요.</p>', '<p class="chart-note">Your assets if you stayed that many years.</p>'),
+    ('<p class="chart-note">거주 기간에 따른 계산 결과를 보여줘요.</p>', '<p class="chart-note">Compare the results for different lengths of stay.</p>'),
     ('aria-label="금액이 어떻게 나왔는지 보기"', 'aria-label="How these amounts add up"'),
     ('<span class="name">매매</span>', '<span class="name">Buy</span>'),
     ('<span class="name">전세</span>', '<span class="name">Jeonse</span>'),

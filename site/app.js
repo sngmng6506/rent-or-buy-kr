@@ -577,8 +577,8 @@ function render() {
   }
 
   $('note').textContent = L(
-    `매달 주거비로 쓸 수 있는 돈은 세 선택지 모두 ${won(res.flow.spend / (Y * 12))}으로 봤어요. 덜 쓰는 쪽은 차액을 예금에 넣어요.`,
-    `Each option has the same ${won(res.flow.spend / (Y * 12))} monthly housing budget. Any difference goes into savings.`);
+    '매달 주거비가 적게 드는 선택지는 절약한 돈을 예금에 넣는다고 계산해요.',
+    'Options with lower monthly housing costs put the savings into a bank deposit.');
   const help = {
     ratio: L(`전세금 ${won(res.D0)}`, `Jeonse deposit: ${won(res.D0)}`),
     wdep: L(`월세 보증금 ${won(res.W)}`, `Rent deposit: ${won(res.W)}`),

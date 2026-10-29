@@ -208,6 +208,7 @@ def page(tpl, code, r, siblings, window):
     <h2 id="facts-h">{html.escape(name)} 아파트 시세</h2>
     {''.join(f'<p>{html.escape(x)}</p>' for x in lines)}
     {table}
+    <div class="talk-latest" id="talk-latest" hidden></div>
     <nav aria-label="같은 시도 다른 지역">{nav}</nav>
     <p><a href="r/index.html">전체 지역 보기</a> · <a href="index.html">처음 화면</a></p>
   </section>
@@ -319,7 +320,7 @@ def main():
            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"}, **({"url": absu("")} if URL else {})}
     stamp(SITE / "faq" / "index.html", seo("영끌각 계산 방법 · 자주 묻는 질문", "영끌각이 매매·전세·월세를 어떻게 비교하는지, 시세·상승률·세금·대출을 어떤 기준으로 계산하는지 자세히 설명해요.", "faq/"))
     stamp(SITE / "about" / "index.html", seo("영끌각 소개", "영끌각은 매매·전세·월세 중 몇 년 뒤 돈이 더 남는 쪽을 공공 데이터로 계산해주는 무료 웹 계산기예요.", "about/"))
-    stamp(SITE / "privacy" / "index.html", seo("개인정보 처리방침 | 영끌각", "영끌각은 회원가입이 없고 입력한 값을 서버로 보내지 않아요. 광고 쿠키와 접속 기록 처리 방식을 설명해요.", "privacy/"))
+    stamp(SITE / "privacy" / "index.html", seo("개인정보 처리방침 | 영끌각", "영끌각은 회원가입이 없고 계산에 쓴 값을 서버로 보내지 않아요. 코멘트 저장, 광고 쿠키, 접속 기록 처리 방식을 설명해요.", "privacy/"))
     # 계산기 본문(index.html)이 틀이라 마지막에: 위 지역 페이지는 이미 만들어짐
     stamp(SITE / "index.html", seo(MAIN_TITLE, MAIN_DESC, "", app))
 

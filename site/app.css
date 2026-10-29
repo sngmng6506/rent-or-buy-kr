@@ -362,3 +362,60 @@ a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid 
 :root[data-theme="dark"] .theme-btn .i-moon { display: none; }
 @media (pointer: coarse) { .theme-btn { width: 44px; height: 44px; } }
 .kofi a { color: var(--ink); font-weight: 500; }
+
+/* ── 이 동네 이야기 (지역 코멘트) ─────────────────────────── */
+.talk-btn {
+  justify-self: start; display: inline-flex; align-items: center; gap: 6px; margin-top: -10px;
+  font: 500 var(--fs-s) var(--body); color: var(--ink-2); background: transparent;
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer;
+}
+.talk-btn b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.talk-btn b:empty { display: none; }
+@media (hover: hover) { .talk-btn:hover { color: var(--ink); border-color: var(--ink-2); } }
+.talk-dim { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.28); opacity: 0; transition: opacity 200ms ease; }
+.talk-dim.on { opacity: 1; }
+.talk {
+  position: fixed; z-index: 31; top: 0; right: 0; bottom: 0; width: min(420px, 100vw);
+  display: flex; flex-direction: column; gap: 10px; padding: 20px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.10);
+  transform: translateX(100%); transition: transform 200ms ease; overscroll-behavior: contain;
+}
+.talk.on { transform: none; }
+@media (max-width: 720px) {   /* 폰: 아래에서 올라오는 시트 */
+  .talk { top: auto; left: 0; width: 100%; height: min(78vh, 640px); border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; transform: translateY(100%); }
+}
+@media (prefers-reduced-motion: reduce) { .talk, .talk-dim { transition: none; } }
+html.talk-open { overflow: hidden; }
+.talk-head { display: flex; justify-content: space-between; align-items: center; }
+.talk-head h2 { margin: 0; font-size: var(--fs-l); }
+.talk-close { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--bg); color: var(--ink-2); font-size: var(--fs-base); cursor: pointer; }
+.talk-close:hover { color: var(--ink); }
+.talk-sub { margin: -4px 0 0; font-size: var(--fs-s); color: var(--ink-2); }
+.talk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; align-content: start; overflow-y: auto; flex: 1; overscroll-behavior: contain; }
+.talk-list li { padding: 10px 12px; border-radius: 12px; background: var(--bg); }
+.talk-list li p { margin: 0; font-size: var(--fs-base); line-height: 1.5; overflow-wrap: anywhere; }
+.talk-list li.talk-empty { background: none; padding: 8px 0; color: var(--ink-2); font-size: var(--fs-m); }
+.talk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 6px; font-size: var(--fs-xs); color: var(--ink-2); }
+.talk-ctag { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.talk-report, .talk-del { margin-left: auto; font: 400 var(--fs-xs) var(--body); color: var(--ink-2); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+.talk-del { margin-left: 0; color: var(--warn); }
+.talk-more { align-self: center; font: 500 var(--fs-s) var(--body); color: var(--ink-2); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+.talk-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.talk-form input[type="text"] {
+  min-width: 0; font: 400 var(--fs-base) var(--body); color: var(--ink); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 12px;
+}
+.talk-form input[type="text"]:focus { outline: none; border-color: var(--ink); }
+.talk-form button[type="submit"] { font: 600 var(--fs-m) var(--body); color: var(--surface); background: var(--ink); border: 0; border-radius: 10px; padding: 0 16px; cursor: pointer; }
+.talk-form button[type="submit"]:disabled { opacity: .6; cursor: default; }
+.talk-tag { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--ink-2); }
+.talk-tag input { accent-color: var(--ink); margin: 0; }
+.talk-msg { grid-column: 1 / -1; margin: 0; font-size: var(--fs-s); color: var(--ink-2); }
+.talk-msg:empty { display: none; }
+/* 지역 페이지 시세 설명 아래 최근 이야기 */
+.talk-latest { display: grid; gap: 10px; max-width: 640px; }
+.talk-latest h3 { margin: 0; font-size: var(--fs-base); }
+.talk-latest h3 span { color: var(--ink-2); font-weight: 400; font-variant-numeric: tabular-nums; }
+.talk-latest .talk-list { overflow: visible; }
+.talk-none { margin: 0; color: var(--ink-2); font-size: var(--fs-m); }
+.talk-open-btn { justify-self: start; font: 500 var(--fs-m) var(--body); color: var(--ink); background: transparent; border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }

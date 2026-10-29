@@ -1,0 +1,10 @@
+# Cloudflare Pages 설정 (코멘트 저장용 D1). 배포 방법은 docs/comments.md
+name = "yeongkkeul"
+pages_build_output_dir = "site"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "yeongkkeul-comments"
+database_id = "00000000-0000-0000-0000-000000000000"   # 배포 때 만든 D1의 ID로 바꾸기
+migrations_dir = "migrations"

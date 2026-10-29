@@ -3,7 +3,7 @@ name: Check
 # 계산 엔진 테스트와 스크립트 문법 검사. 숫자가 바뀌는 수정이면 tests/의 기준값을 같이 고칠 것
 on:
   push:
-    paths: ["site/**", "tests/**", "scripts/**", ".github/workflows/check.yml"]
+    paths: ["site/**", "tests/**", "scripts/**", "functions/**", "lib/**", ".github/workflows/check.yml"]
   pull_request:
 
 jobs:
@@ -17,6 +17,6 @@ jobs:
       - name: Engine tests
         run: node --test tests/*.test.mjs
       - name: JS syntax
-        run: for f in site/maps.js site/engine.js site/app.js; do node --check "$f"; done
+        run: for f in site/maps.js site/engine.js site/app.js lib/*.js functions/api/*.js functions/api/comments/*.js; do node --check "$f"; done
       - name: Python syntax
         run: python3 -m py_compile scripts/*.py

@@ -61,6 +61,7 @@
       <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="전국 시군구 지도"></svg></div>
       <span class="legend">싸다 <i></i> 비싸다</span>
       <p class="picked" id="picked"></p>
+      <button class="talk-btn" id="talk-btn" type="button" aria-haspopup="dialog" aria-controls="talk"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="talk-btn-label">이 동네 이야기</span><b id="talk-count"></b></button>
     </section>
 
     <section class="panel" aria-labelledby="h-input">
@@ -144,11 +145,31 @@
     </section>
   </div>
 
+  <!-- 지역 코멘트: PC는 오른쪽 패널, 폰은 아래에서 올라오는 시트 -->
+  <div class="talk-dim" id="talk-dim" hidden></div>
+  <aside class="talk" id="talk" role="dialog" aria-modal="true" aria-labelledby="talk-title" hidden>
+    <div class="talk-head">
+      <h2 id="talk-title">이 동네 이야기</h2>
+      <button class="talk-close" id="talk-close" type="button" aria-label="닫기">✕</button>
+    </div>
+    <p class="talk-sub">이 동네에 살아봤거나 알아본 경험을 한 줄로 나눠요.</p>
+    <ol class="talk-list" id="talk-list" aria-live="polite"></ol>
+    <button class="talk-more" id="talk-more" type="button" hidden>지난 이야기 더 보기</button>
+    <form class="talk-form" id="talk-form">
+      <label class="sr-only" for="talk-text">한 줄 남기기</label>
+      <input id="talk-text" name="comment" type="text" maxlength="100" autocomplete="off" placeholder="예: 34평 전세 5억에 들어왔어요…">
+      <button type="submit" id="talk-send">남기기</button>
+      <label class="talk-tag"><input type="checkbox" id="talk-tag-on" checked> <span id="talk-tag"></span></label>
+      <p class="talk-msg" id="talk-msg" role="status"></p>
+    </form>
+  </aside>
+
 
   <section class="panel facts" aria-labelledby="facts-h">
     <h2 id="facts-h">경기도 고양시 덕양구 아파트 시세</h2>
     <p>2026년 7월~2026년 9월 실거래가 기준이에요. 이 기간 매매 거래는 1,303건이에요. 전세금은 보통 집값의 66% 정도예요.</p><p>한국부동산원 아파트 매매가격지수로 보면 이 지역 아파트값은 2003년부터 해마다 평균 2.7% 올랐어요 (최근 10년은 +2.4%, 5년은 −3%씩).</p><p>월세는 전세 1억당 월 29만 원 꼴이에요 (보증금은 전세금의 22% 정도).</p>
     <div class="table"><table><thead><tr><th>크기</th><th>매매 중간값(원)</th><th>전세 중간값(원)</th><th>매매 거래</th></tr></thead><tbody><tr><td>39㎡(16평형)</td><td>2억 4,500만</td><td>1억 8,700만</td><td>27건</td></tr><tr><td>49㎡(20평형)</td><td>3억</td><td>2억 3,000만</td><td>140건</td></tr><tr><td>59㎡(25평형)</td><td>3억 9,600만</td><td>2억 8,000만</td><td>352건</td></tr><tr><td>74㎡(30평형)</td><td>6억 5,000만</td><td>4억 2,500만</td><td>153건</td></tr><tr><td>84㎡(34평형)</td><td>7억 2,600만</td><td>4억 7,500만</td><td>506건</td></tr><tr><td>101㎡(40평형)</td><td>6억 4,300만</td><td>4억 7,000만</td><td>53건</td></tr><tr><td>114㎡(45평형)</td><td>6억 500만</td><td>5억</td><td>19건</td></tr></tbody></table></div>
+    <div class="talk-latest" id="talk-latest" hidden></div>
     <nav aria-label="같은 시도 다른 지역"><a href="r/41111/index.html">수원시 장안구</a> <a href="r/41113/index.html">수원시 권선구</a> <a href="r/41115/index.html">수원시 팔달구</a> <a href="r/41117/index.html">수원시 영통구</a> <a href="r/41131/index.html">성남시 수정구</a> <a href="r/41133/index.html">성남시 중원구</a> <a href="r/41135/index.html">성남시 분당구</a> <a href="r/41150/index.html">의정부시</a> <a href="r/41171/index.html">안양시 만안구</a> <a href="r/41173/index.html">안양시 동안구</a> <a href="r/41192/index.html">부천시 원미구</a> <a href="r/41194/index.html">부천시 소사구</a> <a href="r/41196/index.html">부천시 오정구</a> <a href="r/41210/index.html">광명시</a> <a href="r/41220/index.html">평택시</a> <a href="r/41250/index.html">동두천시</a> <a href="r/41271/index.html">안산시 상록구</a> <a href="r/41273/index.html">안산시 단원구</a> <span class="here">고양시 덕양구</span> <a href="r/41285/index.html">고양시 일산동구</a> <a href="r/41287/index.html">고양시 일산서구</a> <a href="r/41290/index.html">과천시</a> <a href="r/41310/index.html">구리시</a> <a href="r/41360/index.html">남양주시</a> <a href="r/41370/index.html">오산시</a> <a href="r/41390/index.html">시흥시</a> <a href="r/41410/index.html">군포시</a> <a href="r/41430/index.html">의왕시</a> <a href="r/41450/index.html">하남시</a> <a href="r/41461/index.html">용인시 처인구</a> <a href="r/41463/index.html">용인시 기흥구</a> <a href="r/41465/index.html">용인시 수지구</a> <a href="r/41480/index.html">파주시</a> <a href="r/41500/index.html">이천시</a> <a href="r/41550/index.html">안성시</a> <a href="r/41570/index.html">김포시</a> <a href="r/41591/index.html">화성시 만세구</a> <a href="r/41593/index.html">화성시 효행구</a> <a href="r/41595/index.html">화성시 병점구</a> <a href="r/41597/index.html">화성시 동탄구</a> <a href="r/41610/index.html">광주시</a> <a href="r/41630/index.html">양주시</a> <a href="r/41650/index.html">포천시</a> <a href="r/41670/index.html">여주시</a> <a href="r/41800/index.html">연천군</a> <a href="r/41820/index.html">가평군</a> <a href="r/41830/index.html">양평군</a></nav>
     <p><a href="r/index.html">전체 지역 보기</a> · <a href="index.html">처음 화면</a></p>
   </section>

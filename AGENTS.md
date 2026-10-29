@@ -9,7 +9,11 @@ site/index.html            계산기 페이지 뼈대 (지역 페이지도 이�
 site/app.js, site/app.css  화면·지도 그리기·검색·입력 (모든 페이지 공용)
 site/engine.js             계산 엔진: 세금·대출·전세 재계약·월세·예금, 뒤집히는 값 (순수 함수, tests/에서 검사)
 site/maps.js               지도 모양 데이터(SVG 경로)만
-tests/engine.test.mjs      엔진 테스트. `node --test tests/*.test.mjs`
+tests/                     엔진·코멘트 규칙 테스트. `node --test tests/*.test.mjs`
+functions/api/comments*    지역 코멘트 API (Cloudflare Pages Functions + D1 바인딩 DB)
+lib/comments-lib.js        코멘트 검사 규칙(100자·링크·전화·금칙어)·IP 해시. functions/ 밖이라 주소로 안 열림
+migrations/                D1 표 만들기 SQL. wrangler.toml에 D1 ID
+docs/comments.md           코멘트 켜는 법(배포·D1·비밀값·관리)
 site/r/<시군구코드>/       지역별 페이지 (scripts/build_pages.py가 생성, 직접 수정 금지)
 site/faq/index.html        계산 방법·자주 묻는 질문 (계산 방식 바꾸면 같이 수정)
 site/about/, site/privacy/ 소개, 개인정보 처리방침 (광고·쿠키·데이터 처리 바꾸면 같이 수정)
@@ -56,3 +60,4 @@ data/lawd_fallback.json    저장본도 없을 때 쓰는 예비 시군구 코�
 - UI: 글씨 크기는 `--fs-*` 6단계만, 펼치기는 꺾쇠(›) 또는 "?" 두 가지만. 폰 입력칸 16px 이상, 누르는 영역 44px
 - 공유하기는 결과 칸 오른쪽 위. 밝게/어둡게 버튼은 머리 오른쪽, 고른 값은 localStorage `yk-theme`(모든 페이지 머리의 짧은 스크립트가 적용)
 - 후원 링크: Ko-fi https://ko-fi.com/sngmng (첫 화면 맨 아래, 소개 페이지). 광고처럼 튀지 않게 한 줄로만
+- 지역 코멘트("○○ 이야기"): 지도 아래 버튼 → PC 오른쪽 패널, 폰 아래 시트. 자동으로 열지 않음. 지역 페이지는 시세 설명 아래 최근 3개. 규칙 바꾸면 tests/comments.test.mjs·개인정보 처리방침·FAQ 같이

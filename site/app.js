@@ -462,6 +462,8 @@ function render() {
   $('why-detail').innerHTML = `<p>${assume}</p><p>${beLine}</p>${flip ? `<p>${flip}</p>` : ''}`;
   saveUrl();
   if (view === 'chart') drawChart();
+  refreshTalkCount();
+  if (talk.open && $('talk-tag')) $('talk-tag').textContent = `내 계산 조건 붙이기: ${talkTagText()}`;
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;
 
   // 대출 경고는 해당 막대 아래에
@@ -700,6 +702,145 @@ $('theme-btn').addEventListener('click', () => {
 });
 syncThemeBtn();
 
+// ── 이 동네 이야기 (지역 코멘트) ──────────────────────────
+// 저장은 Cloudflare Pages Functions(/api/comments) + D1. 배포 전(미리보기 등)에는 불러오기에 실패하고 안내만 보여줌
+const TALK_API = '/api/comments';
+const talk = { region: null, items: [], open: false, lastFocus: null, countFor: null };
+const talkKey = () => regionParam(state.region);
+const talkName = () => { const r = REG[state.region]; return r ? (r.short || r.name) : '이 동네'; };
+function talkTagText() {
+  const t = TYPES.find(x => x[0] === state.type)?.[1] || '';
+  const win = lastVerdict ? `${OBJ[lastVerdict]} 이득` : '';
+  return [`${t} ${state.size ? sizeText(state.size) : ''}`.trim(), `${state.years}년`, win].filter(Boolean).join(' · ');
+}
+function when(sec) {
+  const d = Math.max(0, Date.now() / 1000 - sec);
+  if (d < 60) return '방금';
+  if (d < 3600) return `${Math.floor(d / 60)}분 전`;
+  if (d < 86400) return `${Math.floor(d / 3600)}시간 전`;
+  if (d < 86400 * 7) return `${Math.floor(d / 86400)}일 전`;
+  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(sec * 1000));
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let adminKey = null;
+try {
+  const q = new URLSearchParams(location.search);
+  if (q.get('admin')) { localStorage.setItem('yk-admin', q.get('admin')); q.delete('admin'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
+  adminKey = localStorage.getItem('yk-admin');
+} catch (e) {}
+async function talkFetch(region, limit, before) {
+  const q = new URLSearchParams({ region, limit: String(limit) }); if (before) q.set('before', before);
+  const r = await fetch(`${TALK_API}?${q}`, { headers: { accept: 'application/json' } });
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !d || d.error) throw new Error(d?.message || '불러오지 못했어요');
+  return d;
+}
+function talkItem(c) {
+  return `<li data-id="${c.id}"><p>${esc(c.text)}</p><div class="talk-meta">${c.tag ? `<span class="talk-ctag">${esc(c.tag)}</span>` : ''}<span>${when(c.created)}</span>` +
+    `<button type="button" class="talk-report" data-id="${c.id}">신고</button>${adminKey ? `<button type="button" class="talk-del" data-id="${c.id}">삭제</button>` : ''}</div></li>`;
+}
+function setTalkCount(n) { $('talk-count').textContent = n ? String(n) : ''; }
+async function refreshTalkCount() {
+  const key = talkKey(); if (!key || key === talk.countFor) return;
+  talk.countFor = key;
+  $('talk-btn-label').textContent = `${talkName()} 이야기`;
+  setTalkCount(0);
+  if (talk.open) { $('talk-title').textContent = `${talkName()} 이야기`; loadTalk(); return; }   // 열어둔 채 지역을 바꾸면 그 지역 이야기로
+  try { const d = await talkFetch(key, 0); if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 배포 전이거나 연결 실패: 숫자 없이 */ }
+}
+async function loadTalk(more = false) {
+  const key = talkKey(), list = $('talk-list'), msg = $('talk-msg');
+  if (!more) { talk.items = []; list.innerHTML = '<li class="talk-empty">불러오는 중…</li>'; }
+  try {
+    const before = more && talk.items.length ? talk.items[talk.items.length - 1].id : 0;
+    const d = await talkFetch(key, 10, before);
+    if (key !== talkKey()) return;
+    talk.items = talk.items.concat(d.items);
+    list.innerHTML = talk.items.length ? talk.items.map(talkItem).join('')
+      : `<li class="talk-empty">아직 이야기가 없어요. ${esc(talkName())}에서 살아봤거나 알아본 경험을 첫 번째로 남겨주세요.</li>`;
+    $('talk-more').hidden = talk.items.length >= d.count;
+    setTalkCount(d.count);
+  } catch (e) {
+    list.innerHTML = '<li class="talk-empty">지금은 이야기를 불러올 수 없어요. 잠시 뒤에 다시 열어주세요.</li>';
+    $('talk-more').hidden = true;
+  }
+  msg.textContent = '';
+}
+function openTalk() {
+  talk.open = true; talk.lastFocus = document.activeElement;
+  $('talk-title').textContent = `${talkName()} 이야기`;
+  $('talk-tag').textContent = `내 계산 조건 붙이기: ${talkTagText()}`;
+  $('talk').hidden = false; $('talk-dim').hidden = false;
+  requestAnimationFrame(() => { $('talk').classList.add('on'); $('talk-dim').classList.add('on'); });
+  document.documentElement.classList.add('talk-open');
+  loadTalk();
+  if (matchMedia('(pointer: fine)').matches) $('talk-text').focus(); else $('talk-close').focus();
+}
+function closeTalk() {
+  talk.open = false;
+  $('talk').classList.remove('on'); $('talk-dim').classList.remove('on');
+  document.documentElement.classList.remove('talk-open');
+  setTimeout(() => { if (!talk.open) { $('talk').hidden = true; $('talk-dim').hidden = true; } }, 200);
+  talk.lastFocus?.focus?.();
+}
+$('talk-btn').addEventListener('click', openTalk);
+$('talk-close').addEventListener('click', closeTalk);
+$('talk-dim').addEventListener('click', closeTalk);
+$('talk-more').addEventListener('click', () => loadTalk(true));
+document.addEventListener('keydown', e => {
+  if (!talk.open) return;
+  if (e.key === 'Escape') { closeTalk(); return; }
+  if (e.key === 'Tab') {   // 패널 안에서만 이동
+    const f = [...$('talk').querySelectorAll('button:not([hidden]), input, [href]')].filter(x => x.offsetParent);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { f[f.length - 1].focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { f[0].focus(); e.preventDefault(); }
+  }
+});
+$('talk-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const input = $('talk-text'), msg = $('talk-msg'), btn = $('talk-send');
+  const text = input.value.trim();
+  if (!text) { msg.textContent = '내용을 적어주세요.'; input.focus(); return; }
+  btn.disabled = true; btn.textContent = '남기는 중…';
+  try {
+    const r = await fetch(TALK_API, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ region: talkKey(), text, tag: $('talk-tag-on').checked ? talkTagText() : '' }) });
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d || d.error) { msg.textContent = d?.message || '지금은 남길 수 없어요. 잠시 뒤에 다시 해주세요.'; return; }
+    input.value = ''; msg.textContent = '남겼어요.';
+    talk.items.unshift(d.item);
+    $('talk-list').innerHTML = talk.items.map(talkItem).join('');
+    setTalkCount((parseInt($('talk-count').textContent, 10) || 0) + 1);
+  } catch (err) {
+    msg.textContent = '지금은 남길 수 없어요. 잠시 뒤에 다시 해주세요.';
+  } finally { btn.disabled = false; btn.textContent = '남기기'; }
+});
+$('talk-list').addEventListener('click', async e => {
+  const rep = e.target.closest('.talk-report'), del = e.target.closest('.talk-del');
+  if (rep) {
+    if (rep.dataset.done) return;
+    rep.dataset.done = '1'; rep.textContent = '신고했어요';
+    fetch(`${TALK_API}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rep.dataset.id }) }).catch(() => {});
+  }
+  if (del && adminKey) {
+    const r = await fetch(`${TALK_API}/${del.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } }).catch(() => null);
+    if (r && r.ok) { talk.items = talk.items.filter(c => String(c.id) !== del.dataset.id); del.closest('li').remove(); }
+  }
+});
+// 지역 페이지: 시세 설명 아래에 최근 이야기 3개
+async function talkLatest() {
+  const box = document.getElementById('talk-latest'); if (!box) return;
+  try {
+    const d = await talkFetch(talkKey(), 3);
+    box.innerHTML = `<h3>${esc(talkName())} 이야기 <span>${d.count}</span></h3>` +
+      (d.items.length ? `<ol class="talk-list">${d.items.map(c => `<li><p>${esc(c.text)}</p><div class="talk-meta">${c.tag ? `<span class="talk-ctag">${esc(c.tag)}</span>` : ''}<span>${when(c.created)}</span></div></li>`).join('')}</ol>` : '<p class="talk-none">아직 이야기가 없어요.</p>') +
+      `<button type="button" class="talk-open-btn">${d.items.length ? '이야기 더 보기·남기기' : '첫 이야기 남기기'}</button>`;
+    box.querySelector('.talk-open-btn').addEventListener('click', openTalk);
+    box.hidden = false;
+  } catch (e) { box.hidden = true; }
+}
+
 // ── 주소에 입력값 담기 (공유 링크) ───────────────────────
 // ?t=유형(villa·offi, 아파트면 생략)&r=시군구코드(또는 묶음 키)&s=크기(전용㎡)&p=직접 넣은 집값(억)&c=가진 돈(억)&y=년
 const regionParam = key => { const r = REG[key]; if (!r) return null; return r.key.startsWith('c:') ? r.key.slice(2) : r.key; };
@@ -858,6 +999,7 @@ Promise.all([loadType(firstType).catch(() => firstType === 'apt' ? Promise.rejec
     if (u.view === 'chart') setView('chart', false);
     syncInputs(); buildAssume(); drawSizes(); drawYears(); showTab(tabOf(start) || 'seoul'); paintMaps(); render();
     urlLive = true;
+    talkLatest();
   })
   .catch(() => {
     REG.manual = { key: 'manual', name: '직접 입력', short: '직접 입력', sido: '', sizes: {}, cnt: 0, n84: 0, whole: true };

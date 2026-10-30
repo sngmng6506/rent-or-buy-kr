@@ -523,7 +523,7 @@ function render() {
   saveUrl();
   if (view === 'chart') drawChart();
   refreshTalkCount();
-  if (talk.open && $('talk-tag')) $('talk-tag').textContent = `내 계산 조건 붙이기: ${talkTagText()}`;
+  if (talk.open && $('talk-tag')) $('talk-tag').textContent = L(`내 계산 조건 붙이기: ${talkTagText()}`, `Include my calculation: ${talkTagText()}`);
   $('peek').innerHTML = `<span class="pk-seal${buyWins ? '' : ' no'}">${SEAL[win]}</span><span>${lead}</span>`;
 
   // 대출 경고는 해당 막대 아래에
@@ -785,23 +785,35 @@ $('theme-btn').addEventListener('click', () => {
 syncThemeBtn();
 
 // ── 이 동네 이야기 (지역 코멘트) ──────────────────────────
-// 저장은 Cloudflare Pages Functions(/api/comments) + D1. 배포 전(미리보기 등)에는 불러오기에 실패하고 안내만 보여줌
+// 한국어·영어 모두 같은 지역 키로 Worker(/api/comments) + D1의 글을 공유한다. 본문·태그는 원문 그대로 표시한다.
 const TALK_API = '/api/comments';
 const talk = { region: null, items: [], open: false, lastFocus: null, countFor: null };
 const talkKey = () => regionParam(state.region);
-const talkName = () => { const r = REG[state.region]; return r ? (r.short || r.name) : '이 동네'; };
+const talkName = () => { const r = REG[state.region]; return r ? (r.short || r.name) : L('이 동네', 'this area'); };
+const talkHeading = () => L(`${talkName()} 이야기`, `Stories from ${talkName()}`);
+function talkError(data) {
+  const messages = {
+    EMPTY: 'Please write a story.', TOO_LONG: 'You can write up to 100 characters.',
+    LINK: 'Links and contact details are not allowed.', PHONE: 'Phone numbers are not allowed.',
+    BANNED: 'This text contains words that are not allowed.', REGION: 'Please select a valid area.',
+    RATE: 'You can post once a minute. Please try again shortly.',
+  };
+  return L(data?.message || '지금은 요청을 처리할 수 없어요. 잠시 뒤에 다시 해주세요.',
+    messages[data?.error] || 'Your request could not be completed. Please try again later.');
+}
 function talkTagText() {
   const t = TYPES.find(x => x[0] === state.type)?.[1] || '';
-  const win = lastVerdict ? `${OBJ[lastVerdict]} 이득` : '';
+  const win = lastVerdict ? L(`${OBJ[lastVerdict]} 이득`, SEAL[lastVerdict]) : '';
+  if (EN) return [`${t} ${state.size ? `${state.size}㎡(${PYEONG[state.size]}p)` : ''}`.trim(), `${state.years}y`, win].filter(Boolean).join(' · ');
   return [`${t} ${state.size ? sizeText(state.size) : ''}`.trim(), `${state.years}년`, win].filter(Boolean).join(' · ');
 }
 function when(sec) {
   const d = Math.max(0, Date.now() / 1000 - sec);
-  if (d < 60) return '방금';
-  if (d < 3600) return `${Math.floor(d / 60)}분 전`;
-  if (d < 86400) return `${Math.floor(d / 3600)}시간 전`;
-  if (d < 86400 * 7) return `${Math.floor(d / 86400)}일 전`;
-  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(sec * 1000));
+  if (d < 60) return L('방금', 'just now');
+  if (d < 3600) return L(`${Math.floor(d / 60)}분 전`, `${Math.floor(d / 60)}m ago`);
+  if (d < 86400) return L(`${Math.floor(d / 3600)}시간 전`, `${Math.floor(d / 3600)}h ago`);
+  if (d < 86400 * 7) return L(`${Math.floor(d / 86400)}일 전`, `${Math.floor(d / 86400)}d ago`);
+  return new Intl.DateTimeFormat(L('ko-KR', 'en'), { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(sec * 1000));
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let adminKey = null;
@@ -814,44 +826,44 @@ async function talkFetch(region, limit, before) {
   const q = new URLSearchParams({ region, limit: String(limit) }); if (before) q.set('before', before);
   const r = await fetch(`${TALK_API}?${q}`, { headers: { accept: 'application/json' } });
   const d = await r.json().catch(() => null);
-  if (!r.ok || !d || d.error) throw new Error(d?.message || '불러오지 못했어요');
+  if (!r.ok || !d || d.error) throw new Error(talkError(d));
   return d;
 }
 function talkItem(c) {
   return `<li data-id="${c.id}"><p>${esc(c.text)}</p><div class="talk-meta">${c.tag ? `<span class="talk-ctag">${esc(c.tag)}</span>` : ''}<span>${when(c.created)}</span>` +
-    `<button type="button" class="talk-report" data-id="${c.id}">신고</button>${adminKey ? `<button type="button" class="talk-del" data-id="${c.id}">삭제</button>` : ''}</div></li>`;
+    `<button type="button" class="talk-report" data-id="${c.id}">${L('신고', 'Report')}</button>${adminKey ? `<button type="button" class="talk-del" data-id="${c.id}">${L('삭제', 'Delete')}</button>` : ''}</div></li>`;
 }
 function setTalkCount(n) { $('talk-count').textContent = n ? String(n) : ''; }
 async function refreshTalkCount() {
-  const key = talkKey(); if (EN || !key || key === talk.countFor) return;   // 영어판은 코멘트 없음
+  const key = talkKey(); if (!key || key === talk.countFor) return;
   talk.countFor = key;
-  $('talk-btn-label').textContent = `${talkName()} 이야기`;
+  $('talk-btn-label').textContent = talkHeading();
   setTalkCount(0);
-  if (talk.open) { $('talk-title').textContent = `${talkName()} 이야기`; loadTalk(); return; }   // 열어둔 채 지역을 바꾸면 그 지역 이야기로
+  if (talk.open) { $('talk-title').textContent = talkHeading(); loadTalk(); return; }   // 열어둔 채 지역을 바꾸면 그 지역 이야기로
   try { const d = await talkFetch(key, 0); $('talk-btn').hidden = false; if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 배포 전이거나 연결 실패: 버튼을 숨긴 채로 */ }
 }
 async function loadTalk(more = false) {
   const key = talkKey(), list = $('talk-list'), msg = $('talk-msg');
-  if (!more) { talk.items = []; list.innerHTML = '<li class="talk-empty">불러오는 중…</li>'; }
+  if (!more) { talk.items = []; list.innerHTML = `<li class="talk-empty">${L('불러오는 중…', 'Loading…')}</li>`; }
   try {
     const before = more && talk.items.length ? talk.items[talk.items.length - 1].id : 0;
     const d = await talkFetch(key, 10, before);
     if (key !== talkKey()) return;
     talk.items = talk.items.concat(d.items);
     list.innerHTML = talk.items.length ? talk.items.map(talkItem).join('')
-      : `<li class="talk-empty">아직 이야기가 없어요. ${esc(talkName())}에서 살아봤거나 알아본 경험을 첫 번째로 남겨주세요.</li>`;
+      : `<li class="talk-empty">${L(`아직 이야기가 없어요. ${esc(talkName())}에서 살아봤거나 알아본 경험을 첫 번째로 남겨주세요.`, `No stories yet. Share your experience of living in or exploring ${esc(talkName())}.`)}</li>`;
     $('talk-more').hidden = talk.items.length >= d.count;
     setTalkCount(d.count);
   } catch (e) {
-    list.innerHTML = '<li class="talk-empty">지금은 이야기를 불러올 수 없어요. 잠시 뒤에 다시 열어주세요.</li>';
+    list.innerHTML = `<li class="talk-empty">${L('지금은 이야기를 불러올 수 없어요. 잠시 뒤에 다시 열어주세요.', 'Stories could not be loaded. Please try again later.')}</li>`;
     $('talk-more').hidden = true;
   }
   msg.textContent = '';
 }
 function openTalk() {
   talk.open = true; talk.lastFocus = document.activeElement;
-  $('talk-title').textContent = `${talkName()} 이야기`;
-  $('talk-tag').textContent = `내 계산 조건 붙이기: ${talkTagText()}`;
+  $('talk-title').textContent = talkHeading();
+  $('talk-tag').textContent = L(`내 계산 조건 붙이기: ${talkTagText()}`, `Include my calculation: ${talkTagText()}`);
   $('talk').hidden = false; $('talk-dim').hidden = false;
   requestAnimationFrame(() => { $('talk').classList.add('on'); $('talk-dim').classList.add('on'); });
   document.documentElement.classList.add('talk-open');
@@ -883,43 +895,43 @@ $('talk-form').addEventListener('submit', async e => {
   e.preventDefault();
   const input = $('talk-text'), msg = $('talk-msg'), btn = $('talk-send');
   const text = input.value.trim();
-  if (!text) { msg.textContent = '내용을 적어주세요.'; input.focus(); return; }
-  btn.disabled = true; btn.textContent = '남기는 중…';
+  if (!text) { msg.textContent = L('내용을 적어주세요.', 'Please write a story.'); input.focus(); return; }
+  btn.disabled = true; btn.textContent = L('남기는 중…', 'Posting…');
   try {
     const r = await fetch(TALK_API, { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ region: talkKey(), text, tag: $('talk-tag-on').checked ? talkTagText() : '' }) });
     const d = await r.json().catch(() => null);
-    if (!r.ok || !d || d.error) { msg.textContent = d?.message || '지금은 남길 수 없어요. 잠시 뒤에 다시 해주세요.'; return; }
-    input.value = ''; msg.textContent = '남겼어요.';
+    if (!r.ok || !d || d.error) { msg.textContent = talkError(d); return; }
+    input.value = ''; msg.textContent = L('남겼어요.', 'Posted.');
     talk.items.unshift(d.item);
     $('talk-list').innerHTML = talk.items.map(talkItem).join('');
     setTalkCount((parseInt($('talk-count').textContent, 10) || 0) + 1);
   } catch (err) {
-    msg.textContent = '지금은 남길 수 없어요. 잠시 뒤에 다시 해주세요.';
-  } finally { btn.disabled = false; btn.textContent = '남기기'; }
+    msg.textContent = talkError();
+  } finally { btn.disabled = false; btn.textContent = L('남기기', 'Post'); }
 });
 $('talk-list').addEventListener('click', async e => {
   const rep = e.target.closest('.talk-report'), del = e.target.closest('.talk-del');
   if (rep) {
     if (rep.dataset.done) return;
-    rep.dataset.done = '1'; rep.textContent = '신고했어요';
+    rep.dataset.done = '1'; rep.textContent = L('신고했어요', 'Reported');
     fetch(`${TALK_API}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rep.dataset.id }) }).catch(() => {});
   }
   if (del && adminKey) {
     // 헤더에는 영문·숫자만 들어가서 인코딩해 보냄 (한글·특수문자 키도 되게)
     const r = await fetch(`${TALK_API}/${del.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-key': encodeURIComponent(adminKey) } }).catch(() => null);
     if (r && r.ok) { talk.items = talk.items.filter(c => String(c.id) !== del.dataset.id); del.closest('li').remove(); setTalkCount(Math.max(0, (parseInt($('talk-count').textContent, 10) || 1) - 1)); }
-    else $('talk-msg').textContent = r && r.status === 403 ? '관리 키가 맞지 않아요. ?admin=키 로 다시 열어주세요.' : '삭제하지 못했어요. 잠시 뒤에 다시 해주세요.';
+    else $('talk-msg').textContent = r && r.status === 403 ? L('관리 키가 맞지 않아요. ?admin=키 로 다시 열어주세요.', 'Invalid admin key. Reopen with ?admin=your-key.') : L('삭제하지 못했어요. 잠시 뒤에 다시 해주세요.', 'Could not delete the story. Please try again later.');
   }
 });
 // 지역 페이지: 시세 설명 아래에 최근 이야기 3개
 async function talkLatest() {
-  const box = document.getElementById('talk-latest'); if (!box || EN) return;
+  const box = document.getElementById('talk-latest'); if (!box) return;
   try {
     const d = await talkFetch(talkKey(), 3);
-    box.innerHTML = `<h3>${esc(talkName())} 이야기 <span>${d.count}</span></h3>` +
-      (d.items.length ? `<ol class="talk-list">${d.items.map(c => `<li><p>${esc(c.text)}</p><div class="talk-meta">${c.tag ? `<span class="talk-ctag">${esc(c.tag)}</span>` : ''}<span>${when(c.created)}</span></div></li>`).join('')}</ol>` : '<p class="talk-none">아직 이야기가 없어요.</p>') +
-      `<button type="button" class="talk-open-btn">${d.items.length ? '이야기 더 보기·남기기' : '첫 이야기 남기기'}</button>`;
+    box.innerHTML = `<h3>${esc(talkHeading())} <span>${d.count}</span></h3>` +
+      (d.items.length ? `<ol class="talk-list">${d.items.map(c => `<li><p>${esc(c.text)}</p><div class="talk-meta">${c.tag ? `<span class="talk-ctag">${esc(c.tag)}</span>` : ''}<span>${when(c.created)}</span></div></li>`).join('')}</ol>` : `<p class="talk-none">${L('아직 이야기가 없어요.', 'No stories yet.')}</p>`) +
+      `<button type="button" class="talk-open-btn">${d.items.length ? L('이야기 더 보기·남기기', 'Read and share stories') : L('첫 이야기 남기기', 'Share the first story')}</button>`;
     box.querySelector('.talk-open-btn').addEventListener('click', openTalk);
     box.hidden = false;
   } catch (e) { box.hidden = true; }

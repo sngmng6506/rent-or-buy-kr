@@ -337,7 +337,9 @@ function buildMap(svgId, data) {
       if (key === 'capital') {
         grp.style.cursor = 'pointer'; grp.setAttribute('role', 'button'); grp.setAttribute('tabindex', '0');
         grp.setAttribute('aria-label', L('수도권 지도로 가기', 'Go to the capital area map'));
-        grp.addEventListener('click', () => showTab('seoul'));
+        const goCapital = () => showTab('cap');
+        grp.addEventListener('click', goCapital);
+        grp.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goCapital(); } });
       }
       grp.append(path, tx); svg.appendChild(grp); continue;
     }
@@ -646,9 +648,13 @@ $('bars-help').addEventListener('click', () => {
 {
   const peek = $('peek');
   let resultVisible = true, typing = false;
-  const sync = () => { peek.hidden = resultVisible || typing; };
+  const sync = () => {
+    const show = !resultVisible && !typing;
+    peek.hidden = !show;
+    document.documentElement.classList.toggle('peek-on', show);
+  };
   new IntersectionObserver(([e]) => { resultVisible = e.isIntersecting; sync(); }, { threshold: 0.6 }).observe(document.querySelector('.verdict'));
-  document.addEventListener('focusin', e => { typing = e.target.matches('#q, input[type="number"]'); sync(); });
+  document.addEventListener('focusin', e => { typing = e.target.id !== 'peek' && e.target.matches('#q, input, select, button, summary, a'); sync(); });
   document.addEventListener('focusout', () => { typing = false; setTimeout(sync, 0); });
   peek.addEventListener('click', e => { e.preventDefault(); $('result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
 }
@@ -986,8 +992,9 @@ function buildIndex() {
 }
 function renderHits() {
   const ul = $('q-list'), q = norm($('q').value);
+  const input = $('q');
   ul.innerHTML = '';
-  if (!q) { ul.hidden = true; $('q').setAttribute('aria-expanded', 'false'); return; }
+  if (!q) { ul.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); return; }
   hits = INDEX.filter(x => x.text.includes(q))
     .sort((a, b) => (b.r.whole ? 1 : 0) - (a.r.whole ? 1 : 0) || a.r.name.length - b.r.name.length).slice(0, 8);
   if (!hits.length) {
@@ -1003,7 +1010,9 @@ function renderHits() {
     li.addEventListener('mousedown', e => { e.preventDefault(); choose(i); });
     ul.appendChild(li);
   });
-  ul.hidden = false; $('q').setAttribute('aria-expanded', 'true');
+  ul.hidden = false; input.setAttribute('aria-expanded', 'true');
+  if (cursor >= 0 && hits[cursor]) input.setAttribute('aria-activedescendant', 'q-' + cursor);
+  else input.removeAttribute('aria-activedescendant');
 }
 function choose(i) {
   const h = hits[i]; if (!h) return;

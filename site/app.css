@@ -124,8 +124,7 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
   #map-nat { max-width: 380px; }
   .panel { gap: 18px; }
   .maps-head { flex-direction: column; align-items: stretch; }
-  .chips.tabs { justify-content: flex-start; gap: 4px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; }
-  .chips.tabs::-webkit-scrollbar { display: none; }
+  .chips.tabs { justify-content: flex-start; gap: 4px; flex-wrap: wrap; padding: 2px; margin: -2px; }
   .tabs .chip { padding: 5px 8px; font-size: var(--fs-m); min-width: 0; white-space: nowrap; flex: none; }
 }
 /* 좁은 화면: 결과가 화면 밖이면 아래에 결론 한 줄 */
@@ -138,6 +137,7 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .peek .pk-seal { flex: none; font: var(--fs-xl) var(--display); color: #fff; background: var(--seal); border-radius: 8px; padding: 3px 8px; }
 .peek .pk-seal.no { background: var(--cool); }
 .peek b { font-variant-numeric: tabular-nums; }
+html.peek-on body { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 960px) { .peek { display: none !important; } }
 
 .field { display: grid; gap: 8px; }

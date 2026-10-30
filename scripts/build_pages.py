@@ -243,7 +243,7 @@ def page(tpl, code, r, siblings, window):
     return t
 
 
-# 영어판 계산기: site/index.html을 틀로 문구만 바꿔 site/en/index.html을 만듦 (지역 페이지·코멘트 없음)
+# 영어판 계산기: site/index.html을 틀로 문구만 바꿔 site/en/index.html을 만듦 (지역 페이지 없음, 코멘트는 한국어판과 공유)
 LOAN_FIELD = """      <div class="field">
         <span class="label" id="loan-l">Can you get a bank loan in Korea?<span class="sub-l">Many foreigners can’t, depending on visa and income. Pick No if unsure.</span></span>
         <div class="chips" role="group" aria-labelledby="loan-l" id="loan"></div>
@@ -295,6 +295,14 @@ EN_HTML = [
      '<p class="kofi">Found this useful? <a href="https://ko-fi.com/sngmng" target="_blank" rel="noopener">Buy me a coffee</a></p>'),
     ('<p>참고용 시뮬레이션이에요 · <a href="faq/index.html">계산 방법 보기</a> · <a href="r/index.html">지역별 시세</a> · <a href="about/index.html">소개</a> · <a href="privacy/index.html">개인정보 처리방침</a></p>',
      '<p>A simulation for reference only, not financial advice · <a href="en/faq/">How it works</a> · <a href="./" lang="ko">한국어</a> · <a href="privacy/index.html">Privacy (in Korean)</a></p>'),
+    ("<span id=\"talk-btn-label\">이 동네 이야기</span>", "<span id=\"talk-btn-label\">Local stories</span>"),
+    ("<h2 id=\"talk-title\">이 동네 이야기</h2>", "<h2 id=\"talk-title\">Local stories</h2>"),
+    ("aria-label=\"닫기\"", "aria-label=\"Close\""),
+    ("이 동네에 살아봤거나 알아본 경험을 한 줄로 나눠요.", "Share a short story about living in or exploring this area."),
+    (">지난 이야기 더 보기</button>", ">Load earlier stories</button>"),
+    (">한 줄 남기기</label>", ">Write a story</label>"),
+    ("placeholder=\"예: 34평 전세 5억에 들어왔어요…\"", "placeholder=\"For example: I rented here last year…\""),
+    (">남기기</button>", ">Post</button>"),
     ('<script src="app.js"></script>', '<script src="romanize.js"></script>\n<script src="app.js"></script>'),
 ]
 

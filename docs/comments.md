@@ -3,6 +3,8 @@
 사이트는 Cloudflare Workers 하나로 배포한다. `site/`는 정적 파일(assets)로 바로 나가고, `/api/*`만 `worker/index.js`가 처리한다.
 "○○ 이야기" 버튼과 지역 페이지의 최근 이야기는 이 API와 Cloudflare D1(무료 SQLite)로 동작한다. D1을 연결하기 전에는 API가 503을 돌려주고 버튼은 숨겨진다.
 
+한국어·영어 페이지는 같은 지역 키로 같은 글 목록을 조회하고 작성한다. 언어별 저장소나 필터는 없으며, 본문과 계산 조건 태그는 작성 당시 원문 그대로 표시한다. 기존 글도 그대로 공유한다.
+
 ## 1. Worker 프로젝트 (한 번)
 - Cloudflare 대시보드 → Workers & Pages → 만들기 → Workers → Git 저장소 가져오기 → `rent-or-buy-kr`
 - 프로젝트 이름 `buy-or-rent-kr` (wrangler.toml의 `name`과 같아야 함)

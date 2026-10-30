@@ -68,7 +68,7 @@
       <div class="map-box" id="box-nat" hidden><svg class="map" id="map-nat" role="group" aria-label="Map of Korea"></svg></div>
       <span class="legend">Cheaper <i></i> Pricier</span>
       <p class="picked" id="picked"></p>
-      <button class="talk-btn" id="talk-btn" type="button" hidden aria-haspopup="dialog" aria-controls="talk"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="talk-btn-label">이 동네 이야기</span><b id="talk-count"></b></button>
+      <button class="talk-btn" id="talk-btn" type="button" hidden aria-haspopup="dialog" aria-controls="talk"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="talk-btn-label">Local stories</span><b id="talk-count"></b></button>
     </section>
 
     <section class="panel" aria-labelledby="h-input">
@@ -161,16 +161,16 @@
   <div class="talk-dim" id="talk-dim" hidden></div>
   <aside class="talk" id="talk" role="dialog" aria-modal="true" aria-labelledby="talk-title" hidden>
     <div class="talk-head">
-      <h2 id="talk-title">이 동네 이야기</h2>
-      <button class="talk-close" id="talk-close" type="button" aria-label="닫기">✕</button>
+      <h2 id="talk-title">Local stories</h2>
+      <button class="talk-close" id="talk-close" type="button" aria-label="Close">✕</button>
     </div>
-    <p class="talk-sub">이 동네에 살아봤거나 알아본 경험을 한 줄로 나눠요.</p>
+    <p class="talk-sub">Share a short story about living in or exploring this area.</p>
     <ol class="talk-list" id="talk-list" aria-live="polite"></ol>
-    <button class="talk-more" id="talk-more" type="button" hidden>지난 이야기 더 보기</button>
+    <button class="talk-more" id="talk-more" type="button" hidden>Load earlier stories</button>
     <form class="talk-form" id="talk-form">
-      <label class="sr-only" for="talk-text">한 줄 남기기</label>
-      <input id="talk-text" name="comment" type="text" maxlength="100" autocomplete="off" placeholder="예: 34평 전세 5억에 들어왔어요…">
-      <button type="submit" id="talk-send">남기기</button>
+      <label class="sr-only" for="talk-text">Write a story</label>
+      <input id="talk-text" name="comment" type="text" maxlength="100" autocomplete="off" placeholder="For example: I rented here last year…">
+      <button type="submit" id="talk-send">Post</button>
       <label class="talk-tag"><input type="checkbox" id="talk-tag-on" checked> <span id="talk-tag"></span></label>
       <p class="talk-msg" id="talk-msg" role="status"></p>
     </form>

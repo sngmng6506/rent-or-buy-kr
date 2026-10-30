@@ -7,6 +7,7 @@ export default {
     const { pathname } = new URL(request.url);
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     if (!env.DB) return fail('NO_DB', '코멘트 저장소가 아직 연결되지 않았어요.', 503);
+    if (!env.HASH_SALT) return fail('NO_CONFIG', '코멘트 설정이 아직 완료되지 않았어요.', 503);
     const m = request.method;
     try {
       if (pathname === '/api/comments') {

@@ -47,6 +47,8 @@ export async function report(request, env) {
   try { body = await request.json(); } catch { return fail('BODY', '보낸 내용을 읽지 못했어요.'); }
   const id = parseInt(body.id, 10);
   if (!id) return fail('ID', '어떤 코멘트인지 알 수 없어요.');
+  const comment = await env.DB.prepare('SELECT id FROM comments WHERE id = ?').bind(id).first();
+  if (!comment) return fail('NOT_FOUND', '없는 코멘트예요.', 404);
   const ip = await ipHash(request, env);
   const ins = await env.DB.prepare('INSERT OR IGNORE INTO comment_reports (comment_id, ip_hash) VALUES (?, ?)').bind(id, ip).run();
   if (ins.meta.changes) {

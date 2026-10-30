@@ -5,6 +5,19 @@
 
 한국어·영어 페이지는 같은 지역 키로 같은 글 목록을 조회하고 작성한다. 언어별 저장소나 필터는 없으며, 본문과 계산 조건 태그는 작성 당시 원문 그대로 표시한다. 기존 글도 그대로 공유한다.
 
+## API 계약
+
+모든 응답은 JSON이며 `cache-control: no-store`를 보낸다. 오류는 항상 `{ "error": "코드", "message": "사용자 안내" }` 형식이다. `DB` 또는 필수 비밀값 `HASH_SALT`가 빠지면 모든 `/api/*` 요청은 각각 `NO_DB` 또는 `NO_CONFIG`과 함께 `503`을 반환한다.
+
+| 요청 | 입력 | 성공 응답 | 주요 오류 |
+| --- | --- | --- | --- |
+| `GET /api/comments?region=&limit=&before=` | `region`은 지역 키, `limit`은 0~30, `before`는 이전 글 ID | `200 { count, items }` | `400 REGION` |
+| `POST /api/comments` | `{ region, text, tag? }` | `201 { item }` | `400 REGION`, `EMPTY`, `TOO_LONG`, `LINK`, `PHONE`, `BANNED`; `429 RATE` |
+| `POST /api/comments/report` | `{ id }` | `200 { ok: true }` | `400 ID`; `404 NOT_FOUND` (없는 댓글) |
+| `DELETE /api/comments/:id` | `x-admin-key` 헤더 | `200 { ok: true }` | `403 ADMIN`; `400 ID` |
+
+지원하지 않는 메서드는 `405 METHOD`, 없는 API 경로는 `404 NOT_FOUND`를 반환한다. 신고는 같은 IP 해시와 댓글 ID 조합으로 한 번만 반영하며, 없는 ID의 신고는 저장하지 않는다.
+
 ## 1. Worker 프로젝트 (한 번)
 - Cloudflare 대시보드 → Workers & Pages → 만들기 → Workers → Git 저장소 가져오기 → `rent-or-buy-kr`
 - 프로젝트 이름 `buy-or-rent-kr` (wrangler.toml의 `name`과 같아야 함)
@@ -19,7 +32,7 @@
 ## 3. 비밀값 (한 번)
 - Worker 프로젝트 → 설정 → 변수 및 비밀 → 비밀(Secret)로 추가
   - `ADMIN_KEY`: 삭제용 비밀번호 (길게 아무 문자열)
-  - `HASH_SALT`: IP 해시용 아무 문자열 (바꾸면 1분 제한·신고 기록이 초기화됨)
+  - `HASH_SALT`: **필수** IP 해시용 긴 무작위 문자열 (없으면 API는 503, 바꾸면 1분 제한·신고 기록이 초기화됨)
 - 다시 배포하면 적용
 
 ## 4. 운영

@@ -32,7 +32,7 @@ export function checkTag(raw) {
 
 export async function ipHash(request, env) {
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'local';
-  const salt = env.HASH_SALT || 'yeongkkeul';
+  const salt = env.HASH_SALT;
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salt + ip));
   return [...new Uint8Array(buf)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
 }

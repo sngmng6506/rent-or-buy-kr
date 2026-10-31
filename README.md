@@ -19,6 +19,5 @@
 
 ## 향후 일정
 
-- [x] 도메인(rent-or-buy-kr.app) 연결, Cloudflare Workers 배포, 코멘트용 D1 연결
-- [ ] Google Search Console·네이버 서치어드바이저 등록, AdSense 신청
+
 - 보류: **AI로 예측하기 (시험)**. 지수 데이터는 2003년 이후 큰 흐름이 4번 정도뿐이라 장기 평균을 이기기 어렵다고 봄. 실거래 원본(천만 건 이상)을 쌓으면 다시 검토. 기획: [docs/ai-forecast.md](docs/ai-forecast.md)

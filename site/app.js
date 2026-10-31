@@ -322,7 +322,7 @@ function tintFor(r) {
   const prices = Object.values(REG).filter(x => x.mapKey).map(x => priceAt(x, state.size) || x.avg).filter(Boolean);
   const lo = Math.log(Math.min(...prices)), hi = Math.log(Math.max(...prices));
   const v = priceAt(r, state.size) || r.avg;
-  return v ? (6 + 56 * (Math.log(v) - lo) / Math.max(hi - lo, 1e-6)).toFixed(0) + '%' : '0%';
+  return v ? (10 + 75 * (Math.log(v) - lo) / Math.max(hi - lo, 1e-6)).toFixed(0) + '%' : '0%';
 }
 function buildMap(svgId, data) {
   const svg = $(svgId);
@@ -422,7 +422,7 @@ function paintMaps() {
     const on = grp.dataset.key === sel || grp.dataset.key === selMetro;
     grp.classList.toggle('on', on);
     grp.setAttribute('aria-pressed', String(on));
-    grp.querySelector('text').style.display = (grp.dataset.small === 'true' && !on) ? 'none' : '';
+    grp.querySelector('text').style.display = (!on && (grp.dataset.small === 'true' || grp.parentNode.id === 'map-nat')) ? 'none' : '';
     if (on) grp.parentNode.appendChild(grp);
   }
 }

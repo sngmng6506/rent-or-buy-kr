@@ -369,9 +369,9 @@ function measureLabels(svg) {
   for (const grp of svg.querySelectorAll('.rg')) {
     try {
       const b = grp.querySelector('path').getBBox(), w = grp.querySelector('text').getComputedTextLength();
-      if (!b.width) return;
+      if (!b.width) { grp.dataset.small = 'true'; continue; }
       grp.dataset.small = String(b.width < w + (svg.id === 'map-nat' ? 20 : 6) || b.height < (svg.id === 'map-nat' ? 28 : 14));
-    } catch (e) { return; }
+    } catch (e) { grp.dataset.small = 'true'; }
   }
   svg.dataset.measured = '1';
 }
@@ -823,10 +823,30 @@ function when(sec) {
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let adminKey = null;
+try { localStorage.removeItem('yk-admin'); } catch (e) {}
+try { adminKey = sessionStorage.getItem('yk-admin'); } catch (e) {}
 try {
   const q = new URLSearchParams(location.search);
-  if (q.get('admin')) { localStorage.setItem('yk-admin', q.get('admin')); q.delete('admin'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
-  adminKey = localStorage.getItem('yk-admin');
+  if (q.has('admin')) {
+    q.delete('admin');
+    history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+    const dialog = document.createElement('dialog');
+    const form = document.createElement('form');
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    const save = document.createElement('button');
+    const cancel = document.createElement('button');
+    form.method = 'dialog';
+    label.textContent = L('관리 키', 'Admin key');
+    input.type = 'password'; input.required = true; input.autocomplete = 'off';
+    save.textContent = L('확인', 'Confirm');
+    cancel.type = 'button'; cancel.textContent = L('취소', 'Cancel');
+    label.appendChild(input); form.append(label, save, cancel); dialog.appendChild(form); document.body.appendChild(dialog);
+    cancel.addEventListener('click', () => dialog.close());
+    form.addEventListener('submit', () => { adminKey = input.value; try { sessionStorage.setItem('yk-admin', adminKey); } catch (e) {} });
+    dialog.addEventListener('close', () => { dialog.remove(); if (adminKey && talk.open) loadTalk(); });
+    dialog.showModal(); input.focus();
+  }
 } catch (e) {}
 async function talkFetch(region, limit, before) {
   const q = new URLSearchParams({ region, limit: String(limit) }); if (before) q.set('before', before);
@@ -919,15 +939,22 @@ $('talk-form').addEventListener('submit', async e => {
 $('talk-list').addEventListener('click', async e => {
   const rep = e.target.closest('.talk-report'), del = e.target.closest('.talk-del');
   if (rep) {
-    if (rep.dataset.done) return;
-    rep.dataset.done = '1'; rep.textContent = L('신고했어요', 'Reported');
-    fetch(`${TALK_API}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rep.dataset.id }) }).catch(() => {});
+    if (rep.disabled) return;
+    rep.disabled = true;
+    try {
+      const r = await fetch(`${TALK_API}/report`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: rep.dataset.id }) });
+      if (!r.ok) throw new Error();
+      rep.textContent = L('신고했어요', 'Reported');
+    } catch (err) {
+      rep.disabled = false;
+      $('talk-msg').textContent = L('신고하지 못했어요. 다시 시도해주세요.', 'Could not report. Please try again.');
+    }
   }
   if (del && adminKey) {
     // 헤더에는 영문·숫자만 들어가서 인코딩해 보냄 (한글·특수문자 키도 되게)
     const r = await fetch(`${TALK_API}/${del.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-key': encodeURIComponent(adminKey) } }).catch(() => null);
     if (r && r.ok) { talk.items = talk.items.filter(c => String(c.id) !== del.dataset.id); del.closest('li').remove(); setTalkCount(Math.max(0, (parseInt($('talk-count').textContent, 10) || 1) - 1)); }
-    else $('talk-msg').textContent = r && r.status === 403 ? L('관리 키가 맞지 않아요. ?admin=키 로 다시 열어주세요.', 'Invalid admin key. Reopen with ?admin=your-key.') : L('삭제하지 못했어요. 잠시 뒤에 다시 해주세요.', 'Could not delete the story. Please try again later.');
+    else $('talk-msg').textContent = r && r.status === 403 ? L('관리 키가 맞지 않아요. ?admin으로 다시 열어주세요.', 'Invalid admin key. Reopen with ?admin.') : L('삭제하지 못했어요. 잠시 뒤에 다시 해주세요.', 'Could not delete the story. Please try again later.');
   }
 });
 // 지역 페이지: 시세 설명 아래에 최근 이야기 3개

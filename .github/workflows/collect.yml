@@ -100,7 +100,9 @@ jobs:
           for f in $files; do if [ -f $f ]; then git add $f; fi; done
           git diff --cached --quiet || git commit -m "data(${{ matrix.type }}): 실거래가·지수 갱신 $(date +%Y-%m-%d)"
           # 다른 유형 작업도 동시에 올리니까 다시 얹어서 올림
-          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done
+          pushed=false
+          for i in 1 2 3 4 5; do if git pull --rebase origin main && git push; then pushed=true; break; fi; sleep $((i * 5)); done
+          $pushed
 
   rates:
     if: github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates'
@@ -120,12 +122,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add site/data/rates.json
           git diff --cached --quiet || git commit -m "data: 금리 갱신 $(date +%Y-%m-%d)"
-          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done
+          pushed=false
+          for i in 1 2 3 4 5; do if git pull --rebase origin main && git push; then pushed=true; break; fi; sleep $((i * 5)); done
+          $pushed
 
   # 데이터가 다 올라간 뒤 지역 페이지·검색 태그를 최신 데이터로 다시 만듦
   pages:
     needs: [collect, rates]
-    if: always() && (github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates' || inputs.mode == 'reb')
+    if: ${{ !cancelled() && (needs.collect.result == 'success' || needs.collect.result == 'skipped') && (needs.rates.result == 'success' || needs.rates.result == 'skipped') && (github.event_name == 'schedule' || inputs.mode == 'full' || inputs.mode == 'rates' || inputs.mode == 'reb') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -142,4 +146,6 @@ jobs:
           python scripts/build_pages.py
           git add -A site
           git diff --cached --quiet || git commit -m "pages: 지역별 페이지 갱신 $(date +%Y-%m-%d)"
-          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && break; sleep $((i * 5)); done
+          pushed=false
+          for i in 1 2 3 4 5; do if git pull --rebase origin main && git push; then pushed=true; break; fi; sleep $((i * 5)); done
+          $pushed

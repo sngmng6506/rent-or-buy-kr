@@ -193,7 +193,7 @@ def describe(code, r, window):
     table = ""
     if rows:
         table = (
-            '<div class="table"><table><thead><tr><th>크기</th><th>매매 중간값(원)</th><th>전세 중간값(원)</th><th>매매 거래</th></tr></thead>'
+            '<div class="table"><table><thead><tr><th>크기</th><th>매매 평균 가격(원)</th><th>전세 평균 가격(원)</th><th>매매 거래</th></tr></thead>'
             f'<tbody>{"".join(rows)}</tbody></table></div>'
         )
     return lines, table
@@ -203,7 +203,7 @@ def meta_desc(r):
     s84 = (r.get("sizes") or {}).get("84") or {}
     bits = [f"{r['name']} 아파트"]
     if s84.get("p"):
-        bits.append(f"84㎡(34평형) 매매 중간값 {won(s84['p'])}")
+        bits.append(f"84㎡(34평형) 매매 평균 가격 {won(s84['p'])}")
     if s84.get("j"):
         bits.append(f"전세 {won(s84['j'])}")
     return ", ".join(bits) + ". 가진 돈과 사는 기간을 넣으면 매매·전세·월세 중 어디가 돈이 더 남는지 바로 계산해요."

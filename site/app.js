@@ -469,8 +469,8 @@ function render() {
   // 선택한 지역
   const v = priceAt(r0, state.size), s = state.size && r0.sizes[state.size];
   $('picked').innerHTML = v
-    ? L(`<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 중간 가격</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· 거래가 적어 참고만 하세요</span>` : ''}`,
-        `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} median price</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· few deals, use as a rough guide</span>` : ''}`)
+    ? L(`<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} 평균 가격</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· 거래가 적어 참고만 하세요</span>` : ''}`,
+        `<b>${r0.name}</b> <span class="muted">· ${sizeText(state.size)} average price</span> <b>${won(v * 1e4)}</b>${s.n < 10 ? ` <span class="muted">· few deals, use as a rough guide</span>` : ''}`)
     : L(`<b>${r0.name}</b> <span class="muted">· 최근 거래가 적어 시세가 없어요. 집 가격을 직접 넣어주세요.</span>`,
         `<b>${r0.name}</b> <span class="muted">· Not enough recent deals for a price. Enter the price yourself.</span>`);
   $('price-hint').textContent = state.manual && v ? L('직접 입력한 가격이에요.', 'You entered this price.') : '';

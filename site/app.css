@@ -108,11 +108,11 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 }
 @media (max-width: 720px) { .chips.tabs { display: none; } .tab-select { display: block; } }
 .map .rg path { fill: color-mix(in srgb, var(--map-high) var(--t), var(--map-low)); stroke: var(--surface); stroke-width: 1; cursor: pointer; transition: fill 120ms; }
-.map .rg text { font: 500 var(--fs, 10px) var(--body); fill: var(--ink); pointer-events: none; text-anchor: middle; }
+.map .rg text { font: 500 var(--fs, 10px) var(--body); fill: var(--ink); stroke: var(--surface); stroke-width: 2px; stroke-linejoin: round; paint-order: stroke fill; pointer-events: none; text-anchor: middle; }
 .map .rg:hover path, .map .rg:focus-visible path { stroke: var(--ink); stroke-width: 1.6; }
 .map .rg:focus { outline: none; }
 .map .rg.on path { fill: var(--seal); }
-.map .rg.on text { fill: #fff; font-weight: 700; }
+.map .rg.on text { fill: #fff; stroke: var(--seal); font-weight: 700; }
 .map .seoul-block path { fill: var(--bg); stroke: var(--line); }
 .map .seoul-block text { font: 700 11px var(--body); fill: var(--ink-2); text-anchor: middle; }
 .legend { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--ink-2); }

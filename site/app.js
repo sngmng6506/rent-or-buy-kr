@@ -370,7 +370,7 @@ function measureLabels(svg) {
     try {
       const b = grp.querySelector('path').getBBox(), w = grp.querySelector('text').getComputedTextLength();
       if (!b.width) return;
-      grp.dataset.small = String(b.width < w + 6 || b.height < 14);
+      grp.dataset.small = String(b.width < w + (svg.id === 'map-nat' ? 20 : 6) || b.height < (svg.id === 'map-nat' ? 28 : 14));
     } catch (e) { return; }
   }
   svg.dataset.measured = '1';
@@ -422,7 +422,7 @@ function paintMaps() {
     const on = grp.dataset.key === sel || grp.dataset.key === selMetro;
     grp.classList.toggle('on', on);
     grp.setAttribute('aria-pressed', String(on));
-    grp.querySelector('text').style.display = (!on && (grp.dataset.small === 'true' || grp.parentNode.id === 'map-nat')) ? 'none' : '';
+    grp.querySelector('text').style.display = (grp.dataset.small === 'true' && !on) ? 'none' : '';
     if (on) grp.parentNode.appendChild(grp);
   }
 }

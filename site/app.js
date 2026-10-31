@@ -864,9 +864,10 @@ async function refreshTalkCount() {
   const key = talkKey(); if (!key || key === talk.countFor) return;
   talk.countFor = key;
   $('talk-btn-label').textContent = talkHeading();
+  $('talk-btn').hidden = false;
   setTalkCount(0);
   if (talk.open) { $('talk-title').textContent = talkHeading(); loadTalk(); return; }   // 열어둔 채 지역을 바꾸면 그 지역 이야기로
-  try { const d = await talkFetch(key, 0); $('talk-btn').hidden = false; if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 배포 전이거나 연결 실패: 버튼을 숨긴 채로 */ }
+  try { const d = await talkFetch(key, 0); if (talk.countFor === key) setTalkCount(d.count); } catch (e) { /* 연결 상태는 패널에서 안내 */ }
 }
 async function loadTalk(more = false) {
   const key = talkKey(), list = $('talk-list'), msg = $('talk-msg');
@@ -880,9 +881,11 @@ async function loadTalk(more = false) {
       : `<li class="talk-empty">${L(`아직 이야기가 없어요. ${esc(talkName())}에서 살아봤거나 알아본 경험을 첫 번째로 남겨주세요.`, `No stories yet. Share your experience of living in or exploring ${esc(talkName())}.`)}</li>`;
     $('talk-more').hidden = talk.items.length >= d.count;
     setTalkCount(d.count);
+    $('talk-send').disabled = false;
   } catch (e) {
     list.innerHTML = `<li class="talk-empty">${L('지금은 이야기를 불러올 수 없어요. 잠시 뒤에 다시 열어주세요.', 'Stories could not be loaded. Please try again later.')}</li>`;
     $('talk-more').hidden = true;
+    $('talk-send').disabled = true;
   }
   msg.textContent = '';
 }

@@ -193,7 +193,7 @@ def describe(code, r, window):
     table = ""
     if rows:
         table = (
-            '<div class="table"><table><thead><tr><th>크기</th><th>매매 평균 가격(원)</th><th>전세 평균 가격(원)</th><th>매매 거래</th></tr></thead>'
+            '<div class="table"><table><thead><tr><th>크기</th><th>매매 중간 가격(원)</th><th>전세 중간 가격(원)</th><th>매매 거래</th></tr></thead>'
             f'<tbody>{"".join(rows)}</tbody></table></div>'
         )
     return lines, table
@@ -203,7 +203,7 @@ def meta_desc(r):
     s84 = (r.get("sizes") or {}).get("84") or {}
     bits = [f"{r['name']} 아파트"]
     if s84.get("p"):
-        bits.append(f"84㎡(34평형) 매매 평균 가격 {won(s84['p'])}")
+        bits.append(f"84㎡(34평형) 매매 중간 가격 {won(s84['p'])}")
     if s84.get("j"):
         bits.append(f"전세 {won(s84['j'])}")
     return ", ".join(bits) + ". 가진 돈과 사는 기간을 넣으면 매매·전세·월세 중 어디가 돈이 더 남는지 바로 계산해요."
@@ -329,11 +329,11 @@ def llms(window):
 - 입력: 집 종류(아파트·빌라·오피스텔), 지역(시군구), 집 크기, 지금 가진 돈, 살 기간(년)
 - 오피스텔은 취득세 4.6%, 중개수수료 0.5%로 계산
 - 결과: 매매·전세·월세 각각 N년 뒤 남는 돈, 이기는 쪽과 차이 금액, 결과가 뒤집히는 집값 상승률
-- 시세: 국토교통부 아파트 매매·전월세 실거래가, 최근 3개월 크기별 중간값 ({ym(a)}~{ym(b)})
-- 집값·전세 상승률: 한국부동산원 월간 아파트 매매·전세가격지수의 장기 연평균(대부분 2003년 11월부터). 지수가 없는 시군은 시도 지수
+- 시세: 국토교통부 아파트·연립다세대·오피스텔 매매·전월세 실거래가, 최근 3개월 크기별 중간값 ({ym(a)}~{ym(b)})
+- 집값·전세 상승률: 한국부동산원 주택 유형별 매매·전세가격지수의 장기 연평균. 지수가 없는 시군은 시도 지수 등을 사용하며, 지수 자료가 없으면 실거래 중간값 비교
 - 금리: 한국은행 ECOS 예금은행 가중평균금리(주택담보대출, 전세자금대출, 정기예금, 신규취급액 기준)
 - 세금: 취득세, 재산세, 종합부동산세를 1세대 1주택 법정 세율로 계산
-- 매달 16일 갱신. 참고용 시뮬레이션이며 투자·대출 조언이 아님
+- 매달 16일 데이터 수집·갱신 시도. 참고용 시뮬레이션이며 투자·대출 조언이 아님
 
 ## 페이지
 
@@ -425,8 +425,7 @@ def main():
     pages = ["", "faq/", "about/", "privacy/", "r/", "en/", "en/faq/"] + [f"r/{c}/" for c in sorted(ok)]
     robots = "User-agent: *\nAllow: /\n"
     if URL:
-        day = (data.get("updated") or "")[:10]
-        items = "".join(f"<url><loc>{absu(p)}</loc>{f'<lastmod>{day}</lastmod>' if day and p.startswith('r/') else ''}</url>\n" for p in pages)
+        items = "".join(f"<url><loc>{absu(p)}</loc></url>\n" for p in pages)
         (SITE / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + items + "</urlset>\n")
         robots += f"Sitemap: {absu('sitemap.xml')}\n"
     (SITE / "robots.txt").write_text(robots)

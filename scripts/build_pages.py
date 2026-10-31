@@ -253,7 +253,7 @@ LOAN_FIELD = """      <div class="field">
 EN_HTML = [
     ('<html lang="ko">', '<html lang="en">'),
     ('<a class="skip" href="#result">결과로 건너뛰기</a>', '<a class="skip" href="#result">Skip to result</a>'),
-    ('<div class="brand">영끌각</div>', f'<div class="brand">{EN_NAME}</div>'),
+    ('<a class="brand" href="index.html" aria-label="영끌각 대문으로 이동">영끌각</a>', f'<a class="brand" href="en/index.html" aria-label="Rent or Buy Korea home">{EN_NAME}</a>'),
     ('<a class="lang" href="en/" hreflang="en" lang="en">EN</a>', '<a class="lang" href="./" hreflang="ko" lang="ko">한국어</a>'),
     ('<h1>이 집, 영끌해서 사야 하나?</h1>', '<h1>Buy, jeonse, or rent in Korea?</h1>'),
     ('aria-label="지역 선택"', 'aria-label="Choose an area"'),
